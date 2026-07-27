@@ -1,0 +1,79 @@
+<section
+  class="to-empty-state"
+  [class.to-empty-state--compact]="compact()"
+  [class]="
+    'to-empty-state--' + tone()
+  "
+  [attr.data-testid]="dataTestId()"
+>
+  @if (loading()) {
+    <div class="to-empty-state__loading">
+      <i class="pi pi-spin pi-spinner"></i>
+
+      <span>{{ loadingMessage() }}</span>
+    </div>
+  } @else {
+    <span class="to-empty-state__icon">
+      <i [class]="icon()"></i>
+    </span>
+
+    <strong>{{ title() }}</strong>
+
+    <p>{{ message() }}</p>
+
+    @if (
+      primaryLabel() ||
+      secondaryLabel() ||
+      actions().length
+    ) {
+      <div class="to-empty-state__actions">
+        @for (
+          action of actions();
+          track action.id
+        ) {
+          @if (isActionVisible(action)) {
+            <p-button
+              [label]="action.label"
+              [icon]="action.icon"
+              [severity]="action.severity"
+              [outlined]="action.outlined === true"
+              [text]="action.text === true"
+              [loading]="action.loading === true"
+              [disabled]="action.disabled === true"
+              [attr.data-testid]="
+                action.dataTestId ??
+                'empty-state-action-' +
+                action.id
+              "
+              (click)="triggerAction(action)"
+            />
+          }
+        }
+
+        @if (secondaryLabel()) {
+          <p-button
+            [label]="secondaryLabel()!"
+            [icon]="secondaryIcon() ?? undefined"
+            severity="secondary"
+            [outlined]="true"
+            [loading]="secondaryLoading()"
+            [disabled]="secondaryDisabled()"
+            data-testid="empty-state-secondary-btn"
+            (click)="secondaryAction()"
+          />
+        }
+
+        @if (primaryLabel()) {
+          <p-button
+            [label]="primaryLabel()!"
+            [icon]="primaryIcon() ?? undefined"
+            [loading]="primaryLoading()"
+            [disabled]="primaryDisabled()"
+            data-testid="empty-state-primary-btn"
+            (click)="primaryAction()"
+          />
+        }
+      </div>
+    }
+  }
+</section>

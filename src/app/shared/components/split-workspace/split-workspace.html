@@ -1,0 +1,443 @@
+<section
+  class="to-split-workspace"
+  [ngClass]="workspaceClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  @if (loading()) {
+    <div
+      class="to-split-workspace__loading"
+      role="status"
+      aria-live="polite"
+    >
+      <p-progressSpinner
+        strokeWidth="4"
+        ariaLabel="Loading"
+      />
+
+      <span>
+        {{ loadingLabel() }}
+      </span>
+    </div>
+  } @else {
+    @if (
+      isMobile() &&
+      mobileView() === 'right' &&
+      showMobileBack()
+    ) {
+      <div
+        class="to-split-workspace__mobile-navigation"
+      >
+        <p-button
+          type="button"
+          label="Back to list"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          data-testid="split-workspace-mobile-back"
+          (click)="openMobileList()"
+        />
+      </div>
+    }
+
+    @if (isMobile()) {
+      <div
+        class="to-split-workspace__mobile-content"
+      >
+        @if (showLeftPanel()) {
+          <section
+            class="to-split-workspace__panel to-split-workspace__panel--left"
+            [attr.aria-label]="leftAriaLabel()"
+          >
+            <header
+              class="to-split-workspace__panel-header"
+            >
+              <div
+                class="to-split-workspace__panel-heading"
+              >
+                <ng-content
+                  select="[leftHeader]"
+                />
+              </div>
+
+              <div
+                class="to-split-workspace__panel-controls"
+              >
+                <ng-content
+                  select="[leftHeaderActions]"
+                />
+              </div>
+            </header>
+
+            <div
+              class="to-split-workspace__panel-toolbar"
+            >
+              <ng-content
+                select="[leftToolbar]"
+              />
+            </div>
+
+            <div
+              class="to-split-workspace__panel-content"
+            >
+              <ng-content
+                select="[leftContent]"
+              />
+            </div>
+
+            @if (detailAvailable()) {
+              <footer
+                class="to-split-workspace__mobile-footer"
+              >
+                <p-button
+                  type="button"
+                  label="View selected details"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  size="small"
+                  data-testid="split-workspace-mobile-detail"
+                  (click)="openMobileDetail()"
+                />
+              </footer>
+            }
+          </section>
+        }
+
+        @if (showRightPanel()) {
+          <section
+            class="to-split-workspace__panel to-split-workspace__panel--right"
+            [attr.aria-label]="rightAriaLabel()"
+          >
+            @if (detailAvailable()) {
+              <header
+                class="to-split-workspace__panel-header"
+              >
+                <div
+                  class="to-split-workspace__panel-heading"
+                >
+                  <ng-content
+                    select="[rightHeader]"
+                  />
+                </div>
+
+                <div
+                  class="to-split-workspace__panel-controls"
+                >
+                  <ng-content
+                    select="[rightHeaderActions]"
+                  />
+                </div>
+              </header>
+
+              <div
+                class="to-split-workspace__panel-toolbar"
+              >
+                <ng-content
+                  select="[rightToolbar]"
+                />
+              </div>
+
+              <div
+                class="to-split-workspace__panel-content"
+              >
+                <ng-content
+                  select="[rightContent]"
+                />
+              </div>
+
+              <footer
+                class="to-split-workspace__panel-footer"
+              >
+                <ng-content
+                  select="[rightFooter]"
+                />
+              </footer>
+            } @else {
+              <div
+                class="to-split-workspace__empty"
+              >
+                <ng-content
+                  select="[emptyState]"
+                />
+
+                <div
+                  class="to-split-workspace__default-empty"
+                >
+                  <span>
+                    <i
+                      [class]="emptyIcon()"
+                    ></i>
+                  </span>
+
+                  <strong>
+                    {{ emptyTitle() }}
+                  </strong>
+
+                  <p>
+                    {{ emptyMessage() }}
+                  </p>
+                </div>
+              </div>
+            }
+          </section>
+        }
+      </div>
+    } @else {
+      <div
+        class="to-split-workspace__desktop"
+      >
+        @if (leftCollapsed()) {
+          <aside
+            class="to-split-workspace__collapsed-rail"
+          >
+            <p-button
+              type="button"
+              icon="pi pi-angle-right"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              pTooltip="Expand list panel"
+              tooltipPosition="right"
+              ariaLabel="Expand list panel"
+              (click)="toggleLeftPanel()"
+            />
+          </aside>
+        }
+
+        <p-splitter
+          class="to-split-workspace__splitter"
+          [layout]="resolvedLayout()"
+          [panelSizes]="effectivePanelSizes()"
+          [minSizes]="minimumPanelSizes()"
+          [gutterSize]="gutterSize()"
+          (onResizeEnd)="handleResizeEnd($event)"
+        >
+          <ng-template #panel>
+            @if (showLeftPanel()) {
+              <section
+                class="to-split-workspace__panel to-split-workspace__panel--left"
+                [attr.aria-label]="leftAriaLabel()"
+              >
+                <header
+                  class="to-split-workspace__panel-header"
+                >
+                  <div
+                    class="to-split-workspace__panel-heading"
+                  >
+                    <ng-content
+                      select="[leftHeader]"
+                    />
+                  </div>
+
+                  <div
+                    class="to-split-workspace__panel-controls"
+                  >
+                    <ng-content
+                      select="[leftHeaderActions]"
+                    />
+
+                    @if (
+                      showCollapseControls()
+                    ) {
+                      <p-button
+                        type="button"
+                        icon="pi pi-angle-left"
+                        severity="secondary"
+                        [text]="true"
+                        [rounded]="true"
+                        pTooltip="Collapse list panel"
+                        tooltipPosition="bottom"
+                        ariaLabel="Collapse list panel"
+                        (click)="toggleLeftPanel()"
+                      />
+                    }
+                  </div>
+                </header>
+
+                <div
+                  class="to-split-workspace__panel-toolbar"
+                >
+                  <ng-content
+                    select="[leftToolbar]"
+                  />
+                </div>
+
+                <div
+                  class="to-split-workspace__panel-content"
+                >
+                  <ng-content
+                    select="[leftContent]"
+                  />
+                </div>
+
+                <footer
+                  class="to-split-workspace__panel-footer"
+                >
+                  <ng-content
+                    select="[leftFooter]"
+                  />
+                </footer>
+              </section>
+            }
+          </ng-template>
+
+          <ng-template #panel>
+            @if (showRightPanel()) {
+              <section
+                class="to-split-workspace__panel to-split-workspace__panel--right"
+                [attr.aria-label]="rightAriaLabel()"
+              >
+                @if (detailAvailable()) {
+                  <header
+                    class="to-split-workspace__panel-header"
+                  >
+                    <div
+                      class="to-split-workspace__panel-heading"
+                    >
+                      <ng-content
+                        select="[rightHeader]"
+                      />
+                    </div>
+
+                    <div
+                      class="to-split-workspace__panel-controls"
+                    >
+                      <ng-content
+                        select="[rightHeaderActions]"
+                      />
+
+                      <p-button
+                        type="button"
+                        icon="pi pi-refresh"
+                        severity="secondary"
+                        [text]="true"
+                        [rounded]="true"
+                        pTooltip="Reset panel sizes"
+                        tooltipPosition="bottom"
+                        ariaLabel="Reset panel sizes"
+                        (click)="resetPanelSizes()"
+                      />
+
+                      @if (
+                        showFullscreenControl()
+                      ) {
+                        <p-button
+                          type="button"
+                          [icon]="
+                            fullscreen()
+                              ? 'pi pi-window-minimize'
+                              : 'pi pi-window-maximize'
+                          "
+                          severity="secondary"
+                          [text]="true"
+                          [rounded]="true"
+                          [pTooltip]="
+                            fullscreen()
+                              ? 'Exit fullscreen'
+                              : 'Open fullscreen'
+                          "
+                          tooltipPosition="bottom"
+                          [attr.aria-label]="
+                            fullscreen()
+                              ? 'Exit fullscreen'
+                              : 'Open fullscreen'
+                          "
+                          (click)="toggleFullscreen()"
+                        />
+                      }
+
+                      @if (
+                        showCollapseControls() &&
+                        !fullscreen()
+                      ) {
+                        <p-button
+                          type="button"
+                          icon="pi pi-angle-right"
+                          severity="secondary"
+                          [text]="true"
+                          [rounded]="true"
+                          pTooltip="Collapse detail panel"
+                          tooltipPosition="bottom"
+                          ariaLabel="Collapse detail panel"
+                          (click)="toggleRightPanel()"
+                        />
+                      }
+                    </div>
+                  </header>
+
+                  <div
+                    class="to-split-workspace__panel-toolbar"
+                  >
+                    <ng-content
+                      select="[rightToolbar]"
+                    />
+                  </div>
+
+                  <div
+                    class="to-split-workspace__panel-content"
+                  >
+                    <ng-content
+                      select="[rightContent]"
+                    />
+                  </div>
+
+                  <footer
+                    class="to-split-workspace__panel-footer"
+                  >
+                    <ng-content
+                      select="[rightFooter]"
+                    />
+                  </footer>
+                } @else {
+                  <div
+                    class="to-split-workspace__empty"
+                  >
+                    <ng-content
+                      select="[emptyState]"
+                    />
+
+                    <div
+                      class="to-split-workspace__default-empty"
+                    >
+                      <span>
+                        <i
+                          [class]="emptyIcon()"
+                        ></i>
+                      </span>
+
+                      <strong>
+                        {{ emptyTitle() }}
+                      </strong>
+
+                      <p>
+                        {{ emptyMessage() }}
+                      </p>
+                    </div>
+                  </div>
+                }
+              </section>
+            }
+          </ng-template>
+        </p-splitter>
+
+        @if (rightCollapsed()) {
+          <aside
+            class="to-split-workspace__collapsed-rail"
+          >
+            <p-button
+              type="button"
+              icon="pi pi-angle-left"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              pTooltip="Expand detail panel"
+              tooltipPosition="left"
+              ariaLabel="Expand detail panel"
+              (click)="toggleRightPanel()"
+            />
+          </aside>
+        }
+      </div>
+    }
+  }
+</section>

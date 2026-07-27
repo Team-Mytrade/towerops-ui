@@ -1,0 +1,319 @@
+<footer
+  class="to-action-center"
+  data-testid="work-order-action-footer"
+>
+  <section class="to-action-center__summary">
+    <div class="to-action-center__status">
+      <div class="to-action-center__status-heading">
+        <span class="to-action-center__icon">
+          <i class="pi pi-directions"></i>
+        </span>
+
+        <div>
+          <span class="to-action-center__eyebrow">
+            Workflow status
+          </span>
+
+          <div class="to-action-center__status-row">
+            @if (isCreateMode()) {
+              <p-tag
+                value="Draft"
+                severity="secondary"
+                [rounded]="true"
+              />
+            } @else {
+              <p-tag
+                [value]="normalizedStatusLabel()"
+                [severity]="statusSeverity()"
+                [rounded]="true"
+              />
+            }
+
+            <strong>
+              {{ nextActionLabel() }}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        {{ workflowMessage() }}
+      </p>
+    </div>
+
+    <div
+      class="to-validation-summary"
+      [attr.data-state]="validationState()"
+    >
+      <div class="to-validation-summary__header">
+        <span class="to-validation-summary__icon">
+          @switch (validationState()) {
+            @case ('valid') {
+              <i class="pi pi-check-circle"></i>
+            }
+
+            @case ('clean') {
+              <i class="pi pi-info-circle"></i>
+            }
+
+            @default {
+              <i class="pi pi-exclamation-triangle"></i>
+            }
+          }
+        </span>
+
+        <div>
+          <strong>
+            {{ validationMessage() }}
+          </strong>
+
+          @if (
+            !valid() &&
+            invalidFields().length > 0
+          ) {
+            <span>
+              Review the highlighted fields.
+            </span>
+          } @else if (
+            valid() &&
+            dirty()
+          ) {
+            <span>
+              Your changes have not been saved yet.
+            </span>
+          } @else {
+            <span>
+              The form is currently up to date.
+            </span>
+          }
+        </div>
+      </div>
+
+      @if (
+        !valid() &&
+        invalidFields().length > 0
+      ) {
+        <ul class="to-validation-summary__fields">
+          @for (
+            field of invalidFields();
+            track field
+          ) {
+            <li>{{ field }}</li>
+          }
+        </ul>
+      }
+    </div>
+  </section>
+
+  @if (loading()) {
+    <section
+      class="to-action-center__loading"
+      aria-live="polite"
+    >
+      <p-progress-spinner
+        strokeWidth="5"
+        animationDuration=".8s"
+        ariaLabel="Processing work order"
+      />
+
+      <div>
+        <strong>Processing work order</strong>
+
+        <span>
+          Please wait while the request is completed.
+        </span>
+      </div>
+    </section>
+  } @else {
+    <section class="to-action-center__actions">
+      <div class="to-action-center__secondary-actions">
+        @if (
+          isEditMode() &&
+          canDelete() &&
+          !isTerminalStatus()
+        ) {
+          <p-button
+            type="button"
+            label="Delete"
+            icon="pi pi-trash"
+            severity="danger"
+            variant="text"
+            [disabled]="readonly()"
+            pTooltip="Delete this work order"
+            tooltipPosition="top"
+            data-testid="delete-work-order-btn"
+            (onClick)="onDelete()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canCancel() &&
+          !isTerminalStatus()
+        ) {
+          <p-button
+            type="button"
+            label="Cancel Work Order"
+            icon="pi pi-ban"
+            severity="danger"
+            variant="outlined"
+            [disabled]="readonly()"
+            data-testid="cancel-work-order-btn"
+            (onClick)="onCancelOrder()"
+          />
+        }
+      </div>
+
+      <div class="to-action-center__primary-actions">
+        <p-button
+          type="button"
+          [label]="
+            isTerminalStatus()
+              ? 'Back'
+              : 'Cancel'
+          "
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          variant="text"
+          data-testid="cancel-work-order-form-btn"
+          (onClick)="onCancel()"
+        />
+
+        @if (
+          isCreateMode() &&
+          canSaveDraft()
+        ) {
+          <p-button
+            type="button"
+            label="Save Draft"
+            icon="pi pi-save"
+            severity="secondary"
+            variant="outlined"
+            [disabled]="readonly()"
+            data-testid="save-work-order-draft-btn"
+            (onClick)="onSaveDraft()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canSave() &&
+          !isTerminalStatus()
+        ) {
+          <p-button
+            type="button"
+            label="Save Changes"
+            icon="pi pi-save"
+            severity="secondary"
+            variant="outlined"
+            [disabled]="saveDisabled()"
+            data-testid="save-work-order-btn"
+            (onClick)="onSave()"
+          />
+        }
+
+        @if (
+          isCreateMode() &&
+          canCreate()
+        ) {
+          <p-button
+            type="button"
+            label="Create Work Order"
+            icon="pi pi-plus"
+            [disabled]="primaryActionDisabled()"
+            data-testid="create-work-order-btn"
+            (onClick)="onCreate()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canAssign() &&
+          status() === 'CREATED'
+        ) {
+          <p-button
+            type="button"
+            label="Assign Technician"
+            icon="pi pi-user-plus"
+            [disabled]="
+              isActionLocked() ||
+              !valid()
+            "
+            data-testid="assign-work-order-btn"
+            (onClick)="onAssign()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canStart() &&
+          (
+            status() === 'ASSIGNED' ||
+            status() === 'SCHEDULED'
+          )
+        ) {
+          <p-button
+            type="button"
+            label="Start Work"
+            icon="pi pi-play"
+            severity="warn"
+            [disabled]="isActionLocked()"
+            data-testid="start-work-order-btn"
+            (onClick)="onStart()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canComplete() &&
+          status() === 'IN_PROGRESS'
+        ) {
+          <p-button
+            type="button"
+            label="Complete Work"
+            icon="pi pi-check"
+            severity="success"
+            [disabled]="
+              isActionLocked() ||
+              !valid()
+            "
+            data-testid="complete-work-order-btn"
+            (onClick)="onComplete()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canVerify() &&
+          status() === 'COMPLETED'
+        ) {
+          <p-button
+            type="button"
+            label="Verify Work"
+            icon="pi pi-verified"
+            severity="help"
+            [disabled]="isActionLocked()"
+            data-testid="verify-work-order-btn"
+            (onClick)="onVerify()"
+          />
+        }
+
+        @if (
+          isEditMode() &&
+          canClose() &&
+          status() === 'VERIFIED'
+        ) {
+          <p-button
+            type="button"
+            label="Close Work Order"
+            icon="pi pi-lock"
+            severity="success"
+            [disabled]="isActionLocked()"
+            data-testid="close-work-order-btn"
+            (onClick)="onClose()"
+          />
+        }
+      </div>
+    </section>
+  }
+</footer>

@@ -1,0 +1,389 @@
+<section
+  class="to-devices"
+  [class.to-devices--detail-open]="selectedDevice()"
+  data-testid="devices-page"
+>
+  <header class="to-devices__header">
+    <div>
+      <p class="to-devices__eyebrow">
+        Connected Infrastructure
+      </p>
+
+      <h1>Devices</h1>
+
+      <p>
+        Monitor device connectivity, health and site assignments.
+      </p>
+    </div>
+
+    <div class="to-devices__header-actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        (click)="refresh()"
+      />
+
+      <p-button
+        label="Create Device"
+        icon="pi pi-plus"
+        data-testid="create-device-btn"
+        (click)="createDevice()"
+      />
+    </div>
+  </header>
+
+
+  @if (formMode(); as mode) {
+    <to-device-form
+      [mode]="mode"
+      [device]="editingDevice()"
+      (saved)="onDeviceSaved($event)"
+      (cancelled)="closeForm()"
+    />
+  } @else {
+
+  <div class="to-devices__summary">
+    <article>
+      <span>Total Devices</span>
+      <strong>{{ totalDevices() }}</strong>
+    </article>
+
+    <article class="to-devices__summary--online">
+      <span>Online</span>
+      <strong>{{ onlineDevices() }}</strong>
+    </article>
+
+    <article class="to-devices__summary--offline">
+      <span>Offline</span>
+      <strong>{{ offlineDevices() }}</strong>
+    </article>
+
+    <article class="to-devices__summary--maintenance">
+      <span>Maintenance</span>
+      <strong>{{ maintenanceDevices() }}</strong>
+    </article>
+
+    <article class="to-devices__summary--fault">
+      <span>Fault</span>
+      <strong>{{ faultDevices() }}</strong>
+    </article>
+  </div>
+
+  <div class="to-devices__toolbar">
+    <div class="to-devices__filters">
+      <div class="to-devices__search">
+        <i class="pi pi-search"></i>
+
+        <input
+          pInputText
+          type="search"
+          placeholder="Search device, serial number or site"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          data-testid="device-search-input"
+        />
+      </div>
+
+      <p-select
+        [options]="categoryOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Category"
+        [ngModel]="categoryFilter()"
+        (ngModelChange)="categoryFilter.set($event)"
+      />
+
+      <p-select
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      />
+
+      <button
+        type="button"
+        class="to-devices__clear"
+        (click)="clearFilters()"
+      >
+        Clear filters
+      </button>
+    </div>
+
+    <span class="to-devices__result-count">
+      {{ filteredDevices().length }} devices
+    </span>
+  </div>
+
+  <div class="to-devices__workspace">
+    <main class="to-devices__content">
+      @if (loading()) {
+        <div class="to-devices__state">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading devices...</span>
+        </div>
+      } @else if (pageError()) {
+        <div class="to-devices__state">
+          <i class="pi pi-exclamation-triangle"></i>
+          <strong>Devices could not be loaded</strong>
+          <span>{{ pageError() }}</span>
+        </div>
+      } @else {
+        <div class="to-devices__table">
+          <div class="to-devices__table-header">
+            <span>Device</span>
+            <span>Category</span>
+            <span>Site</span>
+            <span>Status</span>
+            <span>Health</span>
+            <span>Last Seen</span>
+            <span>Alerts</span>
+            <span></span>
+          </div>
+
+          @for (
+            device of filteredDevices();
+            track device.id
+          ) {
+            <button
+              type="button"
+              class="to-devices__row"
+              [class.to-devices__row--selected]="
+                selectedDevice()?.id === device.id
+              "
+              (click)="selectDevice(device)"
+            >
+              <span class="to-devices__device">
+                <span class="to-devices__device-icon">
+                  <i class="pi pi-microchip"></i>
+                </span>
+
+                <span>
+                  <strong>{{ device.deviceName }}</strong>
+
+                  <small>
+                    {{ device.deviceCode }}
+                    ·
+                    {{ device.serialNumber }}
+                  </small>
+                </span>
+              </span>
+
+              <span>
+                {{ device.category | titlecase }}
+              </span>
+
+              <span>
+                <strong class="to-devices__site-name">
+                  {{ device.siteName || 'Unassigned' }}
+                </strong>
+
+                <small>
+                  {{ device.siteCode || 'No site' }}
+                </small>
+              </span>
+
+              <span>
+                <p-tag
+                  [value]="device.status"
+                  [severity]="statusSeverity(device.status)"
+                />
+              </span>
+
+              <span>
+                <span
+                  class="to-device-health"
+                  [class]="healthClass(device.healthScore)"
+                >
+                  {{
+                    device.healthScore !== null &&
+                    device.healthScore !== undefined
+                      ? device.healthScore + '%'
+                      : '—'
+                  }}
+                </span>
+              </span>
+
+              <span>
+                @if (device.lastSeenAt) {
+                  {{
+                    device.lastSeenAt
+                      | date:'MMM d, h:mm a'
+                  }}
+                } @else {
+                  Never
+                }
+              </span>
+
+              <span>
+                {{ device.openAlerts ?? 0 }}
+              </span>
+
+              <span>
+                <i class="pi pi-angle-right"></i>
+              </span>
+            </button>
+          } @empty {
+            <div class="to-devices__state">
+              <i class="pi pi-microchip"></i>
+              <strong>No devices found</strong>
+              <span>
+                Adjust the filters or create a new device.
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </main>
+
+    @if (selectedDevice(); as device) {
+      <aside class="to-devices__details">
+        <header>
+          <div>
+            <span>{{ device.deviceCode }}</span>
+            <h2>{{ device.deviceName }}</h2>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Close device details"
+            (click)="closeDetails()"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </header>
+
+        <div class="to-devices__details-body">
+          <section>
+            <span>Status</span>
+
+            <p-tag
+              [value]="device.status"
+              [severity]="statusSeverity(device.status)"
+            />
+          </section>
+
+          <section>
+            <span>Category</span>
+            <strong>
+              {{ device.category | titlecase }}
+            </strong>
+          </section>
+
+          <section>
+            <span>Serial Number</span>
+            <strong>{{ device.serialNumber }}</strong>
+          </section>
+
+          <section>
+            <span>Assigned Site</span>
+            <strong>
+              {{ device.siteName || 'Unassigned' }}
+            </strong>
+
+            <small>
+              {{ device.siteCode || 'No site code' }}
+            </small>
+          </section>
+
+          <div class="to-devices__details-metrics">
+            <article>
+              <span>Health Score</span>
+              <strong>
+                {{
+                  device.healthScore !== null &&
+                  device.healthScore !== undefined
+                    ? device.healthScore + '%'
+                    : '—'
+                }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Open Alerts</span>
+              <strong>{{ device.openAlerts ?? 0 }}</strong>
+            </article>
+          </div>
+
+          <section>
+            <span>Device Model</span>
+            <strong>
+              {{
+                device.deviceModelName ||
+                device.deviceModelCode ||
+                'Not available'
+              }}
+            </strong>
+
+            @if (device.manufacturer) {
+              <small>{{ device.manufacturer }}</small>
+            }
+          </section>
+
+          <section>
+            <span>Network</span>
+
+            <div class="to-devices__network">
+              <span>
+                <small>IP Address</small>
+                <strong>
+                  {{ device.ipAddress || '—' }}
+                </strong>
+              </span>
+
+              <span>
+                <small>MAC Address</small>
+                <strong>
+                  {{ device.macAddress || '—' }}
+                </strong>
+              </span>
+            </div>
+          </section>
+
+          <section>
+            <span>Firmware</span>
+            <strong>
+              {{ device.firmwareVersion || '—' }}
+            </strong>
+          </section>
+
+          <section>
+            <span>Last Seen</span>
+            <strong>
+              @if (device.lastSeenAt) {
+                {{
+                  device.lastSeenAt
+                    | date:'MMM d, y, h:mm a'
+                }}
+              } @else {
+                Never connected
+              }
+            </strong>
+          </section>
+        </div>
+
+        <footer>
+          <p-button
+            label="Edit"
+            icon="pi pi-pencil"
+            severity="secondary"
+            [outlined]="true"
+            (click)="editDevice(device)"
+          />
+
+          <p-button
+            label="Open Device"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (click)="openDevice(device)"
+          />
+        </footer>
+      </aside>
+    }
+  </div>
+}
+</section>

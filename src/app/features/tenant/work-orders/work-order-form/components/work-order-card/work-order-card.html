@@ -1,0 +1,126 @@
+<section
+  class="to-form-card"
+  [formGroup]="form()">
+
+  <header class="to-form-card__header">
+
+    <div>
+
+      <h2>
+        Work Order
+      </h2>
+
+      <p>
+        Basic information about the task.
+      </p>
+
+    </div>
+
+    @if(editMode()){
+
+      <p-tag
+        [value]="form().get('status')?.value"
+        severity="info">
+      </p-tag>
+
+    }
+
+  </header>
+
+  <div class="to-form-card__content">
+
+    <div class="to-form-grid">
+
+      <div class="to-form-field">
+
+        <label>
+
+          Work Order Code
+
+        </label>
+
+        <input
+          pInputText
+          readonly
+          formControlName="workOrderCode"
+          placeholder="Generated automatically">
+
+      </div>
+
+      <div class="to-form-field to-form-field--wide">
+
+        <label>
+
+          Title
+          <span>*</span>
+
+        </label>
+
+        <input
+          pInputText
+          formControlName="title"
+          [maxlength]="titleMaxLength"
+          [readonly]="readonly()">
+
+        <div class="to-counter">
+
+          {{titleLength()}}
+          /
+          {{titleMaxLength}}
+
+        </div>
+
+        @if(isInvalid('title')){
+
+          <small>
+
+            {{error('title')}}
+
+          </small>
+
+        }
+
+      </div>
+
+      <div class="to-form-field to-form-field--wide">
+
+        <label>
+
+          Description
+          <span>*</span>
+
+        </label>
+
+        <textarea
+          pTextarea
+          rows="8"
+          formControlName="description"
+          [maxlength]="descriptionMaxLength"
+          [readonly]="readonly()">
+        </textarea>
+
+        <div class="to-counter">
+
+          {{descriptionLength()}}
+          /
+          {{descriptionMaxLength}}
+
+        </div>
+
+        @if(isInvalid('description')){
+
+          <small>
+
+            {{error('description')}}
+
+          </small>
+
+        }
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>

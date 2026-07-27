@@ -1,0 +1,349 @@
+<section
+  class="to-alerts"
+  [class.to-alerts--detail-open]="selectedAlert()"
+  data-testid="alerts-page"
+>
+  <header class="to-alerts__header">
+    <div>
+      <p class="to-alerts__eyebrow">
+        Operational Events
+      </p>
+
+      <h1>Alerts</h1>
+
+      <p>
+        Review, acknowledge and escalate infrastructure alerts.
+      </p>
+    </div>
+
+    <p-button
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="loading()"
+      data-testid="refresh-alerts-btn"
+      (click)="refresh()"
+    />
+  </header>
+
+  <div class="to-alerts__summary">
+    <article>
+      <span>Total</span>
+      <strong>{{ totalAlerts() }}</strong>
+    </article>
+
+    <article class="to-alerts__summary--critical">
+      <span>Critical</span>
+      <strong>{{ criticalAlerts() }}</strong>
+    </article>
+
+    <article class="to-alerts__summary--open">
+      <span>Open</span>
+      <strong>{{ openAlerts() }}</strong>
+    </article>
+
+    <article class="to-alerts__summary--acknowledged">
+      <span>Acknowledged</span>
+      <strong>{{ acknowledgedAlerts() }}</strong>
+    </article>
+
+    <article class="to-alerts__summary--resolved">
+      <span>Resolved</span>
+      <strong>{{ resolvedAlerts() }}</strong>
+    </article>
+  </div>
+
+  <div class="to-alerts__toolbar">
+    <div class="to-alerts__filters">
+      <div class="to-alerts__search">
+        <i class="pi pi-search"></i>
+
+        <input
+          pInputText
+          type="search"
+          placeholder="Search alert, site or device"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          data-testid="alert-search-input"
+        />
+      </div>
+
+      <p-select
+        [options]="severityOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Severity"
+        [ngModel]="severityFilter()"
+        (ngModelChange)="severityFilter.set($event)"
+        data-testid="alert-severity-filter"
+      />
+
+      <p-select
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Status"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+        data-testid="alert-status-filter"
+      />
+
+      <button
+        type="button"
+        class="to-alerts__clear"
+        data-testid="clear-alert-filters-btn"
+        (click)="clearFilters()"
+      >
+        Clear filters
+      </button>
+    </div>
+
+    <span class="to-alerts__count">
+      {{ filteredAlerts().length }} alerts
+    </span>
+  </div>
+
+  <div class="to-alerts__workspace">
+    <main class="to-alerts__content">
+      @if (loading()) {
+        <div class="to-alerts__state">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading alerts...</span>
+        </div>
+      } @else if (pageError()) {
+        <div class="to-alerts__state">
+          <i class="pi pi-exclamation-triangle"></i>
+          <strong>Alerts could not be loaded</strong>
+          <span>{{ pageError() }}</span>
+        </div>
+      } @else {
+        <div class="to-alerts__table">
+          <div class="to-alerts__table-header">
+            <span>Alert</span>
+            <span>Severity</span>
+            <span>Site</span>
+            <span>Device</span>
+            <span>Status</span>
+            <span>Raised</span>
+            <span></span>
+          </div>
+
+          @for (
+            alert of filteredAlerts();
+            track alert.id
+          ) {
+            <button
+              type="button"
+              class="to-alerts__row"
+              [class.to-alerts__row--selected]="
+                selectedAlert()?.id === alert.id
+              "
+              [attr.data-testid]="
+                'alert-row-' + alert.id
+              "
+              (click)="selectAlert(alert)"
+            >
+              <span class="to-alerts__alert">
+                <span
+                  class="to-alerts__severity-line"
+                  [class.to-alerts__severity-line--critical]="
+                    alert.severity === 'CRITICAL'
+                  "
+                  [class.to-alerts__severity-line--high]="
+                    alert.severity === 'HIGH'
+                  "
+                ></span>
+
+                <span>
+                  <strong>{{ alert.title }}</strong>
+
+                  <small>
+                    {{ alert.alertCode }} ·
+                    {{ alert.message }}
+                  </small>
+                </span>
+              </span>
+
+              <span>
+                <p-tag
+                  [value]="alert.severity"
+                  [severity]="
+                    severityTag(alert.severity)
+                  "
+                />
+              </span>
+
+              <span>
+                <strong>
+                  {{ alert.siteName || 'Unknown site' }}
+                </strong>
+
+                <small>
+                  {{ alert.siteCode || '—' }}
+                </small>
+              </span>
+
+              <span>
+                <strong>
+                  {{ alert.deviceName || 'Unknown device' }}
+                </strong>
+
+                <small>
+                  {{ alert.deviceCode || '—' }}
+                </small>
+              </span>
+
+              <span>
+                <p-tag
+                  [value]="alert.status"
+                  [severity]="statusTag(alert.status)"
+                />
+              </span>
+
+              <span>
+                {{ alert.createdAt | date:'MMM d, h:mm a' }}
+              </span>
+
+              <span>
+                <i class="pi pi-angle-right"></i>
+              </span>
+            </button>
+          } @empty {
+            <div class="to-alerts__state">
+              <i class="pi pi-bell"></i>
+              <strong>No alerts found</strong>
+              <span>Adjust the filters to see more results.</span>
+            </div>
+          }
+        </div>
+      }
+    </main>
+
+    @if (selectedAlert(); as alert) {
+      <aside class="to-alerts__details">
+        <header>
+          <div>
+            <span>{{ alert.alertCode }}</span>
+            <h2>{{ alert.title }}</h2>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Close alert details"
+            data-testid="close-alert-details-btn"
+            (click)="closeDetails()"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </header>
+
+        <div class="to-alerts__details-body">
+          <div class="to-alerts__tags">
+            <p-tag
+              [value]="alert.severity"
+              [severity]="severityTag(alert.severity)"
+            />
+
+            <p-tag
+              [value]="alert.status"
+              [severity]="statusTag(alert.status)"
+            />
+          </div>
+
+          <section>
+            <span>Message</span>
+            <p>{{ alert.message }}</p>
+          </section>
+
+          <section>
+            <span>Site</span>
+            <button
+              type="button"
+              [disabled]="!alert.siteId"
+              data-testid="open-alert-site-btn"
+              (click)="openSite(alert)"
+            >
+              {{ alert.siteName || 'Unknown site' }}
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </section>
+
+          <section>
+            <span>Device</span>
+            <button
+              type="button"
+              [disabled]="!alert.deviceId"
+              data-testid="open-alert-device-btn"
+              (click)="openDevice(alert)"
+            >
+              {{ alert.deviceName || 'Unknown device' }}
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </section>
+
+          <section>
+            <span>Rule</span>
+            <strong>
+              {{ alert.ruleName || 'Not available' }}
+            </strong>
+          </section>
+
+          <section>
+            <span>Raised At</span>
+            <strong>
+              {{ alert.createdAt | date:'MMM d, y, h:mm:ss a' }}
+            </strong>
+          </section>
+
+          @if (alert.acknowledgedAt) {
+            <section>
+              <span>Acknowledged</span>
+              <strong>
+                {{ alert.acknowledgedBy || 'Unknown user' }}
+              </strong>
+
+              <small>
+                {{
+                  alert.acknowledgedAt
+                    | date:'MMM d, y, h:mm a'
+                }}
+              </small>
+            </section>
+          }
+
+          @if (alert.ticketId) {
+            <section>
+              <span>Ticket</span>
+              <strong>
+                {{ alert.ticketCode || alert.ticketId }}
+              </strong>
+            </section>
+          }
+        </div>
+
+        <footer>
+          @if (alert.status === 'OPEN') {
+            <p-button
+              label="Acknowledge"
+              icon="pi pi-check"
+              severity="secondary"
+              [outlined]="true"
+              data-testid="acknowledge-alert-btn"
+              (click)="acknowledge(alert)"
+            />
+          }
+
+          @if (!alert.ticketId) {
+            <p-button
+              label="Create Ticket"
+              icon="pi pi-ticket"
+              data-testid="create-ticket-from-alert-btn"
+              (click)="createTicket(alert)"
+            />
+          }
+        </footer>
+      </aside>
+    }
+  </div>
+</section>

@@ -1,0 +1,67 @@
+<section
+  class="to-data-state-panel"
+  [ngClass]="panelClasses()"
+  [attr.data-testid]="dataTestId()"
+  role="status"
+  [attr.aria-live]="
+    state() === 'error'
+      ? 'assertive'
+      : 'polite'
+  "
+>
+  <div class="to-data-state-panel__visual">
+    @if (
+      state() === 'loading' &&
+      showSpinner()
+    ) {
+      <p-progress-spinner
+        strokeWidth="4"
+        animationDuration=".8s"
+        ariaLabel="Loading"
+      />
+    } @else if (showIcon()) {
+      <i [class]="resolvedState().icon"></i>
+    }
+  </div>
+
+  <div class="to-data-state-panel__content">
+    <strong>
+      {{ resolvedState().title }}
+    </strong>
+
+    <p>
+      {{ resolvedState().message }}
+    </p>
+
+    <ng-content />
+  </div>
+
+  @if (visibleActions().length) {
+    <div class="to-data-state-panel__actions">
+      @for (
+        action of visibleActions();
+        track action.id
+      ) {
+        <p-button
+          type="button"
+          [label]="action.label"
+          [icon]="action.icon"
+          [severity]="
+            action.severity ??
+            'secondary'
+          "
+          [outlined]="action.outlined === true"
+          [text]="action.text === true"
+          [disabled]="action.disabled === true"
+          [loading]="action.loading === true"
+          [attr.data-testid]="
+            action.dataTestId ??
+            'data-state-action-' +
+            action.id
+          "
+          (click)="requestAction(action)"
+        />
+      }
+    </div>
+  }
+</section>

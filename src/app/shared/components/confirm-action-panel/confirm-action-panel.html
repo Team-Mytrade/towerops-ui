@@ -1,0 +1,105 @@
+<section
+  class="to-confirm-action"
+  [class.to-confirm-action--compact]="compact()"
+  [class]="
+    'to-confirm-action--' + tone()
+  "
+  [attr.data-testid]="dataTestId()"
+>
+  <div class="to-confirm-action__icon">
+    <i [class]="icon()"></i>
+  </div>
+
+  <div class="to-confirm-action__content">
+    <header>
+      <h3>{{ title() }}</h3>
+
+      @if (message()) {
+        <p>{{ message() }}</p>
+      }
+    </header>
+
+    @if (options().length) {
+      <div class="to-confirm-action__field">
+        <label for="confirmActionOption">
+          {{ optionLabel() }}
+
+          @if (optionRequired()) {
+            <span>*</span>
+          }
+        </label>
+
+        <p-select
+          inputId="confirmActionOption"
+          [options]="options()"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="!optionRequired()"
+          [placeholder]="optionPlaceholder()"
+          [ngModel]="selectedOption()"
+          (ngModelChange)="onOptionChange($event)"
+          appendTo="body"
+          data-testid="confirm-action-option-select"
+        />
+      </div>
+    }
+
+    <div class="to-confirm-action__field">
+      <label for="confirmActionRemarks">
+        {{ inputLabel() }}
+
+        @if (inputRequired()) {
+          <span>*</span>
+        }
+      </label>
+
+      <textarea
+        id="confirmActionRemarks"
+        pTextarea
+        rows="4"
+        [maxlength]="maxLength()"
+        [placeholder]="inputPlaceholder()"
+        [ngModel]="value()"
+        (ngModelChange)="onValueChange($event)"
+        data-testid="confirm-action-input"
+      ></textarea>
+
+      <div class="to-confirm-action__meta">
+        @if (validationMessage()) {
+          <small>
+            {{ validationMessage() }}
+          </small>
+        } @else {
+          <span></span>
+        }
+
+        <span>
+          {{ value().length }}/{{ maxLength() }}
+        </span>
+      </div>
+    </div>
+
+    <footer>
+      <p-button
+        type="button"
+        [label]="cancelLabel()"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="loading()"
+        data-testid="cancel-confirm-action-btn"
+        (click)="cancel()"
+      />
+
+      <p-button
+        type="button"
+        [label]="confirmLabel()"
+        [icon]="confirmIcon()"
+        [severity]="confirmButtonSeverity()"
+        [loading]="loading()"
+        [disabled]="!canSubmit()"
+        data-testid="submit-confirm-action-btn"
+        (click)="confirm()"
+      />
+    </footer>
+  </div>
+</section>

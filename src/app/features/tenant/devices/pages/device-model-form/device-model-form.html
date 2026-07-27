@@ -1,0 +1,455 @@
+<section
+  class="to-device-model-form-page"
+  data-testid="device-model-form-page"
+>
+  <header class="to-form-header">
+    <div class="to-form-header__content">
+      <button
+        type="button"
+        class="to-back-button"
+        aria-label="Back to device models"
+        (click)="cancel()"
+      >
+        <i class="pi pi-arrow-left"></i>
+      </button>
+
+      <div>
+        <p class="to-eyebrow">
+          Hardware catalog
+        </p>
+
+        <h1>
+          {{ pageTitle() }}
+        </h1>
+
+        <p>
+          {{ pageDescription() }}
+        </p>
+      </div>
+    </div>
+
+    <div class="to-form-header__actions">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="saving()"
+        data-testid="cancel-device-model-btn"
+        (click)="cancel()"
+      />
+
+      <p-button
+        [label]="
+          isEditMode()
+            ? 'Save Changes'
+            : 'Create Model'
+        "
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="
+          loading() ||
+          saving()
+        "
+        data-testid="save-device-model-btn"
+        (click)="submit()"
+      />
+    </div>
+  </header>
+
+  @if (loading()) {
+    <section class="to-loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading device model...</span>
+    </section>
+  } @else {
+    <form
+      class="to-device-model-form"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+    >
+      <div class="to-form-layout">
+        <main class="to-form-main">
+          <section class="to-form-card">
+            <header class="to-form-card__header">
+              <div class="to-form-card__icon">
+                <i class="pi pi-box"></i>
+              </div>
+
+              <div>
+                <h2>Model Information</h2>
+
+                <p>
+                  Define the model identity,
+                  manufacturer and hardware
+                  category.
+                </p>
+              </div>
+            </header>
+
+            <div class="to-form-grid">
+              <div class="to-form-field">
+                <label for="modelCode">
+                  Model Code
+                  <span>*</span>
+                </label>
+
+                <input
+                  id="modelCode"
+                  pInputText
+                  type="text"
+                  formControlName="modelCode"
+                  placeholder="Example: DGM-1001"
+                  maxlength="50"
+                  data-testid="device-model-code"
+                />
+
+                @if (
+                  hasError(
+                    'modelCode',
+                    'required'
+                  )
+                ) {
+                  <small class="to-field-error">
+                    Model code is required.
+                  </small>
+                }
+              </div>
+
+              <div class="to-form-field">
+                <label for="modelName">
+                  Model Name
+                  <span>*</span>
+                </label>
+
+                <input
+                  id="modelName"
+                  pInputText
+                  type="text"
+                  formControlName="modelName"
+                  placeholder="Enter model name"
+                  maxlength="120"
+                  data-testid="device-model-name"
+                />
+
+                @if (
+                  hasError(
+                    'modelName',
+                    'required'
+                  )
+                ) {
+                  <small class="to-field-error">
+                    Model name is required.
+                  </small>
+                }
+              </div>
+
+              <div class="to-form-field">
+                <label for="manufacturer">
+                  Manufacturer
+                </label>
+
+                <input
+                  id="manufacturer"
+                  pInputText
+                  type="text"
+                  formControlName="manufacturer"
+                  placeholder="Enter manufacturer"
+                  maxlength="120"
+                  data-testid="device-model-manufacturer"
+                />
+              </div>
+
+              <div class="to-form-field">
+                <label for="category">
+                  Category
+                  <span>*</span>
+                </label>
+
+                <p-select
+                  inputId="category"
+                  formControlName="category"
+                  [options]="categoryOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select category"
+                  [showClear]="true"
+                  appendTo="body"
+                  data-testid="device-model-category"
+                />
+
+                @if (
+                  hasError(
+                    'category',
+                    'required'
+                  )
+                ) {
+                  <small class="to-field-error">
+                    Category is required.
+                  </small>
+                }
+              </div>
+
+              <div class="to-form-field to-form-field--full">
+                <label for="description">
+                  Description
+                </label>
+
+                <textarea
+                  id="description"
+                  pTextarea
+                  formControlName="description"
+                  rows="4"
+                  maxlength="1000"
+                  placeholder="Describe the model and its intended use"
+                  data-testid="device-model-description"
+                ></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="to-form-card">
+            <header class="to-form-card__header">
+              <div class="to-form-card__icon">
+                <i class="pi pi-wifi"></i>
+              </div>
+
+              <div>
+                <h2>
+                  Communication
+                </h2>
+
+                <p>
+                  Configure the default protocol
+                  and connectivity supported by
+                  this hardware.
+                </p>
+              </div>
+            </header>
+
+            <div class="to-form-grid">
+              <div class="to-form-field">
+                <label for="protocol">
+                  Protocol
+                </label>
+
+                <p-select
+                  inputId="protocol"
+                  formControlName="protocol"
+                  [options]="protocolOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select protocol"
+                  [showClear]="true"
+                  appendTo="body"
+                  data-testid="device-model-protocol"
+                />
+              </div>
+
+              <div class="to-form-field">
+                <label for="connectivityType">
+                  Connectivity
+                </label>
+
+                <p-select
+                  inputId="connectivityType"
+                  formControlName="connectivityType"
+                  [options]="connectivityOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select connectivity"
+                  [showClear]="true"
+                  appendTo="body"
+                  data-testid="device-model-connectivity"
+                />
+              </div>
+
+              <div class="to-form-field">
+                <label for="defaultFirmwareVersion">
+                  Default Firmware
+                </label>
+
+                <input
+                  id="defaultFirmwareVersion"
+                  pInputText
+                  type="text"
+                  formControlName="defaultFirmwareVersion"
+                  placeholder="Example: 1.0.0"
+                  maxlength="80"
+                  data-testid="device-model-firmware"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section class="to-form-card">
+            <header class="to-form-card__header">
+              <div class="to-form-card__icon">
+                <i class="pi pi-chart-line"></i>
+              </div>
+
+              <div>
+                <h2>
+                  Telemetry Defaults
+                </h2>
+
+                <p>
+                  Configure supported metrics,
+                  sampling interval and heartbeat
+                  interval.
+                </p>
+              </div>
+            </header>
+
+            <div class="to-form-grid">
+              <div class="to-form-field">
+                <label for="samplingIntervalSeconds">
+                  Sampling Interval
+                </label>
+
+                <p-input-number
+                  inputId="samplingIntervalSeconds"
+                  formControlName="samplingIntervalSeconds"
+                  suffix=" sec"
+                  [min]="1"
+                  [max]="86400"
+                  [useGrouping]="false"
+                  placeholder="60"
+                  data-testid="device-model-sampling-interval"
+                />
+
+                @if (
+                  hasError(
+                    'samplingIntervalSeconds',
+                    'min'
+                  )
+                ) {
+                  <small class="to-field-error">
+                    Minimum interval is 1 second.
+                  </small>
+                }
+              </div>
+
+              <div class="to-form-field">
+                <label for="heartbeatIntervalSeconds">
+                  Heartbeat Interval
+                </label>
+
+                <p-input-number
+                  inputId="heartbeatIntervalSeconds"
+                  formControlName="heartbeatIntervalSeconds"
+                  suffix=" sec"
+                  [min]="1"
+                  [max]="86400"
+                  [useGrouping]="false"
+                  placeholder="300"
+                  data-testid="device-model-heartbeat-interval"
+                />
+
+                @if (
+                  hasError(
+                    'heartbeatIntervalSeconds',
+                    'min'
+                  )
+                ) {
+                  <small class="to-field-error">
+                    Minimum interval is 1 second.
+                  </small>
+                }
+              </div>
+
+              <div class="to-form-field to-form-field--full">
+                <label>
+                  Supported Metrics
+                </label>
+
+                <div class="to-metrics-grid">
+                  @for (
+                    metric of metricOptions;
+                    track metric
+                  ) {
+                    <button
+                      type="button"
+                      class="to-metric-option"
+                      [class.to-metric-option--selected]="
+                        isMetricSelected(metric)
+                      "
+                      (click)="toggleMetric(metric)"
+                    >
+                      <span class="to-metric-option__check">
+                        @if (
+                          isMetricSelected(metric)
+                        ) {
+                          <i class="pi pi-check"></i>
+                        }
+                      </span>
+
+                      <span>
+                        {{ formatMetricLabel(metric) }}
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <aside class="to-form-aside">
+          <section class="to-form-card to-status-card">
+            <header class="to-form-card__header">
+              <div class="to-form-card__icon">
+                <i class="pi pi-sliders-h"></i>
+              </div>
+
+              <div>
+                <h2>Status</h2>
+
+                <p>
+                  Control whether this model can
+                  be selected while registering
+                  devices.
+                </p>
+              </div>
+            </header>
+
+            <label class="to-toggle-row">
+              <div>
+                <strong>
+                  Model Enabled
+                </strong>
+
+                <span>
+                  Available for device
+                  registration.
+                </span>
+              </div>
+
+              <p-checkbox
+                formControlName="enabled"
+                [binary]="true"
+                data-testid="device-model-enabled"
+              />
+            </label>
+          </section>
+
+          <section class="to-form-card to-help-card">
+            <div class="to-help-card__icon">
+              <i class="pi pi-info-circle"></i>
+            </div>
+
+            <h3>
+              Device model usage
+            </h3>
+
+            <p>
+              A device model defines reusable
+              hardware defaults. Individual
+              devices can still have their own
+              firmware and site configuration.
+            </p>
+          </section>
+        </aside>
+      </div>
+    </form>
+  }
+</section>

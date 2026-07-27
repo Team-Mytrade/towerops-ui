@@ -1,0 +1,268 @@
+:host {
+  display: block;
+}
+
+.to-ticket-form {
+  overflow: hidden;
+  border: 1px solid var(--to-border);
+  border-radius: var(--to-radius-xl);
+  background: var(--to-surface);
+  box-shadow: var(--to-shadow-sm);
+}
+
+.to-ticket-form__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--to-border-soft);
+
+  p {
+    margin: 0;
+    color: var(--to-primary);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 0.18rem 0 0.2rem;
+    color: var(--to-text);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  > div > span {
+    color: var(--to-text-secondary);
+    font-size: 0.65rem;
+  }
+}
+
+.to-ticket-form__close {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0.55rem;
+  place-items: center;
+  color: var(--to-text-muted);
+  background: var(--to-surface-muted);
+
+  &:hover:not(:disabled) {
+    color: var(--to-danger);
+    background: var(--to-danger-soft);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.to-ticket-form__lookup-loading {
+  display: flex;
+  min-height: 3.6rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 1.15rem;
+  border-bottom: 1px solid var(--to-border-soft);
+  color: var(--to-primary);
+  background: var(--to-primary-soft);
+
+  > i {
+    font-size: 0.8rem;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: var(--to-text);
+    font-size: 0.62rem;
+  }
+
+  span {
+    margin-top: 0.08rem;
+    color: var(--to-text-secondary);
+    font-size: 0.52rem;
+  }
+}
+
+.to-ticket-form__body {
+  display: grid;
+}
+
+.to-ticket-form__section {
+  display: grid;
+  grid-template-columns:
+    12rem
+    minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 1.15rem;
+  border-bottom: 1px solid var(--to-border-soft);
+
+  > header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+
+    > span {
+      display: grid;
+      width: 1.7rem;
+      height: 1.7rem;
+      flex: 0 0 auto;
+      border-radius: 0.5rem;
+      place-items: center;
+      color: var(--to-primary);
+      background: var(--to-primary-soft);
+      font-size: 0.55rem;
+      font-weight: 700;
+    }
+
+    h3 {
+      margin: 0;
+      color: var(--to-text);
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0.18rem 0 0;
+      color: var(--to-text-muted);
+      font-size: 0.56rem;
+      line-height: 1.45;
+    }
+  }
+}
+
+.to-ticket-form__grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.to-field {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+
+  label {
+    color: var(--to-text);
+    font-size: 0.62rem;
+    font-weight: 600;
+
+    span {
+      color: var(--to-danger);
+    }
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    font-size: 0.7rem;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  > small:not(.to-field__hint) {
+    color: var(--to-danger);
+    font-size: 0.55rem;
+  }
+}
+
+.to-field--wide {
+  grid-column: 1 / -1;
+}
+
+.to-field__hint {
+  color: var(--to-text-muted);
+  font-size: 0.52rem;
+}
+
+.to-field__meta {
+  display: flex;
+  min-height: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  small {
+    color: var(--to-danger);
+    font-size: 0.55rem;
+  }
+
+  > span:last-child {
+    margin-left: auto;
+    color: var(--to-text-muted);
+    font-size: 0.5rem;
+  }
+}
+
+.to-ticket-form__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.9rem 1.15rem;
+  background: var(--to-surface-muted);
+}
+
+:host ::ng-deep {
+  .p-select,
+  .p-datepicker,
+  .p-datepicker-input,
+  .p-inputtext {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .to-ticket-form__section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .to-ticket-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .to-field--wide {
+    grid-column: auto;
+  }
+
+  .to-ticket-form__header {
+    > div > span {
+      display: block;
+      max-width: 18rem;
+    }
+  }
+
+  .to-ticket-form__footer {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  :host ::ng-deep {
+    .to-ticket-form__footer {
+      .p-button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+@media (max-width: 420px) {
+  .to-ticket-form__footer {
+    grid-template-columns: 1fr;
+  }
+}

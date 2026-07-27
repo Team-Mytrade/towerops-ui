@@ -1,0 +1,507 @@
+<section
+  class="to-work-orders"
+  data-testid="work-orders-page"
+>
+  <header class="to-work-orders__header">
+    <div>
+      <p class="to-work-orders__eyebrow">
+        Field operations
+      </p>
+
+      <h1>Work Orders</h1>
+
+      <span>
+        Track assignments, schedules, execution and completion across sites.
+      </span>
+    </div>
+
+    <div class="to-work-orders__header-actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        data-testid="refresh-work-orders-btn"
+        (click)="refresh()"
+      />
+
+      <p-button
+        label="Create Work Order"
+        icon="pi pi-plus"
+        data-testid="create-work-order-btn"
+        (click)="createWorkOrder()"
+      />
+    </div>
+  </header>
+
+  <div class="to-work-orders__summary">
+    <article class="to-summary-card">
+      <span class="to-summary-card__icon">
+        <i class="pi pi-briefcase"></i>
+      </span>
+
+      <div>
+        <span>Total</span>
+
+        @if (summaryLoading()) {
+          <small class="to-summary-card__skeleton"></small>
+        } @else {
+          <strong>{{ totalCount() | number }}</strong>
+        }
+
+        <small>All work orders</small>
+      </div>
+    </article>
+
+    <article class="to-summary-card to-summary-card--info">
+      <span class="to-summary-card__icon">
+        <i class="pi pi-spin pi-cog"></i>
+      </span>
+
+      <div>
+        <span>Active</span>
+
+        @if (summaryLoading()) {
+          <small class="to-summary-card__skeleton"></small>
+        } @else {
+          <strong>{{ activeCount() | number }}</strong>
+        }
+
+        <small>Created through in progress</small>
+      </div>
+    </article>
+
+    <article class="to-summary-card to-summary-card--success">
+      <span class="to-summary-card__icon">
+        <i class="pi pi-check-circle"></i>
+      </span>
+
+      <div>
+        <span>Completed</span>
+
+        @if (summaryLoading()) {
+          <small class="to-summary-card__skeleton"></small>
+        } @else {
+          <strong>{{ completedCount() | number }}</strong>
+        }
+
+        <small>Ready for verification or closure</small>
+      </div>
+    </article>
+
+    <article class="to-summary-card to-summary-card--danger">
+      <span class="to-summary-card__icon">
+        <i class="pi pi-clock"></i>
+      </span>
+
+      <div>
+        <span>Overdue</span>
+
+        @if (summaryLoading()) {
+          <small class="to-summary-card__skeleton"></small>
+        } @else {
+          <strong>{{ overdueCount() | number }}</strong>
+        }
+
+        <small>Past scheduled completion</small>
+      </div>
+    </article>
+  </div>
+
+  <article class="to-work-orders__content">
+    <div class="to-work-orders__toolbar">
+      <div class="to-work-orders__search">
+        <p-iconfield>
+          <p-inputicon>
+            <i class="pi pi-search"></i>
+          </p-inputicon>
+
+          <input
+            pInputText
+            type="search"
+            placeholder="Search code, title, site or technician..."
+            autocomplete="off"
+            [formControl]="searchControl"
+            data-testid="work-order-search-input"
+          />
+        </p-iconfield>
+      </div>
+
+      <div class="to-work-orders__filters">
+<p-select
+  [options]="categoryOptions"
+  [ngModel]="categoryFilter()"
+  optionLabel="label"
+  optionValue="value"
+  placeholder="All categories"
+  [showClear]="false"
+  data-testid="work-order-category-filter"
+  (ngModelChange)="onCategoryChange($event)"
+/>
+
+<p-select
+  [options]="statusOptions"
+  [ngModel]="statusFilter()"
+  optionLabel="label"
+  optionValue="value"
+  placeholder="All statuses"
+  [showClear]="false"
+  data-testid="work-order-status-filter"
+  (ngModelChange)="onStatusChange($event)"
+/>
+
+<p-select
+  [options]="severityOptions"
+  [ngModel]="severityFilter()"
+  optionLabel="label"
+  optionValue="value"
+  placeholder="All severities"
+  [showClear]="false"
+  data-testid="work-order-severity-filter"
+  (ngModelChange)="onSeverityChange($event)"
+/>
+
+        @if (hasFilters()) {
+          <p-button
+            label="Clear"
+            icon="pi pi-filter-slash"
+            severity="secondary"
+            [text]="true"
+            data-testid="clear-work-order-filters-btn"
+            (click)="clearFilters()"
+          />
+        }
+      </div>
+    </div>
+
+    @if (pageError()) {
+      <div class="to-work-orders__state">
+        <span class="to-work-orders__state-icon">
+          <i class="pi pi-exclamation-triangle"></i>
+        </span>
+
+        <div>
+          <strong>Unable to load work orders</strong>
+          <span>{{ pageError() }}</span>
+        </div>
+
+        <p-button
+          label="Try again"
+          icon="pi pi-refresh"
+          data-testid="retry-work-orders-btn"
+          (click)="refresh()"
+        />
+      </div>
+    } @else {
+      <p-table
+        [value]="workOrders()"
+        [lazy]="true"
+        [loading]="loading()"
+        [paginator]="true"
+        [rows]="pageSize()"
+        [first]="page() * pageSize()"
+        [totalRecords]="totalRecords()"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [rowHover]="true"
+        [scrollable]="true"
+        scrollHeight="flex"
+        dataKey="id"
+        styleClass="to-work-orders-table"
+        data-testid="work-orders-table"
+        (onLazyLoad)="onLazyLoad($event)"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="to-col-code">
+              Work Order
+            </th>
+
+            <th class="to-col-title">
+              Title
+            </th>
+
+            <th class="to-col-site">
+              Site
+            </th>
+
+            <th class="to-col-technician">
+              Technician
+            </th>
+
+            <th class="to-col-severity">
+              Severity
+            </th>
+
+            <th class="to-col-status">
+              Status
+            </th>
+
+            <th class="to-col-schedule">
+              Scheduled
+            </th>
+
+            <th class="to-col-actions">
+              Actions
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template
+          pTemplate="body"
+          let-workOrder
+        >
+          <tr
+            tabindex="0"
+            class="to-work-order-row"
+            [attr.data-testid]="
+              'work-order-row-' + workOrder.id
+            "
+            (click)="openWorkOrder(workOrder)"
+            (keydown.enter)="openWorkOrder(workOrder)"
+            (keydown.space)="
+              openWorkOrder(workOrder);
+              $event.preventDefault()
+            "
+          >
+            <td class="to-col-code">
+              <div class="to-work-order-code">
+                <strong>
+                  {{ workOrder.workOrderCode }}
+                </strong>
+
+                @if (workOrder.ticketCode) {
+                  <span>
+                    Ticket {{ workOrder.ticketCode }}
+                  </span>
+                } @else if (workOrder.alertCode) {
+                  <span>
+                    Alert {{ workOrder.alertCode }}
+                  </span>
+                } @else {
+                  <span>
+                    ID {{ workOrder.id }}
+                  </span>
+                }
+              </div>
+            </td>
+
+            <td class="to-col-title">
+              <div class="to-work-order-title">
+                <strong>
+                  {{ workOrder.title }}
+                </strong>
+
+                <span>
+                  {{
+                    workOrder.description ||
+                    'No description provided'
+                  }}
+                </span>
+              </div>
+            </td>
+
+            <td class="to-col-site">
+              <button
+                type="button"
+                class="to-work-order-site"
+                [disabled]="!workOrder.siteId"
+                [attr.aria-label]="
+                  workOrder.siteId
+                    ? 'Open site ' + siteLabel(workOrder)
+                    : null
+                "
+                (click)="openSite($event, workOrder)"
+              >
+                <span class="to-work-order-site__icon">
+                  <i class="pi pi-map-marker"></i>
+                </span>
+
+                <span>
+                  <strong>
+                    {{ siteLabel(workOrder) }}
+                  </strong>
+
+                  @if (workOrder.siteCategory) {
+                    <small>
+                      {{
+                        workOrder.siteCategory
+                          .replaceAll('_', ' ')
+                          | titlecase
+                      }}
+                    </small>
+                  } @else {
+                    <small>Category not set</small>
+                  }
+                </span>
+              </button>
+            </td>
+
+            <td class="to-col-technician">
+              <div class="to-technician">
+                <span class="to-technician__avatar">
+                  <i class="pi pi-user"></i>
+                </span>
+
+                <span>
+                  <strong>
+                    {{ technicianLabel(workOrder) }}
+                  </strong>
+
+                  <small>
+                    {{
+                      workOrder.technicianCode ||
+                      'No technician code'
+                    }}
+                  </small>
+                </span>
+              </div>
+            </td>
+
+            <td class="to-col-severity">
+              <span
+                class="to-severity"
+                [ngClass]="
+                  severityClass(workOrder.severity)
+                "
+              >
+                <i></i>
+
+                {{
+                  severityLabel(workOrder.severity)
+                }}
+              </span>
+            </td>
+
+            <td class="to-col-status">
+              <p-tag
+                [value]="
+                  statusLabel(workOrder.status)
+                "
+                [severity]="
+                  statusSeverity(workOrder.status)
+                "
+                [rounded]="true"
+              />
+            </td>
+
+            <td class="to-col-schedule">
+              <div class="to-work-order-date">
+                @if (workOrder.scheduledAt) {
+                  <strong>
+                    {{
+                      workOrder.scheduledAt
+                        | date: 'MMM d, y'
+                    }}
+                  </strong>
+
+                  <span>
+                    {{
+                      workOrder.scheduledAt
+                        | date: 'h:mm a'
+                    }}
+                  </span>
+                } @else {
+                  <strong>Not scheduled</strong>
+                  <span>No schedule assigned</span>
+                }
+              </div>
+            </td>
+
+            <td class="to-col-actions">
+              <div class="to-row-actions">
+                <p-button
+                  icon="pi pi-eye"
+                  severity="secondary"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="View work order"
+                  tooltipPosition="top"
+                  [attr.aria-label]="
+                    'View ' + workOrder.workOrderCode
+                  "
+                  (click)="
+                    $event.stopPropagation();
+                    openWorkOrder(workOrder)
+                  "
+                />
+
+                <p-button
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="Edit work order"
+                  tooltipPosition="top"
+                  [attr.aria-label]="
+                    'Edit ' + workOrder.workOrderCode
+                  "
+                  (click)="
+                    editWorkOrder($event, workOrder)
+                  "
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8">
+              <div class="to-work-orders__empty">
+                <span class="to-work-orders__empty-icon">
+                  <i class="pi pi-briefcase"></i>
+                </span>
+
+                <div>
+                  <strong>
+                    No work orders found
+                  </strong>
+
+                  <span>
+                    @if (hasFilters()) {
+                      No records match the current filters.
+                    } @else {
+                      Work orders will appear here once they are created.
+                    }
+                  </span>
+                </div>
+
+                @if (hasFilters()) {
+                  <p-button
+                    label="Clear filters"
+                    icon="pi pi-filter-slash"
+                    severity="secondary"
+                    [outlined]="true"
+                    (click)="clearFilters()"
+                  />
+                } @else {
+                  <p-button
+                    label="Create Work Order"
+                    icon="pi pi-plus"
+                    (click)="createWorkOrder()"
+                  />
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td colspan="8">
+              <div class="to-work-orders__loading">
+                <p-progress-spinner
+                  strokeWidth="3"
+                  ariaLabel="Loading work orders"
+                />
+
+                <span>Loading work orders...</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </article>
+</section>

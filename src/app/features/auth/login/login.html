@@ -1,0 +1,180 @@
+<section class="to-login" data-testid="login-page">
+  <aside class="to-login__visual">
+    <div class="to-login__grid"></div>
+    <div class="to-login__glow to-login__glow--primary"></div>
+    <div class="to-login__glow to-login__glow--secondary"></div>
+
+    <header class="to-login__brand">
+      <div class="to-login__brand-mark" aria-hidden="true">
+        <i class="pi pi-bolt"></i>
+      </div>
+
+      <div class="to-login__brand-copy">
+        <strong>{{ appName }}</strong>
+        <span>Infrastructure Operations</span>
+      </div>
+    </header>
+
+    <div class="to-login__hero">
+      <p class="to-login__eyebrow">Connected Operations</p>
+
+      <h1 class="!text-white">
+        Infrastructure visibility,
+        <span>without the noise.</span>
+      </h1>
+
+      <p class="to-login__hero-copy">
+        Monitor sites, connected devices, alerts and field operations
+        from one secure workspace.
+      </p>
+
+      <div class="to-login__capabilities">
+        <article>
+          <span class="to-login__capability-icon">
+            <i class="pi pi-chart-line"></i>
+          </span>
+
+          <div>
+            <strong>Live monitoring</strong>
+            <small>Real-time infrastructure health</small>
+          </div>
+        </article>
+
+        <article>
+          <span class="to-login__capability-icon">
+            <i class="pi pi-bell"></i>
+          </span>
+
+          <div>
+            <strong>Faster response</strong>
+            <small>Alerts through field resolution</small>
+          </div>
+        </article>
+
+        <article>
+          <span class="to-login__capability-icon">
+            <i class="pi pi-shield"></i>
+          </span>
+
+          <div>
+            <strong>Secure access</strong>
+            <small>Role and tenant-based visibility</small>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <footer class="to-login__visual-footer">
+      <span>Operational intelligence platform</span>
+      <span class="to-login__status">
+        <i></i>
+        Systems connected
+      </span>
+    </footer>
+  </aside>
+
+  <main class="to-login__panel">
+    <div class="to-login__form-card">
+      <header class="to-login__header">
+        <div class="to-login__mobile-brand">
+          <div class="to-login__brand-mark">
+            <i class="pi pi-bolt"></i>
+          </div>
+
+          <strong>{{ appName }}</strong>
+        </div>
+
+        <p class="to-login__eyebrow">Secure workspace</p>
+
+        <h2>Welcome back</h2>
+
+        <p>Enter your credentials to continue.</p>
+      </header>
+
+      @if (loginError()) {
+        <div
+          class="to-login__error"
+          role="alert"
+          data-testid="login-error-message"
+        >
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ loginError() }}</span>
+        </div>
+      }
+
+      <form
+        class="to-login__form"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        novalidate
+      >
+        <div class="to-field">
+          <label for="username">Username</label>
+
+          <div class="to-field__control">
+            <i class="pi pi-user"></i>
+
+            <input
+              id="username"
+              pInputText
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+              placeholder="Enter username"
+              [class.ng-invalid]="isControlInvalid('username')"
+              [attr.aria-invalid]="isControlInvalid('username')"
+              data-testid="login-username-input"
+            />
+          </div>
+
+          @if (usernameError()) {
+            <small class="to-field__error">
+              {{ usernameError() }}
+            </small>
+          }
+        </div>
+
+        <div class="to-field">
+          <div class="to-field__label-row">
+            <label for="password">Password</label>
+          </div>
+
+          <p-password
+            inputId="password"
+            formControlName="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            autocomplete="current-password"
+            placeholder="Enter password"
+            styleClass="to-login-password"
+            inputStyleClass="to-login-password__input"
+            [class.ng-invalid]="isControlInvalid('password')"
+            data-testid="login-password-input"
+          />
+
+          @if (passwordError()) {
+            <small class="to-field__error">
+              {{ passwordError() }}
+            </small>
+          }
+        </div>
+
+        <p-button
+          type="submit"
+          label="Sign in"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          [loading]="submitting()"
+          [disabled]="submitting()"
+          styleClass="to-login__submit"
+          data-testid="login-submit-btn"
+        />
+      </form>
+
+      <footer class="to-login__footer">
+        <span>Version {{ version }}</span>
+        <span>Build {{ build }}</span>
+      </footer>
+    </div>
+  </main>
+</section>

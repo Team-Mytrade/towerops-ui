@@ -1,0 +1,101 @@
+<header
+  class="to-page-header"
+  [class.to-page-header--compact]="compact()"
+  [class.to-page-header--sticky]="sticky()"
+  [attr.data-testid]="dataTestId()"
+>
+  <div class="to-page-header__main">
+    @if (showBack()) {
+      <button
+        type="button"
+        class="to-page-header__back"
+        [attr.aria-label]="backLabel()"
+        data-testid="page-header-back-btn"
+        (click)="back()"
+      >
+        <i [class]="backIcon()"></i>
+      </button>
+    }
+
+    <div class="to-page-header__content">
+      @if (eyebrow()) {
+        <p class="to-page-header__eyebrow">
+          {{ eyebrow() }}
+        </p>
+      }
+
+      <h1>{{ title() }}</h1>
+
+      @if (description()) {
+        <p class="to-page-header__description">
+          {{ description() }}
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="to-page-header__actions">
+    <ng-content select="[pageHeaderActions]" />
+
+    @for (
+      action of actions();
+      track action.id
+    ) {
+      @if (isActionVisible(action)) {
+        <p-button
+          [label]="action.label"
+          [icon]="action.icon"
+          [severity]="actionSeverity(action)"
+          [outlined]="action.outlined === true"
+          [text]="action.text === true"
+          [rounded]="action.rounded === true"
+          [loading]="action.loading === true"
+          [disabled]="action.disabled === true"
+          [attr.data-testid]="
+            action.dataTestId ??
+            'page-header-action-' + action.id
+          "
+          (click)="triggerAction(action)"
+        />
+      }
+    }
+
+    @if (secondaryLabel()) {
+      <p-button
+        [label]="secondaryLabel()!"
+        [icon]="secondaryIcon() ?? undefined"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="secondaryLoading()"
+        [disabled]="secondaryDisabled()"
+        data-testid="page-header-secondary-btn"
+        (click)="secondaryAction()"
+      />
+    }
+
+    @if (showRefresh()) {
+      <p-button
+        [label]="refreshLabel()"
+        [icon]="refreshIcon()"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="refreshLoading()"
+        [disabled]="refreshDisabled()"
+        data-testid="page-header-refresh-btn"
+        (click)="refresh()"
+      />
+    }
+
+    @if (primaryLabel()) {
+      <p-button
+        [label]="primaryLabel()!"
+        [icon]="primaryIcon() ?? undefined"
+        [iconPos]="primaryIconPosition()"
+        [loading]="primaryLoading()"
+        [disabled]="primaryDisabled()"
+        data-testid="page-header-primary-btn"
+        (click)="primaryAction()"
+      />
+    }
+  </div>
+</header>

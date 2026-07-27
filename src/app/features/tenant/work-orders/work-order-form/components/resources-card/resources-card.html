@@ -1,0 +1,503 @@
+<section
+  class="to-form-card"
+  [formGroup]="form()"
+  data-testid="work-order-resources-card"
+>
+  <header class="to-form-card__header">
+    <div class="to-form-card__heading">
+      <span class="to-form-card__icon">
+        <i class="pi pi-sitemap"></i>
+      </span>
+
+      <div>
+        <h2>Related Resources</h2>
+
+        <p>
+          Connect this work order to its site,
+          device, alert and ticket.
+        </p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="to-clear-button"
+      [disabled]="readonly()"
+      pTooltip="Clear all related resources"
+      tooltipPosition="left"
+      aria-label="Clear related resources"
+      data-testid="clear-work-order-resources"
+      (click)="clearResources()"
+    >
+      <i class="pi pi-times"></i>
+      Clear
+    </button>
+  </header>
+
+  <div class="to-form-card__content">
+    <div class="to-form-grid">
+      <div class="to-form-field">
+        <label for="work-order-site">
+          Site
+          <span class="to-required">*</span>
+        </label>
+
+        <p-select
+          inputId="work-order-site"
+          formControlName="siteId"
+          [options]="sites()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select site"
+          [filter]="true"
+          filterBy="label,siteCode,siteName,category"
+          filterPlaceholder="Search sites"
+          [showClear]="true"
+          [loading]="loadingSites()"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-site-select"
+          (onChange)="onSiteChange($event.value)"
+        >
+          <ng-template
+            pTemplate="selectedItem"
+            let-site
+          >
+            @if (site) {
+              <div class="to-resource-option">
+                <span
+                  class="to-resource-option__icon"
+                  data-variant="site"
+                >
+                  <i class="pi pi-map-marker"></i>
+                </span>
+
+                <span class="to-resource-option__body">
+                  <strong>{{ site.siteName }}</strong>
+
+                  <small>
+                    {{ site.siteCode }}
+
+                    @if (site.category) {
+                      · {{ site.category }}
+                    }
+                  </small>
+                </span>
+              </div>
+            }
+          </ng-template>
+
+          <ng-template
+            pTemplate="item"
+            let-site
+          >
+            <div class="to-resource-option">
+              <span
+                class="to-resource-option__icon"
+                data-variant="site"
+              >
+                <i class="pi pi-map-marker"></i>
+              </span>
+
+              <span class="to-resource-option__body">
+                <strong>{{ site.siteName }}</strong>
+
+                <small>
+                  {{ site.siteCode }}
+
+                  @if (site.category) {
+                    · {{ site.category }}
+                  }
+                </small>
+              </span>
+
+              @if (site.healthStatus) {
+                <span
+                  class="to-health-state"
+                  [attr.data-health]="
+                    site.healthStatus.toLowerCase()
+                  "
+                >
+                  <i></i>
+                  {{ site.healthStatus }}
+                </span>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        <small class="to-form-field__support">
+          Devices and related operational records
+          are filtered using the selected site.
+        </small>
+
+        @if (isInvalid('siteId')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('siteId') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-device">
+          Device
+        </label>
+
+        <p-select
+          inputId="work-order-device"
+          formControlName="deviceId"
+          [options]="devices()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select device"
+          [filter]="true"
+          filterBy="label,deviceCode,deviceName,category"
+          filterPlaceholder="Search devices"
+          [showClear]="true"
+          [loading]="loadingDevices()"
+          [disabled]="deviceSelectionDisabled()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-device-select"
+          (onChange)="onDeviceChange($event.value)"
+        >
+          <ng-template
+            pTemplate="selectedItem"
+            let-device
+          >
+            @if (device) {
+              <div class="to-resource-option">
+                <span
+                  class="to-resource-option__icon"
+                  data-variant="device"
+                >
+                  <i class="pi pi-microchip"></i>
+                </span>
+
+                <span class="to-resource-option__body">
+                  <strong>
+                    {{ device.deviceName }}
+                  </strong>
+
+                  <small>
+                    {{ device.deviceCode }}
+
+                    @if (device.category) {
+                      · {{ device.category }}
+                    }
+                  </small>
+                </span>
+              </div>
+            }
+          </ng-template>
+
+          <ng-template
+            pTemplate="item"
+            let-device
+          >
+            <div class="to-resource-option">
+              <span
+                class="to-resource-option__icon"
+                data-variant="device"
+              >
+                <i class="pi pi-microchip"></i>
+              </span>
+
+              <span class="to-resource-option__body">
+                <strong>
+                  {{ device.deviceName }}
+                </strong>
+
+                <small>
+                  {{ device.deviceCode }}
+
+                  @if (device.category) {
+                    · {{ device.category }}
+                  }
+                </small>
+              </span>
+
+              @if (device.status) {
+                <span class="to-resource-status">
+                  {{ device.status }}
+                </span>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        @if (!hasSelectedSite()) {
+          <small class="to-form-field__support">
+            Select a site before choosing a device.
+          </small>
+        } @else {
+          <small class="to-form-field__support">
+            Optional device associated with this task.
+          </small>
+        }
+
+        @if (isInvalid('deviceId')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('deviceId') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-alert">
+          Alert
+        </label>
+
+        <p-select
+          inputId="work-order-alert"
+          formControlName="alertId"
+          [options]="alerts()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select alert"
+          [filter]="true"
+          filterBy="label,alertCode,message,severity"
+          filterPlaceholder="Search alerts"
+          [showClear]="true"
+          [loading]="loadingAlerts()"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-alert-select"
+          (onChange)="onAlertChange($event.value)"
+        >
+          <ng-template
+            pTemplate="selectedItem"
+            let-alert
+          >
+            @if (alert) {
+              <div class="to-resource-option">
+                <span
+                  class="to-resource-option__icon"
+                  data-variant="alert"
+                >
+                  <i class="pi pi-bell"></i>
+                </span>
+
+                <span class="to-resource-option__body">
+                  <strong>{{ alert.alertCode }}</strong>
+
+                  <small>{{ alert.message }}</small>
+                </span>
+              </div>
+            }
+          </ng-template>
+
+          <ng-template
+            pTemplate="item"
+            let-alert
+          >
+            <div class="to-resource-option">
+              <span
+                class="to-resource-option__icon"
+                data-variant="alert"
+              >
+                <i class="pi pi-bell"></i>
+              </span>
+
+              <span class="to-resource-option__body">
+                <strong>{{ alert.alertCode }}</strong>
+
+                <small>{{ alert.message }}</small>
+              </span>
+
+              @if (alert.severity) {
+                <span
+                  class="to-severity"
+                  [attr.data-severity]="
+                    alert.severity.toLowerCase()
+                  "
+                >
+                  <i></i>
+                  {{ alert.severity }}
+                </span>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        <small class="to-form-field__support">
+          Selecting an alert may automatically populate
+          its related site, device and ticket.
+        </small>
+
+        @if (isInvalid('alertId')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('alertId') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-ticket">
+          Ticket
+        </label>
+
+        <p-select
+          inputId="work-order-ticket"
+          formControlName="ticketId"
+          [options]="tickets()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select ticket"
+          [filter]="true"
+          filterBy="label,ticketCode,title,status,severity"
+          filterPlaceholder="Search tickets"
+          [showClear]="true"
+          [loading]="loadingTickets()"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-ticket-select"
+          (onChange)="onTicketChange($event.value)"
+        >
+          <ng-template
+            pTemplate="selectedItem"
+            let-ticket
+          >
+            @if (ticket) {
+              <div class="to-resource-option">
+                <span
+                  class="to-resource-option__icon"
+                  data-variant="ticket"
+                >
+                  <i class="pi pi-ticket"></i>
+                </span>
+
+                <span class="to-resource-option__body">
+                  <strong>{{ ticket.ticketCode }}</strong>
+
+                  <small>{{ ticket.title }}</small>
+                </span>
+              </div>
+            }
+          </ng-template>
+
+          <ng-template
+            pTemplate="item"
+            let-ticket
+          >
+            <div class="to-resource-option">
+              <span
+                class="to-resource-option__icon"
+                data-variant="ticket"
+              >
+                <i class="pi pi-ticket"></i>
+              </span>
+
+              <span class="to-resource-option__body">
+                <strong>{{ ticket.ticketCode }}</strong>
+
+                <small>{{ ticket.title }}</small>
+              </span>
+
+              <span class="to-ticket-meta">
+                @if (ticket.severity) {
+                  <span
+                    class="to-severity"
+                    [attr.data-severity]="
+                      ticket.severity.toLowerCase()
+                    "
+                  >
+                    <i></i>
+                    {{ ticket.severity }}
+                  </span>
+                }
+
+                @if (ticket.status) {
+                  <span class="to-resource-status">
+                    {{ ticket.status }}
+                  </span>
+                }
+              </span>
+            </div>
+          </ng-template>
+        </p-select>
+
+        <small class="to-form-field__support">
+          Selecting a ticket may populate the related
+          alert, site and device.
+        </small>
+
+        @if (isInvalid('ticketId')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('ticketId') }}
+          </small>
+        }
+      </div>
+    </div>
+
+    @if (
+      selectedSite() ||
+      selectedDevice() ||
+      selectedAlert() ||
+      selectedTicket()
+    ) {
+      <div class="to-selection-summary">
+        <div class="to-selection-summary__header">
+          <span>
+            <i class="pi pi-link"></i>
+            Linked context
+          </span>
+
+          <small>
+            These records will be attached to the
+            work order.
+          </small>
+        </div>
+
+        <div class="to-selection-summary__items">
+          @if (selectedSite(); as site) {
+            <div class="to-context-chip">
+              <i class="pi pi-map-marker"></i>
+
+              <span>
+                <small>Site</small>
+                <strong>{{ site.siteCode }}</strong>
+              </span>
+            </div>
+          }
+
+          @if (selectedDevice(); as device) {
+            <div class="to-context-chip">
+              <i class="pi pi-microchip"></i>
+
+              <span>
+                <small>Device</small>
+                <strong>{{ device.deviceCode }}</strong>
+              </span>
+            </div>
+          }
+
+          @if (selectedAlert(); as alert) {
+            <div class="to-context-chip">
+              <i class="pi pi-bell"></i>
+
+              <span>
+                <small>Alert</small>
+                <strong>{{ alert.alertCode }}</strong>
+              </span>
+            </div>
+          }
+
+          @if (selectedTicket(); as ticket) {
+            <div class="to-context-chip">
+              <i class="pi pi-ticket"></i>
+
+              <span>
+                <small>Ticket</small>
+                <strong>{{ ticket.ticketCode }}</strong>
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</section>

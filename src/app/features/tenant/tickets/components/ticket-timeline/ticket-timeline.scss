@@ -1,0 +1,348 @@
+:host {
+  display: block;
+}
+
+.to-ticket-timeline {
+  overflow: hidden;
+  border: 1px solid var(--to-border);
+  border-radius: var(--to-radius-xl);
+  background: var(--to-surface);
+  box-shadow: var(--to-shadow-sm);
+}
+
+.to-ticket-timeline__header {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--to-border-soft);
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: var(--to-text);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin-top: 0.1rem;
+    color: var(--to-text-muted);
+    font-size: 0.53rem;
+  }
+}
+
+.to-ticket-timeline__header-icon {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.6rem;
+  place-items: center;
+  color: var(--to-primary);
+  background: var(--to-primary-soft);
+
+  i {
+    font-size: 0.78rem;
+  }
+}
+
+.to-ticket-timeline__content {
+  padding: 0.9rem 1rem;
+}
+
+.to-ticket-timeline__item {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.to-ticket-timeline__rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.to-ticket-timeline__marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border: 0.22rem solid var(--to-primary-soft);
+  border-radius: 50%;
+  place-items: center;
+  color: var(--to-primary);
+  background: var(--to-surface);
+
+  i {
+    font-size: 0.62rem;
+  }
+}
+
+.to-ticket-timeline__marker--success {
+  border-color: var(--to-success-soft);
+  color: var(--to-success);
+}
+
+.to-ticket-timeline__marker--warning {
+  border-color: var(--to-warning-soft);
+  color: var(--to-warning);
+}
+
+.to-ticket-timeline__marker--danger {
+  border-color: var(--to-danger-soft);
+  color: var(--to-danger);
+}
+
+.to-ticket-timeline__marker--info {
+  border-color: var(--to-info-soft);
+  color: var(--to-info);
+}
+
+.to-ticket-timeline__marker--secondary {
+  border-color: var(--to-surface-muted);
+  color: var(--to-text-muted);
+}
+
+.to-ticket-timeline__line {
+  width: 1px;
+  min-height: 2rem;
+  flex: 1;
+  background: var(--to-border);
+}
+
+.to-ticket-timeline__body {
+  min-width: 0;
+  margin-bottom: 0.85rem;
+  padding: 0 0 0.85rem;
+  border-bottom: 1px solid var(--to-border-soft);
+
+  > header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+
+    > div {
+      min-width: 0;
+    }
+
+    strong,
+    span {
+      display: block;
+    }
+
+    strong {
+      color: var(--to-text);
+      font-size: 0.64rem;
+      font-weight: 600;
+    }
+
+    div > span {
+      margin-top: 0.08rem;
+      color: var(--to-text-muted);
+      font-size: 0.49rem;
+    }
+  }
+
+  > p {
+    margin: 0.45rem 0 0;
+    color: var(--to-text-secondary);
+    font-size: 0.59rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+}
+
+.to-ticket-timeline__item--last {
+  .to-ticket-timeline__body {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+.to-ticket-timeline__actor {
+  display: grid !important;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  border-radius: 0.5rem;
+  place-items: center;
+  color: var(--to-primary);
+  background: var(--to-primary-soft);
+  font-size: 0.51rem !important;
+  font-weight: 700;
+}
+
+.to-ticket-timeline__performed-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  color: var(--to-text-muted);
+
+  i {
+    font-size: 0.5rem;
+  }
+
+  span {
+    font-size: 0.5rem;
+  }
+}
+
+.to-ticket-timeline__metadata {
+  display: grid;
+  margin: 0.55rem 0 0;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+
+  > div {
+    min-width: 0;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--to-surface-muted);
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  dt {
+    color: var(--to-text-muted);
+    font-size: 0.47rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin-top: 0.12rem;
+    overflow: hidden;
+    color: var(--to-text);
+    font-size: 0.54rem;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+  }
+}
+
+.to-ticket-timeline__empty {
+  display: grid;
+  min-height: 13rem;
+  align-content: center;
+  justify-items: center;
+  gap: 0.35rem;
+  text-align: center;
+
+  > span {
+    display: grid;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.2rem;
+    border-radius: 0.85rem;
+    place-items: center;
+    color: var(--to-primary);
+    background: var(--to-primary-soft);
+
+    i {
+      font-size: 1rem;
+    }
+  }
+
+  strong {
+    color: var(--to-text);
+    font-size: 0.68rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--to-text-muted);
+    font-size: 0.56rem;
+  }
+}
+
+.to-ticket-timeline__loading {
+  display: grid;
+}
+
+.to-ticket-timeline__skeleton {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.65rem;
+
+  > span {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--to-surface-muted);
+    animation: to-timeline-pulse 1.3s infinite;
+  }
+
+  > div {
+    display: grid;
+    align-content: start;
+    gap: 0.4rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--to-border-soft);
+
+    i {
+      display: block;
+      height: 0.55rem;
+      border-radius: 999px;
+      background: var(--to-surface-muted);
+      animation: to-timeline-pulse 1.3s infinite;
+
+      &:first-child {
+        width: 34%;
+      }
+
+      &:nth-child(2) {
+        width: 88%;
+      }
+
+      &:last-child {
+        width: 55%;
+      }
+    }
+  }
+}
+
+@keyframes to-timeline-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .to-ticket-timeline__content {
+    padding-inline: 0.75rem;
+  }
+
+  .to-ticket-timeline__metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .to-ticket-timeline__body > header {
+    align-items: flex-start;
+  }
+}

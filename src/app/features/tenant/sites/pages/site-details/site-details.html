@@ -1,0 +1,429 @@
+<section
+  class="to-site-detail"
+  data-testid="site-detail-page"
+>
+  @if (loading()) {
+    <div class="to-site-detail__state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading site details...</span>
+    </div>
+  } @else if (pageError()) {
+    <div class="to-site-detail__state">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>Site details unavailable</strong>
+      <span>{{ pageError() }}</span>
+
+      <p-button
+        label="Try again"
+        icon="pi pi-refresh"
+        (click)="refresh()"
+      />
+    </div>
+  } @else if (
+    site();
+    as currentSite
+  ) {
+    <header class="to-site-detail__header">
+      <div class="to-site-detail__heading">
+        <button
+          type="button"
+          class="to-site-detail__back"
+          aria-label="Back to sites"
+          (click)="goBack()"
+        >
+          <i class="pi pi-arrow-left"></i>
+        </button>
+
+        <div>
+          <div class="to-site-detail__heading-meta">
+            <span>{{ currentSite.siteCode }}</span>
+
+            <p-tag
+              [value]="
+                currentSite.healthStatus ?? 'UNKNOWN'
+              "
+              [severity]="
+                healthSeverity(
+                  currentSite.healthStatus
+                )
+              "
+            />
+          </div>
+
+          <h1>{{ currentSite.siteName }}</h1>
+
+          <p>
+            {{ formatAddress(currentSite.address) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="to-site-detail__actions">
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          (click)="refresh()"
+        />
+
+<p-button
+  label="Edit Site"
+  icon="pi pi-pencil"
+  severity="secondary"
+  [outlined]="true"
+   (click)="editSite()"
+/>
+      </div>
+    </header>
+
+    @if (summary(); as siteSummary) {
+      <div class="to-site-detail__kpis">
+        <article>
+          <span class="to-site-detail__kpi-icon">
+            <i class="pi pi-microchip"></i>
+          </span>
+
+          <div>
+            <span>Total Devices</span>
+            <strong>
+              {{ siteSummary.devices.total }}
+            </strong>
+            <small>
+              {{ onlineDevicePercentage() }}% online
+            </small>
+          </div>
+        </article>
+
+        <article class="to-site-detail__kpi--success">
+          <span class="to-site-detail__kpi-icon">
+            <i class="pi pi-check-circle"></i>
+          </span>
+
+          <div>
+            <span>Online</span>
+            <strong>
+              {{ siteSummary.devices.online }}
+            </strong>
+            <small>Connected devices</small>
+          </div>
+        </article>
+
+        <article class="to-site-detail__kpi--danger">
+          <span class="to-site-detail__kpi-icon">
+            <i class="pi pi-bell"></i>
+          </span>
+
+          <div>
+            <span>Open Alerts</span>
+            <strong>
+              {{ siteSummary.alerts.open }}
+            </strong>
+            <small>
+              {{ siteSummary.alerts.critical }}
+              critical
+            </small>
+          </div>
+        </article>
+
+        <article class="to-site-detail__kpi--warning">
+          <span class="to-site-detail__kpi-icon">
+            <i class="pi pi-ticket"></i>
+          </span>
+
+          <div>
+            <span>Open Tickets</span>
+            <strong>
+              {{ siteSummary.tickets.open }}
+            </strong>
+            <small>Pending investigation</small>
+          </div>
+        </article>
+
+        <article>
+          <span class="to-site-detail__kpi-icon">
+            <i class="pi pi-briefcase"></i>
+          </span>
+
+          <div>
+            <span>Work Orders</span>
+            <strong>
+              {{ siteSummary.workOrders.open }}
+            </strong>
+            <small>Active field tasks</small>
+          </div>
+        </article>
+      </div>
+    }
+
+    <div class="to-site-detail__layout">
+      <main class="to-site-detail__main">
+        <article class="to-site-detail__card">
+          <header class="to-site-detail__card-header">
+            <div>
+              <span>Live monitoring</span>
+              <h2>Current Telemetry</h2>
+            </div>
+
+            @if (summary()?.lastTelemetryAt) {
+              <small>
+                Updated
+                {{
+                  summary()?.lastTelemetryAt
+                    | date:'MMM d, h:mm a'
+                }}
+              </small>
+            }
+          </header>
+
+          <div class="to-site-detail__telemetry">
+            @for (
+              metric of telemetry();
+              track metric.metric
+            ) {
+              <article>
+                <span>{{ metric.label }}</span>
+
+                <strong>
+                  {{ telemetryValue(metric) }}
+                </strong>
+
+                @if (metric.recordedAt) {
+                  <small>
+                    {{
+                      metric.recordedAt
+                        | date:'h:mm a'
+                    }}
+                  </small>
+                }
+              </article>
+            } @empty {
+              <div class="to-site-detail__empty">
+                <i class="pi pi-chart-line"></i>
+                <span>No telemetry available</span>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="to-site-detail__card">
+          <header class="to-site-detail__card-header">
+            <div>
+              <span>Connected assets</span>
+              <h2>Devices</h2>
+            </div>
+
+            <button
+              type="button"
+              (click)="viewAllDevices()"
+            >
+              View all
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </header>
+
+          <div class="to-site-detail__list">
+            @for (
+              device of devices().slice(0, 6);
+              track device.id
+            ) {
+              <button
+                type="button"
+                class="to-site-detail__list-item"
+                (click)="openDevice(device)"
+              >
+                <span class="to-site-detail__list-icon">
+                  <i class="pi pi-microchip"></i>
+                </span>
+
+                <div>
+                  <strong>{{ device.deviceName }}</strong>
+                  <span>
+                    {{ device.deviceCode }}
+                    ·
+                    {{ device.category | titlecase }}
+                  </span>
+
+                  <small>
+                    @if (device.lastSeenAt) {
+                      Last seen
+                      {{
+                        device.lastSeenAt
+                          | date:'MMM d, h:mm a'
+                      }}
+                    } @else {
+                      Last seen unavailable
+                    }
+                  </small>
+                </div>
+
+                <span
+                  class="to-site-detail__device-status"
+                  [class.to-site-detail__device-status--online]="
+                    device.status === 'ONLINE' ||
+                    device.status === 'ACTIVE'
+                  "
+                >
+                  {{ device.status }}
+                </span>
+
+                <i class="pi pi-angle-right"></i>
+              </button>
+            } @empty {
+              <div class="to-site-detail__empty">
+                <i class="pi pi-microchip"></i>
+                <span>No devices assigned</span>
+              </div>
+            }
+          </div>
+        </article>
+      </main>
+
+      <aside class="to-site-detail__side">
+        <article class="to-site-detail__card">
+          <header class="to-site-detail__card-header">
+            <div>
+              <span>Location</span>
+              <h2>Site Map</h2>
+            </div>
+          </header>
+
+          <to-map
+            [markers]="siteMarker()"
+            height="18rem"
+            [zoom]="14"
+            [autoFitBounds]="true"
+            [showFitBoundsControl]="false"
+          />
+        </article>
+
+        <article class="to-site-detail__card">
+          <header class="to-site-detail__card-header">
+            <div>
+              <span>Immediate attention</span>
+              <h2>Open Alerts</h2>
+            </div>
+
+            <button
+              type="button"
+              (click)="viewAllAlerts()"
+            >
+              View all
+            </button>
+          </header>
+
+          <div class="to-site-detail__compact-list">
+            @for (
+              alert of alerts().slice(0, 5);
+              track alert.id
+            ) {
+              <button
+                type="button"
+                (click)="openAlert(alert)"
+              >
+                <span
+                  class="to-site-detail__severity"
+                  [class.to-site-detail__severity--critical]="
+                    alert.severity === 'CRITICAL' ||
+                    alert.severity === 'ERROR'
+                  "
+                ></span>
+
+                <div>
+                  <strong>{{ alert.message }}</strong>
+                  <span>
+                    {{ alert.deviceName || alert.alertCode }}
+                  </span>
+                  <small>
+                    {{
+                      alert.createdAt
+                        | date:'MMM d, h:mm a'
+                    }}
+                  </small>
+                </div>
+
+                <p-tag
+                  [value]="alert.severity"
+                  [severity]="
+                    alertSeverity(alert.severity)
+                  "
+                />
+              </button>
+            } @empty {
+              <div class="to-site-detail__empty">
+                <i class="pi pi-check-circle"></i>
+                <span>No open alerts</span>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="to-site-detail__card">
+          <header class="to-site-detail__card-header">
+            <div>
+              <span>Field operations</span>
+              <h2>Work Orders</h2>
+            </div>
+
+            <button
+              type="button"
+              (click)="viewAllWorkOrders()"
+            >
+              View all
+            </button>
+          </header>
+
+          <div class="to-site-detail__compact-list">
+            @for (
+              workOrder of workOrders().slice(0, 5);
+              track workOrder.id
+            ) {
+              <button
+                type="button"
+                (click)="openWorkOrder(workOrder)"
+              >
+                <span class="to-site-detail__list-icon">
+                  <i class="pi pi-briefcase"></i>
+                </span>
+
+                <div>
+                  <strong>{{ workOrder.title }}</strong>
+                  <span>
+                    {{
+                      workOrder.technicianName ||
+                      'Unassigned'
+                    }}
+                  </span>
+                  <small>
+                    @if (workOrder.scheduledAt) {
+                      {{
+                        workOrder.scheduledAt
+                          | date:'MMM d, h:mm a'
+                      }}
+                    } @else {
+                      Not scheduled
+                    }
+                  </small>
+                </div>
+
+                <p-tag
+                  [value]="workOrder.status"
+                  [severity]="
+                    workOrderSeverity(
+                      workOrder.status
+                    )
+                  "
+                />
+              </button>
+            } @empty {
+              <div class="to-site-detail__empty">
+                <i class="pi pi-briefcase"></i>
+                <span>No active work orders</span>
+              </div>
+            }
+          </div>
+        </article>
+      </aside>
+    </div>
+  }
+</section>

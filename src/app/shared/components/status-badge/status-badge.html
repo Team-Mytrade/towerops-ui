@@ -1,0 +1,22 @@
+<span
+  class="to-status-badge"
+  [ngClass]="badgeClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  @if (resolvedConfig().pulse) {
+    <span
+      class="to-status-badge__pulse"
+      aria-hidden="true"
+    ></span>
+  }
+
+  <p-tag
+    [value]="displayedLabel()"
+    [icon]="
+      resolvedConfig().icon ??
+      undefined
+    "
+    [severity]="primeSeverity()"
+    [rounded]="rounded()"
+  />
+</span>

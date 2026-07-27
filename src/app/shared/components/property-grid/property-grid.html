@@ -1,0 +1,151 @@
+<div
+  class="to-property-grid"
+  [class.to-property-grid--compact]="compact()"
+  [style]="gridStyle()"
+>
+  @for (
+    item of items();
+    track item.label
+  ) {
+    <article
+      [class.to-property-grid__item--multiline]="
+        item.multiline === true
+      "
+    >
+      <label>
+        @if (item.icon) {
+          <i [class]="item.icon"></i>
+        }
+
+        {{ item.label }}
+      </label>
+
+      @switch (item.type ?? 'text') {
+        @case ('tag') {
+          <p-tag
+            [value]="displayValue(item)"
+            [severity]="
+              item.severity ?? 'secondary'
+            "
+          />
+        }
+
+        @case ('boolean') {
+          <strong>
+            {{
+              booleanValue(item)
+                ? item.trueLabel ?? 'Yes'
+                : item.falseLabel ?? 'No'
+            }}
+          </strong>
+        }
+
+        @case ('date') {
+          @if (hasDateValue(item)) {
+            <strong>
+              {{
+                dateValue(item)
+                  | date:'mediumDate'
+              }}
+            </strong>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @case ('datetime') {
+          @if (hasDateValue(item)) {
+            <strong>
+              {{
+                dateValue(item)
+                  | date:'medium'
+              }}
+            </strong>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @case ('number') {
+          @if (hasNumberValue(item)) {
+            <strong>
+              {{
+                numberValue(item)
+                  | number:'1.0-2'
+              }}
+            </strong>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @case ('currency') {
+          @if (hasNumberValue(item)) {
+            <strong>
+              {{
+                numberValue(item)
+                  | currency
+              }}
+            </strong>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @case ('link') {
+          @if (linkValue(item); as href) {
+            <a
+              [href]="href"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ displayValue(item) }}
+            </a>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @case ('email') {
+          @if (emailHref(item); as href) {
+            <a [href]="href">
+              {{ displayValue(item) }}
+            </a>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @case ('phone') {
+          @if (phoneHref(item); as href) {
+            <a [href]="href">
+              {{ displayValue(item) }}
+            </a>
+          } @else {
+            <strong>
+              {{ item.emptyValue ?? '—' }}
+            </strong>
+          }
+        }
+
+        @default {
+          <strong>
+            {{ displayValue(item) }}
+          </strong>
+        }
+      }
+    </article>
+  }
+</div>

@@ -1,0 +1,283 @@
+<form class="to-device-form" [formGroup]="form" (ngSubmit)="submit()">
+  <header class="to-device-form__header">
+    <div>
+      <p>Device Management</p>
+      <h2>{{ mode() === 'edit' ? 'Edit Device' : 'Create Device' }}</h2>
+      <span>Configure device identity, assignment and connectivity.</span>
+    </div>
+
+    <button
+      class="to-device-form__close"
+      type="button"
+      aria-label="Close device form"
+      (click)="cancel()"
+    >
+      <i class="pi pi-times" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <section class="to-device-form__section">
+    <header>
+      <span>01</span>
+
+      <div>
+        <h3>Identity</h3>
+        <p>Define the device and its hardware identity.</p>
+      </div>
+    </header>
+
+    <div class="to-device-form__grid">
+      <div class="to-field">
+        <label for="deviceCode">Device Code *</label>
+        <input id="deviceCode" pInputText formControlName="deviceCode" />
+        @if (error('deviceCode', 'Device code')) {
+          <small>{{ error('deviceCode', 'Device code') }}</small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="serialNumber">Serial Number *</label>
+        <input id="serialNumber" pInputText formControlName="serialNumber" />
+        @if (error('serialNumber', 'Serial number')) {
+          <small>{{ error('serialNumber', 'Serial number') }}</small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="deviceName">Device Name *</label>
+        <input id="deviceName" pInputText formControlName="deviceName" />
+        @if (error('deviceName', 'Device name')) {
+          <small>{{ error('deviceName', 'Device name') }}</small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="category">Category *</label>
+        <p-select
+          inputId="category"
+          formControlName="category"
+          [options]="categoryOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select category"
+          appendTo="body"
+        />
+        @if (error('category', 'Category')) {
+          <small>{{ error('category', 'Category') }}</small>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="to-device-form__section">
+    <header>
+      <span>02</span>
+
+      <div>
+        <h3>Assignment</h3>
+        <p>Assign the device model and operating site.</p>
+      </div>
+    </header>
+
+    <div class="to-device-form__grid">
+      <div class="to-field">
+        <label for="deviceModelId"> Device Model </label>
+
+        <p-select
+          inputId="deviceModelId"
+          formControlName="deviceModelId"
+          [options]="deviceModelOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select device model"
+          emptyMessage="No device models found"
+          emptyFilterMessage="No matching device models"
+          [filter]="true"
+          filterBy="label,code"
+          [showClear]="true"
+          [loading]="lookupLoading()"
+          appendTo="body"
+          data-testid="device-model-select"
+        >
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <div class="to-select-option">
+                <strong>
+                  {{ option.label }}
+                </strong>
+
+                @if (option.code) {
+                  <small>
+                    {{ option.code }}
+                  </small>
+                }
+              </div>
+            }
+          </ng-template>
+
+          <ng-template pTemplate="item" let-option>
+            <div class="to-select-option">
+              <strong>
+                {{ option.label }}
+              </strong>
+
+              @if (option.code) {
+                <small>
+                  {{ option.code }}
+                </small>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        @if (error('deviceModelId', 'Device model')) {
+          <small>
+            {{ error('deviceModelId', 'Device model') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="siteId"> Site </label>
+
+        <p-select
+          inputId="siteId"
+          formControlName="siteId"
+          [options]="siteOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select site"
+          emptyMessage="No sites found"
+          emptyFilterMessage="No matching sites"
+          [filter]="true"
+          filterBy="label,code,category"
+          [showClear]="true"
+          [loading]="lookupLoading()"
+          appendTo="body"
+          data-testid="device-site-select"
+        >
+          <ng-template pTemplate="selectedItem" let-option>
+            @if (option) {
+              <div class="to-select-option">
+                <strong>
+                  {{ option.label }}
+                </strong>
+
+                @if (option.code) {
+                  <small>
+                    {{ option.code }}
+                  </small>
+                }
+              </div>
+            }
+          </ng-template>
+
+          <ng-template pTemplate="item" let-option>
+            <div class="to-select-option">
+              <strong>
+                {{ option.label }}
+              </strong>
+
+              <small>
+                {{ option.code }}
+
+                @if (option.category) {
+                  · {{ option.category }}
+                }
+              </small>
+            </div>
+          </ng-template>
+        </p-select>
+
+        @if (error('siteId', 'Site')) {
+          <small>
+            {{ error('siteId', 'Site') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="status"> Status * </label>
+
+        <p-select
+          inputId="status"
+          formControlName="status"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select status"
+          appendTo="body"
+          data-testid="device-status-select"
+        />
+
+        @if (error('status', 'Status')) {
+          <small>
+            {{ error('status', 'Status') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="firmwareVersion"> Firmware Version </label>
+
+        <input
+          id="firmwareVersion"
+          pInputText
+          formControlName="firmwareVersion"
+          placeholder="1.0.0"
+          data-testid="device-firmware-input"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="to-device-form__section">
+    <header>
+      <span>03</span>
+
+      <div>
+        <h3>Connectivity</h3>
+        <p>Record the device network identifiers.</p>
+      </div>
+    </header>
+
+    <div class="to-device-form__grid">
+      <div class="to-field">
+        <label for="ipAddress">IP Address</label>
+        <input id="ipAddress" pInputText formControlName="ipAddress" placeholder="192.168.1.10" />
+        @if (error('ipAddress', 'IP address')) {
+          <small>{{ error('ipAddress', 'IP address') }}</small>
+        }
+      </div>
+
+      <div class="to-field">
+        <label for="macAddress">MAC Address</label>
+        <input
+          id="macAddress"
+          pInputText
+          formControlName="macAddress"
+          placeholder="00:00:00:00:00:00"
+        />
+        @if (error('macAddress', 'MAC address')) {
+          <small>{{ error('macAddress', 'MAC address') }}</small>
+        }
+      </div>
+    </div>
+  </section>
+
+  <footer class="to-device-form__footer">
+    <p-button
+      type="button"
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      (click)="cancel()"
+    />
+
+    <p-button
+      type="submit"
+      [label]="mode() === 'edit' ? 'Update Device' : 'Create Device'"
+      [loading]="submitting()"
+    />
+  </footer>
+</form>

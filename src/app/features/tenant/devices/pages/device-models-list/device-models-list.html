@@ -1,0 +1,384 @@
+<section
+  class="to-device-models-page"
+  data-testid="device-models-page"
+>
+  <header class="to-page-header">
+    <div>
+      <p class="to-page-header__eyebrow">
+        Hardware catalog
+      </p>
+
+      <h1>Device Models</h1>
+
+      <p>
+        Manage reusable hardware definitions,
+        communication protocols and telemetry
+        configuration.
+      </p>
+    </div>
+
+    <div class="to-page-header__actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        data-testid="refresh-device-models-btn"
+        (click)="loadDeviceModels()"
+      />
+
+      <p-button
+        label="Create Model"
+        icon="pi pi-plus"
+        data-testid="create-device-model-btn"
+        (click)="createDeviceModel()"
+      />
+    </div>
+  </header>
+
+  <section class="to-summary-grid">
+    <article class="to-summary-card">
+      <div>
+        <span>Total Models</span>
+        <strong>{{ totalModels() }}</strong>
+      </div>
+
+      <i class="pi pi-box"></i>
+    </article>
+
+    <article class="to-summary-card">
+      <div>
+        <span>Enabled</span>
+        <strong>{{ enabledModels() }}</strong>
+      </div>
+
+      <i class="pi pi-check-circle"></i>
+    </article>
+
+    <article class="to-summary-card">
+      <div>
+        <span>Disabled</span>
+        <strong>{{ disabledModels() }}</strong>
+      </div>
+
+      <i class="pi pi-ban"></i>
+    </article>
+
+    <article class="to-summary-card">
+      <div>
+        <span>Manufacturers</span>
+        <strong>{{ manufacturers() }}</strong>
+      </div>
+
+      <i class="pi pi-building"></i>
+    </article>
+  </section>
+
+  <section class="to-filter-bar">
+    <div class="to-filter-bar__search">
+      <i class="pi pi-search"></i>
+
+      <input
+        pInputText
+        type="search"
+        placeholder="Search model, code or manufacturer..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        data-testid="device-model-search"
+      />
+    </div>
+
+    <p-select
+      [options]="categoryOptions"
+      [ngModel]="categoryFilter()"
+      (ngModelChange)="categoryFilter.set($event)"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All categories"
+      [showClear]="true"
+      appendTo="body"
+      data-testid="device-model-category-filter"
+    />
+
+    <p-select
+      [options]="protocolOptions"
+      [ngModel]="protocolFilter()"
+      (ngModelChange)="protocolFilter.set($event)"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All protocols"
+      [showClear]="true"
+      appendTo="body"
+      data-testid="device-model-protocol-filter"
+    />
+
+    <p-select
+      [options]="connectivityOptions"
+      [ngModel]="connectivityFilter()"
+      (ngModelChange)="connectivityFilter.set($event)"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All connectivity"
+      [showClear]="true"
+      appendTo="body"
+      data-testid="device-model-connectivity-filter"
+    />
+
+    <p-select
+      [options]="statusOptions"
+      [ngModel]="enabledFilter()"
+      (ngModelChange)="enabledFilter.set($event)"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="All statuses"
+      [showClear]="true"
+      appendTo="body"
+      data-testid="device-model-status-filter"
+    />
+
+    <p-button
+      icon="pi pi-filter-slash"
+      severity="secondary"
+      [text]="true"
+      pTooltip="Clear filters"
+      tooltipPosition="top"
+      data-testid="clear-device-model-filters-btn"
+      (click)="clearFilters()"
+    />
+  </section>
+
+  <section class="to-table-card">
+    <div class="to-table-card__header">
+      <div>
+        <h2>Model catalog</h2>
+
+        <p>
+          {{ filteredDeviceModels().length }}
+          models found
+        </p>
+      </div>
+    </div>
+
+    <p-table
+      [value]="filteredDeviceModels()"
+      [loading]="loading()"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} - {last} of {totalRecords}"
+      [tableStyle]="{
+        'min-width': '78rem'
+      }"
+      data-testid="device-models-table"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Model</th>
+          <th>Manufacturer</th>
+          <th>Category</th>
+          <th>Protocol</th>
+          <th>Connectivity</th>
+          <th>Firmware</th>
+          <th>Devices</th>
+          <th>Status</th>
+          <th class="to-actions-column">
+            Actions
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template
+        pTemplate="body"
+        let-deviceModel
+      >
+        <tr>
+          <td>
+            <button
+              type="button"
+              class="to-model-cell"
+              (click)="
+                viewDeviceModel(deviceModel)
+              "
+            >
+              <span class="to-model-cell__icon">
+                <i class="pi pi-box"></i>
+              </span>
+
+              <span>
+                <strong>
+                  {{ deviceModel.modelName }}
+                </strong>
+
+                <small>
+                  {{ deviceModel.modelCode }}
+                </small>
+              </span>
+            </button>
+          </td>
+
+          <td>
+            {{
+              deviceModel.manufacturer ||
+              '—'
+            }}
+          </td>
+
+          <td>
+            <p-tag
+              [value]="
+                formatEnum(
+                  deviceModel.category
+                )
+              "
+              severity="secondary"
+            />
+          </td>
+
+          <td>
+            {{
+              formatEnum(
+                deviceModel.protocol
+              )
+            }}
+          </td>
+
+          <td>
+            {{
+              formatEnum(
+                deviceModel.connectivityType
+              )
+            }}
+          </td>
+
+          <td>
+            {{
+              deviceModel.defaultFirmwareVersion ||
+              '—'
+            }}
+          </td>
+
+          <td>
+            {{
+              deviceModel.deviceCount ?? 0
+            }}
+          </td>
+
+          <td>
+            <p-tag
+              [value]="
+                deviceModel.enabled
+                  ? 'Enabled'
+                  : 'Disabled'
+              "
+              [severity]="
+                deviceModel.enabled
+                  ? 'success'
+                  : 'secondary'
+              "
+            />
+          </td>
+
+          <td class="to-actions-column">
+            <div class="to-row-actions">
+              <button
+                type="button"
+                class="to-icon-action"
+                pTooltip="View details"
+                tooltipPosition="top"
+                aria-label="View device model"
+                (click)="
+                  viewDeviceModel(deviceModel)
+                "
+              >
+                <i class="pi pi-eye"></i>
+              </button>
+
+              <button
+                type="button"
+                class="to-icon-action"
+                pTooltip="Edit model"
+                tooltipPosition="top"
+                aria-label="Edit device model"
+                (click)="
+                  editDeviceModel(deviceModel)
+                "
+              >
+                <i class="pi pi-pencil"></i>
+              </button>
+
+              <button
+                type="button"
+                class="to-icon-action"
+                [pTooltip]="
+                  deviceModel.enabled
+                    ? 'Disable model'
+                    : 'Enable model'
+                "
+                tooltipPosition="top"
+                [attr.aria-label]="
+                  deviceModel.enabled
+                    ? 'Disable device model'
+                    : 'Enable device model'
+                "
+                (click)="
+                  toggleStatus(deviceModel)
+                "
+              >
+                <i
+                  [class]="
+                    deviceModel.enabled
+                      ? 'pi pi-ban'
+                      : 'pi pi-check-circle'
+                  "
+                ></i>
+              </button>
+
+              <button
+                type="button"
+                class="to-icon-action to-icon-action--danger"
+                pTooltip="Delete model"
+                tooltipPosition="top"
+                aria-label="Delete device model"
+                (click)="
+                  confirmDelete(deviceModel)
+                "
+              >
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9">
+            <div class="to-empty-state">
+              <span>
+                <i class="pi pi-box"></i>
+              </span>
+
+              <h3>No device models found</h3>
+
+              <p>
+                Create a device model or adjust
+                the current filters.
+              </p>
+
+              <p-button
+                label="Create Model"
+                icon="pi pi-plus"
+                (click)="createDeviceModel()"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <p-confirm-dialog />
+</section>

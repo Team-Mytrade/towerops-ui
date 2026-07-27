@@ -1,0 +1,476 @@
+<section
+  class="to-saved-view-selector"
+  [ngClass]="componentClasses()"
+  [attr.data-testid]="dataTestId()"
+  aria-label="Saved views"
+>
+  <div
+    class="to-saved-view-selector__selector-group"
+  >
+    <span
+      class="to-saved-view-selector__label"
+    >
+      <i class="pi pi-bookmark"></i>
+      <span>View</span>
+    </span>
+
+    <p-select
+      class="to-saved-view-selector__select"
+      [options]="selectorOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="activeViewId()"
+      [disabled]="
+        disabled() ||
+        loading() ||
+        saving()
+      "
+      [loading]="loading()"
+      [filter]="
+        selectorOptions().length > 6
+      "
+      filterBy="label"
+      appendTo="body"
+      [placeholder]="
+        selectorPlaceholder()
+      "
+      ariaLabel="Select saved view"
+      data-testid="saved-view-select"
+      (ngModelChange)="
+        selectView($event)
+      "
+    >
+      <ng-template
+        #selectedItem
+        let-option
+      >
+        @if (option) {
+          <div
+            class="to-saved-view-selector__selected"
+          >
+            <i
+              [class]="
+                viewIcon(option.view)
+              "
+            ></i>
+
+            <span>
+              {{ option.view.name }}
+            </span>
+
+            @if (
+              option.view.favourite
+            ) {
+              <i
+                class="pi pi-star-fill to-saved-view-selector__favourite"
+              ></i>
+            }
+
+            @if (
+              option.view.default
+            ) {
+              <span
+                class="to-saved-view-selector__default-badge"
+              >
+                Default
+              </span>
+            }
+          </div>
+        }
+      </ng-template>
+
+      <ng-template
+        #item
+        let-option
+      >
+        <div
+          class="to-saved-view-selector__option"
+        >
+          <span
+            class="to-saved-view-selector__option-icon"
+          >
+            <i
+              [class]="
+                viewIcon(option.view)
+              "
+            ></i>
+          </span>
+
+          <div
+            class="to-saved-view-selector__option-copy"
+          >
+            <div>
+              <strong>
+                {{ option.view.name }}
+              </strong>
+
+              @if (
+                option.view.favourite
+              ) {
+                <i
+                  class="pi pi-star-fill"
+                ></i>
+              }
+            </div>
+
+            <small>
+              {{
+                option.view.description ||
+                  viewScopeLabel(
+                    option.view
+                  )
+              }}
+            </small>
+          </div>
+
+          @if (option.view.default) {
+            <span
+              class="to-saved-view-selector__option-badge"
+            >
+              Default
+            </span>
+          }
+        </div>
+      </ng-template>
+    </p-select>
+
+    @if (
+      showDirtyIndicator() &&
+      dirty()
+    ) {
+      <span
+        class="to-saved-view-selector__dirty-indicator"
+        pTooltip="The current configuration has unsaved changes"
+        tooltipPosition="bottom"
+      >
+        <i class="pi pi-circle-fill"></i>
+        <span>Unsaved</span>
+      </span>
+    }
+  </div>
+
+  <div
+    class="to-saved-view-selector__actions"
+  >
+    <ng-content
+      select="[savedViewBeforeActions]"
+    />
+
+    @if (
+      showReset() &&
+      dirty()
+    ) {
+      <p-button
+        type="button"
+        [label]="
+          compact()
+            ? undefined
+            : resetLabel()
+        "
+        icon="pi pi-undo"
+        severity="secondary"
+        [text]="true"
+        [rounded]="compact()"
+        size="small"
+        [disabled]="
+          disabled() ||
+          loading() ||
+          saving()
+        "
+        [pTooltip]="resetLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="
+          resetLabel()
+        "
+        data-testid="saved-view-reset"
+        (click)="requestReset()"
+      />
+    }
+
+    @if (
+      canUpdate() &&
+      dirty()
+    ) {
+      <p-button
+        type="button"
+        [label]="
+          compact()
+            ? undefined
+            : updateLabel()
+        "
+        icon="pi pi-save"
+        severity="secondary"
+        [outlined]="true"
+        [rounded]="compact()"
+        size="small"
+        [loading]="saving()"
+        [disabled]="
+          disabled() ||
+          loading()
+        "
+        [pTooltip]="updateLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="
+          updateLabel()
+        "
+        data-testid="saved-view-update"
+        (click)="requestUpdate()"
+      />
+    }
+
+    @if (allowCreate()) {
+      <p-button
+        type="button"
+        [label]="
+          compact()
+            ? undefined
+            : createLabel()
+        "
+        icon="pi pi-plus"
+        [rounded]="compact()"
+        size="small"
+        [disabled]="
+          disabled() ||
+          loading() ||
+          saving()
+        "
+        [pTooltip]="createLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="
+          createLabel()
+        "
+        data-testid="saved-view-create"
+        (click)="
+          openCreateView();
+          createPopover.toggle($event)
+        "
+      />
+    }
+
+    @if (activeView()) {
+      <p-menu
+        #actionsMenu
+        [model]="actionMenuItems()"
+        [popup]="true"
+        appendTo="body"
+      />
+
+      <p-button
+        type="button"
+        icon="pi pi-ellipsis-v"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        [disabled]="
+          disabled() ||
+          loading() ||
+          saving()
+        "
+        pTooltip="View options"
+        tooltipPosition="bottom"
+        ariaLabel="View options"
+        data-testid="saved-view-options"
+        (click)="
+          actionsMenu.toggle($event)
+        "
+      />
+    }
+
+    <ng-content
+      select="[savedViewAfterActions]"
+    />
+  </div>
+
+  <p-popover
+    #createPopover
+    appendTo="body"
+    styleClass="to-saved-view-selector__create-popover"
+    (onHide)="closeCreateView()"
+  >
+    @if (createViewOpen()) {
+      <form
+        class="to-saved-view-selector__form"
+        (submit)="
+          $event.preventDefault();
+          submitCreateView()
+        "
+      >
+        <header>
+          <div>
+            <strong>Save current view</strong>
+            <span>
+              Store the current filters,
+              sorting and display settings.
+            </span>
+          </div>
+
+          <p-button
+            type="button"
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            size="small"
+            ariaLabel="Close"
+            (click)="
+              createPopover.hide()
+            "
+          />
+        </header>
+
+        <div
+          class="to-saved-view-selector__field"
+        >
+          <label for="saved-view-name">
+            View name
+            <span>*</span>
+          </label>
+
+          <input
+            id="saved-view-name"
+            pInputText
+            type="text"
+            maxlength="80"
+            autocomplete="off"
+            placeholder="Example: Critical sites"
+            [ngModel]="draftName()"
+            (ngModelChange)="
+              draftName.set($event)
+            "
+            name="viewName"
+            data-testid="saved-view-name"
+          />
+        </div>
+
+        <div
+          class="to-saved-view-selector__field"
+        >
+          <label
+            for="saved-view-description"
+          >
+            Description
+          </label>
+
+          <textarea
+            id="saved-view-description"
+            pTextarea
+            rows="3"
+            maxlength="240"
+            placeholder="Describe what this view contains"
+            [ngModel]="
+              draftDescription()
+            "
+            (ngModelChange)="
+              draftDescription.set(
+                $event
+              )
+            "
+            name="viewDescription"
+            data-testid="saved-view-description"
+          ></textarea>
+        </div>
+
+        <div
+          class="to-saved-view-selector__field"
+        >
+          <label for="saved-view-scope">
+            Visibility
+          </label>
+
+          <p-select
+            inputId="saved-view-scope"
+            [options]="scopeOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="draftScope()"
+            (ngModelChange)="
+              draftScope.set($event)
+            "
+            name="viewScope"
+            appendTo="body"
+            data-testid="saved-view-scope"
+          >
+            <ng-template
+              #selectedItem
+              let-option
+            >
+              @if (option) {
+                <span
+                  class="to-saved-view-selector__scope-option"
+                >
+                  <i
+                    [class]="option.icon"
+                  ></i>
+                  {{ option.label }}
+                </span>
+              }
+            </ng-template>
+
+            <ng-template
+              #item
+              let-option
+            >
+              <span
+                class="to-saved-view-selector__scope-option"
+              >
+                <i
+                  [class]="option.icon"
+                ></i>
+                {{ option.label }}
+              </span>
+            </ng-template>
+          </p-select>
+        </div>
+
+        <label
+          class="to-saved-view-selector__checkbox"
+        >
+          <p-checkbox
+            [ngModel]="
+              draftSetAsDefault()
+            "
+            (ngModelChange)="
+              draftSetAsDefault.set(
+                $event
+              )
+            "
+            [binary]="true"
+            name="setAsDefault"
+            inputId="saved-view-default"
+          />
+
+          <span>
+            Use this as my default view
+          </span>
+        </label>
+
+        <footer>
+          <p-button
+            type="button"
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [disabled]="saving()"
+            (click)="
+              createPopover.hide()
+            "
+          />
+
+          <p-button
+            type="submit"
+            label="Save view"
+            icon="pi pi-save"
+            size="small"
+            [loading]="saving()"
+            [disabled]="
+              !draftName().trim()
+            "
+            data-testid="saved-view-submit"
+          />
+        </footer>
+      </form>
+    }
+  </p-popover>
+</section>

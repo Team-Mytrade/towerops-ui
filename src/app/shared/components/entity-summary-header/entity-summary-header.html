@@ -1,0 +1,213 @@
+<section
+  class="to-entity-summary-header"
+  [ngClass]="headerClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  @if (loading()) {
+    <div class="to-entity-summary-header__skeleton">
+      <span
+        class="to-entity-summary-header__skeleton-back"
+      ></span>
+
+      <span
+        class="to-entity-summary-header__skeleton-icon"
+      ></span>
+
+      <div
+        class="to-entity-summary-header__skeleton-copy"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div
+        class="to-entity-summary-header__skeleton-actions"
+      >
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  } @else {
+    <div class="to-entity-summary-header__main">
+      @if (showBack()) {
+        <button
+          type="button"
+          class="to-entity-summary-header__back"
+          aria-label="Go back"
+          data-testid="entity-summary-back-btn"
+          (click)="requestBack()"
+        >
+          <i class="pi pi-arrow-left"></i>
+        </button>
+      }
+
+      <div
+        class="to-entity-summary-header__visual"
+      >
+        @if (imageUrl()) {
+          <img
+            [src]="imageUrl()"
+            [alt]="imageAlternative()"
+          />
+        } @else {
+          <i [class]="icon()"></i>
+        }
+      </div>
+
+      <div
+        class="to-entity-summary-header__identity"
+      >
+        @if (eyebrow()) {
+          <span
+            class="to-entity-summary-header__eyebrow"
+          >
+            {{ eyebrow() }}
+          </span>
+        }
+
+        <div
+          class="to-entity-summary-header__title-row"
+        >
+          <h1>{{ title() }}</h1>
+
+          @if (code()) {
+            <span
+              class="to-entity-summary-header__code"
+            >
+              {{ code() }}
+            </span>
+          }
+        </div>
+
+        @if (subtitle()) {
+          <p>{{ subtitle() }}</p>
+        }
+
+        @if (visibleBadges().length) {
+          <div
+            class="to-entity-summary-header__badges"
+          >
+            @for (
+              badge of visibleBadges();
+              track badge.id
+            ) {
+              <to-status-badge
+                [value]="badge.value"
+                [label]="badge.label ?? null"
+                [icon]="badge.icon ?? null"
+                [tone]="badge.tone ?? null"
+                [pulse]="badge.pulse === true"
+                [dataTestId]="
+                  'entity-summary-badge-' +
+                  badge.id
+                "
+              />
+            }
+          </div>
+        }
+      </div>
+
+      <div
+        class="to-entity-summary-header__actions"
+      >
+        <ng-content
+          select="[entitySummaryActions]"
+        />
+
+        @for (
+          action of visibleActions();
+          track action.id
+        ) {
+          <p-button
+            type="button"
+            [label]="action.label"
+            [icon]="action.icon"
+            [severity]="action.severity"
+            [outlined]="action.outlined === true"
+            [text]="action.text === true"
+            [disabled]="action.disabled === true"
+            [loading]="action.loading === true"
+            [attr.data-testid]="
+              action.dataTestId ??
+              'entity-summary-action-' +
+              action.id
+            "
+            (click)="requestAction(action)"
+          />
+        }
+
+        @if (showRefresh()) {
+          <p-button
+            type="button"
+            icon="pi pi-refresh"
+            severity="secondary"
+            [outlined]="true"
+            [loading]="refreshing()"
+            ariaLabel="Refresh details"
+            data-testid="entity-summary-refresh-btn"
+            (click)="requestRefresh()"
+          />
+        }
+      </div>
+    </div>
+
+    @if (visibleMetadata().length) {
+      <div
+        class="to-entity-summary-header__metadata"
+      >
+        @for (
+          item of visibleMetadata();
+          track item.id
+        ) {
+          <button
+            type="button"
+            class="to-entity-summary-header__metadata-item"
+            [class.to-entity-summary-header__metadata-item--copyable]="
+              item.copyable === true
+            "
+            [disabled]="item.copyable !== true"
+            [pTooltip]="
+              item.tooltip ??
+              (
+                item.copyable
+                  ? 'Copy ' + item.label
+                  : ''
+              )
+            "
+            tooltipPosition="top"
+            (click)="requestMetadata(item)"
+          >
+            @if (item.icon) {
+              <i [class]="item.icon"></i>
+            }
+
+            <span>
+              <small>
+                {{ item.label }}
+              </small>
+
+              <strong>
+                {{
+                  displayMetadataValue(
+                    item.value
+                  )
+                }}
+              </strong>
+            </span>
+
+            @if (item.copyable) {
+              <i
+                class="pi pi-copy to-entity-summary-header__copy-icon"
+              ></i>
+            }
+          </button>
+        }
+      </div>
+    }
+
+    <ng-content
+      select="[entitySummaryFooter]"
+    />
+  }
+</section>

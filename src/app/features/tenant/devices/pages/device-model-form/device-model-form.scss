@@ -1,0 +1,365 @@
+:host {
+  display: block;
+}
+
+.to-device-model-form-page {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+.to-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.to-form-header__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+
+  h1 {
+    margin: 0.2rem 0 0;
+    color: var(--to-text-primary);
+    font-size: clamp(
+      1.55rem,
+      2vw,
+      2rem
+    );
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  p:not(.to-eyebrow) {
+    max-width: 45rem;
+    margin: 0.45rem 0 0;
+    color: var(--to-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+}
+
+.to-eyebrow {
+  margin: 0;
+  color: var(--p-primary-color);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.to-back-button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-top: 0.05rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--to-border);
+  border-radius: 0.75rem;
+  background: var(--to-surface);
+  color: var(--to-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--to-surface-hover);
+    color: var(--to-text-primary);
+  }
+}
+
+.to-form-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.to-loading-state {
+  display: flex;
+  min-height: 20rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px solid var(--to-border);
+  border-radius: 1rem;
+  background: var(--to-surface);
+  color: var(--to-text-muted);
+}
+
+.to-form-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(17rem, 22rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+.to-form-main,
+.to-form-aside {
+  display: grid;
+  gap: 1rem;
+}
+
+.to-form-aside {
+  position: sticky;
+  top: 1rem;
+}
+
+.to-form-card {
+  overflow: hidden;
+  border: 1px solid var(--to-border);
+  border-radius: 1rem;
+  background: var(--to-surface);
+}
+
+.to-form-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--to-border);
+
+  h2 {
+    margin: 0;
+    color: var(--to-text-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.3rem 0 0;
+    color: var(--to-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+}
+
+.to-form-card__icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background:
+    color-mix(
+      in srgb,
+      var(--p-primary-color) 10%,
+      transparent
+    );
+  color: var(--p-primary-color);
+}
+
+.to-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.1rem;
+}
+
+.to-form-field {
+  display: grid;
+  gap: 0.45rem;
+
+  > label {
+    color: var(--to-text-primary);
+    font-size: 0.75rem;
+    font-weight: 650;
+
+    span {
+      color: var(--p-red-500);
+    }
+  }
+
+  :is(
+    input,
+    textarea,
+    p-select,
+    p-input-number
+  ) {
+    width: 100%;
+  }
+
+  textarea {
+    width: 100%;
+    resize: vertical;
+  }
+}
+
+.to-form-field--full {
+  grid-column: 1 / -1;
+}
+
+.to-field-error {
+  color: var(--p-red-500);
+  font-size: 0.7rem;
+}
+
+.to-metrics-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.to-metric-option {
+  display: flex;
+  min-height: 2.8rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem;
+  border: 1px solid var(--to-border);
+  border-radius: 0.7rem;
+  background: var(--to-surface);
+  color: var(--to-text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color:
+      color-mix(
+        in srgb,
+        var(--p-primary-color) 40%,
+        var(--to-border)
+      );
+    background: var(--to-surface-hover);
+  }
+}
+
+.to-metric-option--selected {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--p-primary-color) 55%,
+      var(--to-border)
+    );
+  background:
+    color-mix(
+      in srgb,
+      var(--p-primary-color) 7%,
+      var(--to-surface)
+    );
+  color: var(--to-text-primary);
+}
+
+.to-metric-option__check {
+  display: grid;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  place-items: center;
+  border: 1px solid var(--to-border);
+  border-radius: 0.35rem;
+  color: var(--p-primary-color);
+  font-size: 0.6rem;
+}
+
+.to-metric-option--selected
+.to-metric-option__check {
+  border-color: var(--p-primary-color);
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+}
+
+.to-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+
+  div {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  strong {
+    color: var(--to-text-primary);
+    font-size: 0.8rem;
+  }
+
+  span {
+    color: var(--to-text-muted);
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+}
+
+.to-help-card {
+  padding: 1.1rem;
+
+  h3 {
+    margin: 0.75rem 0 0;
+    color: var(--to-text-primary);
+    font-size: 0.85rem;
+  }
+
+  p {
+    margin: 0.4rem 0 0;
+    color: var(--to-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.55;
+  }
+}
+
+.to-help-card__icon {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background:
+    color-mix(
+      in srgb,
+      var(--p-primary-color) 10%,
+      transparent
+    );
+  color: var(--p-primary-color);
+}
+
+@media (max-width: 1100px) {
+  .to-form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .to-form-aside {
+    position: static;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .to-device-model-form-page {
+    padding: 1rem;
+  }
+
+  .to-form-header {
+    flex-direction: column;
+  }
+
+  .to-form-header__actions {
+    width: 100%;
+
+    p-button {
+      flex: 1;
+    }
+  }
+
+  .to-form-grid,
+  .to-form-aside,
+  .to-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .to-form-field--full {
+    grid-column: auto;
+  }
+}

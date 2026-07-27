@@ -1,0 +1,101 @@
+@if (hasSelection()) {
+  <section
+    class="to-bulk-action-bar"
+    [ngClass]="barClasses()"
+    [attr.data-testid]="dataTestId()"
+    aria-live="polite"
+  >
+    <div
+      class="to-bulk-action-bar__summary"
+    >
+      <span
+        class="to-bulk-action-bar__icon"
+      >
+        <i [class]="icon()"></i>
+      </span>
+
+      <div
+        class="to-bulk-action-bar__copy"
+      >
+        <strong>
+          {{ selectionText() }}
+        </strong>
+
+        <small>
+          Choose an action to apply to the
+          selected records.
+        </small>
+      </div>
+    </div>
+
+    <div
+      class="to-bulk-action-bar__actions"
+    >
+      <ng-content
+        select="[bulkActionBarBeforeActions]"
+      />
+
+      @for (
+        action of visibleActions();
+        track action.id
+      ) {
+        <p-button
+          type="button"
+          [label]="action.label"
+          [icon]="action.icon"
+          [severity]="
+            action.severity ??
+            'secondary'
+          "
+          [outlined]="
+            action.outlined === true
+          "
+          [text]="
+            action.text === true
+          "
+          [disabled]="
+            disabled() ||
+            action.disabled === true
+          "
+          [loading]="
+            action.loading === true
+          "
+          [pTooltip]="action.label"
+          tooltipPosition="top"
+          [attr.data-testid]="
+            action.dataTestId ??
+            'bulk-action-' +
+              action.id
+          "
+          (click)="
+            requestAction(action)
+          "
+        />
+      }
+
+      <ng-content
+        select="[bulkActionBarAfterActions]"
+      />
+
+      @if (showClear()) {
+        <span
+          class="to-bulk-action-bar__divider"
+        ></span>
+
+        <p-button
+          type="button"
+          icon="pi pi-times"
+          severity="secondary"
+          [text]="true"
+          [rounded]="true"
+          [disabled]="disabled()"
+          [pTooltip]="clearLabel()"
+          tooltipPosition="top"
+          [attr.aria-label]="clearLabel()"
+          data-testid="bulk-action-clear"
+          (click)="requestClear()"
+        />
+      }
+    </div>
+  </section>
+}

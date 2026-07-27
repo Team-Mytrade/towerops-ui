@@ -1,0 +1,303 @@
+<section
+  class="to-form-card"
+  [formGroup]="form()"
+  data-testid="work-order-assignment-card"
+>
+  <header class="to-form-card__header">
+    <div class="to-form-card__heading">
+      <span class="to-form-card__icon">
+        <i class="pi pi-user-edit"></i>
+      </span>
+
+      <div>
+        <h2>Assignment</h2>
+
+        <p>
+          Set ownership, urgency and the planned
+          execution schedule.
+        </p>
+      </div>
+    </div>
+
+    <span
+      class="to-form-card__hint"
+      pTooltip="A technician can also be assigned after the work order is created."
+      tooltipPosition="left"
+    >
+      <i class="pi pi-info-circle"></i>
+    </span>
+  </header>
+
+  <div class="to-form-card__content">
+    <div class="to-form-grid">
+      <div class="to-form-field to-form-field--wide">
+        <label for="work-order-technician">
+          Technician
+        </label>
+
+        <p-select
+          inputId="work-order-technician"
+          formControlName="technicianId"
+          [options]="activeTechnicians()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select technician"
+          [filter]="true"
+          filterBy="label,technicianCode,email"
+          filterPlaceholder="Search technicians"
+          [showClear]="true"
+          [loading]="loadingTechnicians()"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-technician-select"
+          (onChange)="onTechnicianChange($event.value)"
+        >
+          <ng-template
+            pTemplate="selectedItem"
+            let-technician
+          >
+            @if (technician) {
+              <div class="to-technician-option">
+                <span class="to-technician-option__avatar">
+                  {{ technician.label.charAt(0) }}
+                </span>
+
+                <span class="to-technician-option__content">
+                  <strong>
+                    {{ technician.label }}
+                  </strong>
+
+                  @if (technician.technicianCode) {
+                    <small>
+                      {{ technician.technicianCode }}
+                    </small>
+                  }
+                </span>
+              </div>
+            }
+          </ng-template>
+
+          <ng-template
+            pTemplate="item"
+            let-technician
+          >
+            <div class="to-technician-option">
+              <span class="to-technician-option__avatar">
+                {{ technician.label.charAt(0) }}
+              </span>
+
+              <span class="to-technician-option__content">
+                <strong>
+                  {{ technician.label }}
+                </strong>
+
+                <small>
+                  @if (technician.technicianCode) {
+                    {{ technician.technicianCode }}
+                  }
+
+                  @if (
+                    technician.technicianCode &&
+                    technician.email
+                  ) {
+                    ·
+                  }
+
+                  @if (technician.email) {
+                    {{ technician.email }}
+                  }
+                </small>
+              </span>
+            </div>
+          </ng-template>
+        </p-select>
+
+        <small class="to-form-field__support">
+          Assign now or leave unassigned for later
+          planning.
+        </small>
+
+        @if (isInvalid('technicianId')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('technicianId') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-severity">
+          Severity
+          <span class="to-required">*</span>
+        </label>
+
+        <p-select
+          inputId="work-order-severity"
+          formControlName="severity"
+          [options]="severityOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select severity"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-severity-select"
+        >
+          <ng-template
+            pTemplate="selectedItem"
+            let-option
+          >
+            @if (option) {
+              <span
+                class="to-severity"
+                [attr.data-severity]="
+                  option.value.toLowerCase()
+                "
+              >
+                <i></i>
+                {{ option.label }}
+              </span>
+            }
+          </ng-template>
+
+          <ng-template
+            pTemplate="item"
+            let-option
+          >
+            <div class="to-option-detail">
+              <span
+                class="to-severity"
+                [attr.data-severity]="
+                  option.value.toLowerCase()
+                "
+              >
+                <i></i>
+                {{ option.label }}
+              </span>
+
+              @if (option.description) {
+                <small>
+                  {{ option.description }}
+                </small>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        @if (isInvalid('severity')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('severity') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-priority">
+          Priority
+          <span class="to-required">*</span>
+        </label>
+
+        <p-select
+          inputId="work-order-priority"
+          formControlName="priority"
+          [options]="priorityOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select priority"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-priority-select"
+        >
+          <ng-template
+            pTemplate="item"
+            let-option
+          >
+            <div class="to-option-detail">
+              <strong>
+                {{ option.label }}
+              </strong>
+
+              @if (option.description) {
+                <small>
+                  {{ option.description }}
+                </small>
+              }
+            </div>
+          </ng-template>
+        </p-select>
+
+        @if (isInvalid('priority')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('priority') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-scheduled-at">
+          Scheduled date and time
+        </label>
+
+        <p-datepicker
+          inputId="work-order-scheduled-at"
+          formControlName="scheduledAt"
+          placeholder="Select schedule"
+          dateFormat="dd M yy"
+          [showIcon]="true"
+          [showTime]="true"
+          [hourFormat]="'24'"
+          [showButtonBar]="true"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-scheduled-at"
+          (onSelect)="onScheduledAtChange($event)"
+          (onClear)="onScheduledAtChange(null)"
+        />
+
+        <small class="to-form-field__support">
+          Required when a technician is assigned.
+        </small>
+
+        @if (isInvalid('scheduledAt')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('scheduledAt') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-estimated-hours">
+          Estimated hours
+        </label>
+
+        <p-inputnumber
+          inputId="work-order-estimated-hours"
+          formControlName="estimatedHours"
+          mode="decimal"
+          suffix=" hrs"
+          placeholder="0.00"
+          [min]="estimatedHoursMin"
+          [max]="estimatedHoursMax"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          [useGrouping]="false"
+          [disabled]="readonly()"
+          styleClass="to-field-control"
+          data-testid="work-order-estimated-hours"
+        />
+
+        <small class="to-form-field__support">
+          Expected time required to complete the work.
+        </small>
+
+        @if (isInvalid('estimatedHours')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('estimatedHours') }}
+          </small>
+        }
+      </div>
+    </div>
+  </div>
+</section>

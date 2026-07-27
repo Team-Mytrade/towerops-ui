@@ -1,0 +1,386 @@
+<section
+  class="to-dashboard"
+  data-testid="tenant-category-dashboard"
+>
+  @if (loadingDashboard()) {
+    <div class="to-dashboard__state">
+      <p-progress-spinner
+        strokeWidth="3"
+        ariaLabel="Loading dashboard"
+      />
+
+      <div>
+        <h2>Loading dashboard</h2>
+        <p>Preparing operational data...</p>
+      </div>
+    </div>
+  } @else if (pageError()) {
+    <div class="to-dashboard__state">
+      <span class="to-dashboard__state-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </span>
+
+      <div>
+        <h2>Dashboard unavailable</h2>
+        <p>{{ pageError() }}</p>
+      </div>
+
+      <p-button
+        label="Try again"
+        icon="pi pi-refresh"
+        data-testid="dashboard-retry-btn"
+        (click)="refresh()"
+      />
+    </div>
+  } @else if (summary(); as dashboard) {
+    <header class="to-dashboard__header">
+      <div>
+        <p class="to-dashboard__eyebrow">
+          Operational overview
+        </p>
+
+        <h1>
+          {{ categoryLabel() | titlecase }} Dashboard
+        </h1>
+
+        <p>
+          Live health, alerts and field activity for
+          {{ dashboard.sites.total }}
+          {{ categoryLabel() }} sites.
+        </p>
+      </div>
+
+      <div class="to-dashboard__actions">
+        <p-button
+          label="Change Category"
+          icon="pi pi-th-large"
+          severity="secondary"
+          [outlined]="true"
+          data-testid="change-category-btn"
+          (click)="changeCategory()"
+        />
+
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          [loading]="loadingDashboard()"
+          data-testid="refresh-dashboard-btn"
+          (click)="refresh()"
+        />
+      </div>
+    </header>
+
+    <div class="to-dashboard__kpis">
+      <article
+        class="to-kpi-card"
+        role="button"
+        tabindex="0"
+        data-testid="dashboard-total-sites"
+        (click)="openSites()"
+        (keydown.enter)="openSites()"
+        (keydown.space)="openSites(); $event.preventDefault()"
+      >
+        <span class="to-kpi-card__icon">
+          <i class="pi pi-map-marker"></i>
+        </span>
+
+        <div>
+          <span>Total Sites</span>
+          <strong>{{ dashboard.sites.total | number }}</strong>
+          <small>{{ healthyPercentage() }}% healthy</small>
+        </div>
+      </article>
+
+      <article class="to-kpi-card to-kpi-card--success">
+        <span class="to-kpi-card__icon">
+          <i class="pi pi-check-circle"></i>
+        </span>
+
+        <div>
+          <span>Healthy</span>
+          <strong>{{ dashboard.sites.healthy | number }}</strong>
+          <small>Operating normally</small>
+        </div>
+      </article>
+
+      <article class="to-kpi-card to-kpi-card--danger">
+        <span class="to-kpi-card__icon">
+          <i class="pi pi-exclamation-circle"></i>
+        </span>
+
+        <div>
+          <span>Critical</span>
+          <strong>{{ dashboard.sites.critical | number }}</strong>
+          <small>Requires attention</small>
+        </div>
+      </article>
+
+      <article
+        class="to-kpi-card to-kpi-card--warning"
+        role="button"
+        tabindex="0"
+        data-testid="dashboard-open-alerts"
+        (click)="openAlerts()"
+        (keydown.enter)="openAlerts()"
+        (keydown.space)="openAlerts(); $event.preventDefault()"
+      >
+        <span class="to-kpi-card__icon">
+          <i class="pi pi-bell"></i>
+        </span>
+
+        <div>
+          <span>Open Alerts</span>
+          <strong>{{ dashboard.openAlerts | number }}</strong>
+          <small>
+            {{ dashboard.criticalAlerts | number }} critical
+          </small>
+        </div>
+      </article>
+
+      <article
+        class="to-kpi-card"
+        role="button"
+        tabindex="0"
+        data-testid="dashboard-online-devices"
+        (click)="openDevices()"
+        (keydown.enter)="openDevices()"
+        (keydown.space)="openDevices(); $event.preventDefault()"
+      >
+        <span class="to-kpi-card__icon">
+          <i class="pi pi-microchip"></i>
+        </span>
+
+        <div>
+          <span>Devices Online</span>
+          <strong>
+            {{ dashboard.devices.online | number }}
+          </strong>
+          <small>
+            {{ onlineDevicePercentage() }}% availability
+          </small>
+        </div>
+      </article>
+
+      <article class="to-kpi-card to-kpi-card--danger">
+        <span class="to-kpi-card__icon">
+          <i class="pi pi-clock"></i>
+        </span>
+
+        <div>
+          <span>SLA Breaches</span>
+          <strong>{{ dashboard.slaBreaches | number }}</strong>
+          <small>Open violations</small>
+        </div>
+      </article>
+    </div>
+
+    <div class="to-dashboard__layout">
+      <article class="to-dashboard-card to-dashboard-card--map">
+        <header class="to-dashboard-card__header">
+          <div>
+            <span>Network view</span>
+            <h2>Site Map</h2>
+          </div>
+
+          <button
+            type="button"
+            class="to-dashboard-card__link"
+            data-testid="view-all-sites-btn"
+            (click)="openSites()"
+          >
+            View all sites
+            <i class="pi pi-arrow-right"></i>
+          </button>
+        </header>
+
+        @if (mapMarkers().length > 0) {
+          <to-map
+            [markers]="mapMarkers()"
+            height="33rem"
+            [center]="[25.2048, 55.2708]"
+            [zoom]="7"
+            [autoFitBounds]="true"
+            (markerSelected)="onMarkerSelected($event)"
+          />
+        } @else {
+          <div class="to-dashboard-card__map-empty">
+            <i class="pi pi-map-marker"></i>
+
+            <div>
+              <strong>No mapped sites</strong>
+
+              <span>
+                Sites with valid latitude and longitude will appear here.
+              </span>
+            </div>
+          </div>
+        }
+
+        <footer class="to-dashboard-card__legend">
+          <span>
+            <i class="to-health-dot to-health-dot--healthy"></i>
+            Healthy
+          </span>
+
+          <span>
+            <i class="to-health-dot to-health-dot--warning"></i>
+            Warning
+          </span>
+
+          <span>
+            <i class="to-health-dot to-health-dot--critical"></i>
+            Critical
+          </span>
+
+          <span>
+            <i class="to-health-dot to-health-dot--offline"></i>
+            Offline
+          </span>
+        </footer>
+      </article>
+
+      <div class="to-dashboard__side">
+        <article class="to-dashboard-card">
+          <header class="to-dashboard-card__header">
+            <div>
+              <span>Immediate attention</span>
+              <h2>Critical Alerts</h2>
+            </div>
+
+            <a
+              routerLink="/tenant/alerts"
+              [queryParams]="{
+                category: category()
+              }"
+              class="to-dashboard-card__link"
+            >
+              View all
+            </a>
+          </header>
+
+          <div class="to-dashboard-list">
+            @for (
+              alert of criticalAlerts();
+              track alert.id
+            ) {
+              <button
+                type="button"
+                class="to-dashboard-list__item"
+                [attr.data-testid]="
+                  'dashboard-alert-' + alert.id
+                "
+                (click)="openAlert(alert)"
+              >
+                <span
+                  class="to-dashboard-list__severity"
+                  [ngClass]="severityClass(alert.severity)"
+                ></span>
+
+                <div>
+                  <strong>{{ alert.message }}</strong>
+
+                  <span>
+                    {{
+                      alert.siteName ||
+                      alert.siteCode ||
+                      alert.deviceId ||
+                      'Unknown source'
+                    }}
+                  </span>
+
+                  <small>
+                    {{
+                      alert.timestamp
+                        | date: 'MMM d, h:mm a'
+                    }}
+                  </small>
+                </div>
+
+                <i class="pi pi-angle-right"></i>
+              </button>
+            } @empty {
+              <div class="to-dashboard-list__empty">
+                <i class="pi pi-check-circle"></i>
+                <span>No critical alerts</span>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="to-dashboard-card">
+          <header class="to-dashboard-card__header">
+            <div>
+              <span>Field operations</span>
+              <h2>Active Work Orders</h2>
+            </div>
+
+            <a
+              routerLink="/tenant/work-orders"
+              [queryParams]="{
+                category: category()
+              }"
+              class="to-dashboard-card__link"
+            >
+              View all
+            </a>
+          </header>
+
+          <div class="to-dashboard-list">
+            @for (
+              workOrder of activeWorkOrders();
+              track workOrder.id
+            ) {
+              <button
+                type="button"
+                class="to-dashboard-list__item"
+                [attr.data-testid]="
+                  'dashboard-work-order-' +
+                  workOrder.id
+                "
+                (click)="openWorkOrder(workOrder)"
+              >
+                <span
+                  class="to-work-order-status"
+                  [ngClass]="
+                    workOrderClass(workOrder.status)
+                  "
+                >
+                  <i class="pi pi-briefcase"></i>
+                </span>
+
+                <div>
+                  <strong>{{ workOrder.title }}</strong>
+
+                  <span>
+                    {{
+                      workOrder.technicianName ||
+                      'Unassigned'
+                    }}
+                  </span>
+
+                  <small>
+                    @if (workOrder.scheduledAt) {
+                      {{
+                        workOrder.scheduledAt
+                          | date: 'MMM d, h:mm a'
+                      }}
+                    } @else {
+                      Not scheduled
+                    }
+                  </small>
+                </div>
+
+                <i class="pi pi-angle-right"></i>
+              </button>
+            } @empty {
+              <div class="to-dashboard-list__empty">
+                <i class="pi pi-briefcase"></i>
+                <span>No active work orders</span>
+              </div>
+            }
+          </div>
+        </article>
+      </div>
+    </div>
+  }
+</section>

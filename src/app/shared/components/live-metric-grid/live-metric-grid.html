@@ -1,0 +1,250 @@
+<section
+  class="to-live-metric-grid"
+  [ngClass]="gridClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  @if (loading()) {
+    @for (
+      item of [1, 2, 3, 4];
+      track item
+    ) {
+      <article
+        class="to-live-metric-grid__skeleton"
+      >
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+
+        <span></span>
+        <span></span>
+      </article>
+    }
+  } @else {
+    @for (
+      metric of visibleMetrics();
+      track metric.id
+    ) {
+      <article
+        class="to-live-metric-grid__card"
+        [ngClass]="metricClasses(metric)"
+        [attr.data-testid]="
+          metric.dataTestId ??
+          'live-metric-' + metric.id
+        "
+        [attr.role]="
+          clickable()
+            ? 'button'
+            : null
+        "
+        [attr.tabindex]="
+          clickable()
+            ? 0
+            : null
+        "
+        (click)="selectMetric(metric)"
+        (keydown.enter)="
+          selectMetric(metric)
+        "
+        (keydown.space)="
+          selectMetric(metric)
+        "
+      >
+        <header>
+          <div
+            class="to-live-metric-grid__identity"
+          >
+            <span
+              class="to-live-metric-grid__icon"
+            >
+              <i
+                [class]="
+                  metric.icon ??
+                  'pi pi-chart-line'
+                "
+              ></i>
+            </span>
+
+            <div>
+              <strong>
+                {{ metric.label }}
+              </strong>
+
+              <small>
+                {{
+                  metricState(metric)
+                    | titlecase
+                }}
+              </small>
+            </div>
+          </div>
+
+          @if (
+            visibleActions(metric).length
+          ) {
+            <div
+              class="to-live-metric-grid__actions"
+            >
+              @for (
+                action of visibleActions(metric);
+                track action.id
+              ) {
+                <p-button
+                  type="button"
+                  [icon]="
+                    action.icon ??
+                    'pi pi-ellipsis-h'
+                  "
+                  [severity]="
+                    action.severity ??
+                    'secondary'
+                  "
+                  [text]="true"
+                  [rounded]="true"
+                  size="small"
+                  [disabled]="
+                    action.disabled === true
+                  "
+                  [loading]="
+                    action.loading === true
+                  "
+                  [pTooltip]="action.label"
+                  tooltipPosition="top"
+                  [attr.aria-label]="
+                    action.label
+                  "
+                  [attr.data-testid]="
+                    action.dataTestId ??
+                    'metric-action-' +
+                    action.id
+                  "
+                  (click)="
+                    triggerAction(
+                      $event,
+                      metric,
+                      action
+                    )
+                  "
+                />
+              }
+            </div>
+          }
+        </header>
+
+        <div
+          class="to-live-metric-grid__reading"
+        >
+          <strong>
+            {{ formattedValue(metric) }}
+          </strong>
+
+          @if (
+            metric.unit &&
+            metric.online !== false
+          ) {
+            <span>
+              {{ metric.unit }}
+            </span>
+          }
+        </div>
+
+        @if (
+          metric.displayType ===
+            'progress' ||
+          metric.displayType ===
+            'percentage'
+        ) {
+          <div
+            class="to-live-metric-grid__progress"
+          >
+            <p-progressbar
+              [value]="progressValue(metric)"
+              [showValue]="false"
+            />
+
+            <div>
+              <span>
+                {{
+                  metric.minimum ?? 0
+                }}
+                {{ metric.unit ?? '' }}
+              </span>
+
+              <span>
+                {{
+                  metric.maximum ?? 100
+                }}
+                {{ metric.unit ?? '' }}
+              </span>
+            </div>
+          </div>
+        }
+
+        @if (
+          showDescription() &&
+          metric.description
+        ) {
+          <p
+            class="to-live-metric-grid__description"
+          >
+            {{ metric.description }}
+          </p>
+        }
+
+        <footer>
+          @if (
+            showTrend() &&
+            metric.trend
+          ) {
+            <span
+              class="to-live-metric-grid__trend"
+              [class.to-live-metric-grid__trend--up]="
+                metric.trend === 'up'
+              "
+              [class.to-live-metric-grid__trend--down]="
+                metric.trend === 'down'
+              "
+            >
+              <i
+                [class]="
+                  trendIcon(metric.trend)
+                "
+              ></i>
+
+              {{ trendLabel(metric) }}
+            </span>
+          }
+
+          @if (
+            showUpdatedAt() &&
+            hasUpdatedAt(metric)
+          ) {
+            <time>
+              Updated
+              {{
+                updatedAtValue(metric)
+                  | date:dateFormat()
+              }}
+            </time>
+          }
+        </footer>
+      </article>
+    } @empty {
+      <div
+        class="to-live-metric-grid__empty"
+      >
+        <span>
+          <i class="pi pi-chart-line"></i>
+        </span>
+
+        <strong>
+          {{ emptyTitle() }}
+        </strong>
+
+        <p>
+          {{ emptyMessage() }}
+        </p>
+      </div>
+    }
+  }
+</section>

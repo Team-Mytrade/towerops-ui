@@ -1,0 +1,589 @@
+<section
+  class="to-tickets"
+  [class.to-tickets--detail-open]="selectedTicket()"
+  data-testid="tickets-page"
+>
+  <header class="to-tickets__header">
+    <div>
+      <p class="to-tickets__eyebrow">
+        Service Management
+      </p>
+
+      <h1>Tickets</h1>
+
+      <p>
+        Track incidents from alert creation through resolution.
+      </p>
+    </div>
+
+    <div class="to-tickets__header-actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        data-testid="refresh-tickets-btn"
+        (click)="refresh()"
+      />
+
+      @if (!formMode()) {
+        <p-button
+          label="Create Ticket"
+          icon="pi pi-plus"
+          data-testid="create-ticket-btn"
+          (click)="createTicket()"
+        />
+      }
+    </div>
+  </header>
+
+  @if (formMode(); as mode) {
+    @if (
+      mode === 'edit' &&
+      loadingTicketForEdit()
+    ) {
+      <div class="to-tickets__form-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+
+        <div>
+          <strong>Loading ticket</strong>
+
+          <span>
+            Preparing the ticket for editing...
+          </span>
+        </div>
+      </div>
+    } @else if (
+      mode === 'edit' &&
+      !editingTicket()
+    ) {
+      <div class="to-tickets__form-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+
+        <div>
+          <strong>Preparing ticket</strong>
+
+          <span>
+            Loading the selected ticket...
+          </span>
+        </div>
+      </div>
+    } @else {
+      <to-ticket-form
+        [mode]="mode"
+        [ticket]="editingTicket()"
+        (saved)="onTicketSaved($event)"
+        (cancelled)="closeForm()"
+      />
+    }
+  } @else {
+    <div class="to-tickets__summary">
+      <article>
+        <span>Total</span>
+        <strong>{{ totalTickets() }}</strong>
+      </article>
+
+      <article class="to-tickets__summary--open">
+        <span>Open</span>
+        <strong>{{ openTickets() }}</strong>
+      </article>
+
+      <article class="to-tickets__summary--assigned">
+        <span>Assigned</span>
+        <strong>{{ assignedTickets() }}</strong>
+      </article>
+
+      <article class="to-tickets__summary--progress">
+        <span>In Progress</span>
+        <strong>{{ inProgressTickets() }}</strong>
+      </article>
+
+      <article class="to-tickets__summary--closed">
+        <span>Resolved</span>
+        <strong>{{ closedTickets() }}</strong>
+      </article>
+
+      <article class="to-tickets__summary--critical">
+        <span>Critical</span>
+        <strong>{{ criticalTickets() }}</strong>
+      </article>
+    </div>
+
+    <div class="to-tickets__toolbar">
+      <div class="to-tickets__filters">
+        <div class="to-tickets__search">
+          <i class="pi pi-search"></i>
+
+          <input
+            pInputText
+            type="search"
+            placeholder="Search ticket, site, device or technician"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            data-testid="ticket-search-input"
+          />
+        </div>
+
+        <p-select
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Status"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+          data-testid="ticket-status-filter"
+        />
+
+        <p-select
+          [options]="priorityOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Priority"
+          [ngModel]="priorityFilter()"
+          (ngModelChange)="priorityFilter.set($event)"
+          data-testid="ticket-priority-filter"
+        />
+
+        <p-select
+          [options]="severityOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Severity"
+          [ngModel]="severityFilter()"
+          (ngModelChange)="severityFilter.set($event)"
+          data-testid="ticket-severity-filter"
+        />
+
+        <button
+          type="button"
+          class="to-tickets__clear"
+          data-testid="clear-ticket-filters-btn"
+          (click)="clearFilters()"
+        >
+          Clear filters
+        </button>
+      </div>
+
+      <span class="to-tickets__count">
+        {{ filteredTickets().length }} tickets
+      </span>
+    </div>
+
+    <div class="to-tickets__workspace">
+      <main class="to-tickets__content">
+        @if (loading()) {
+          <div class="to-tickets__state">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Loading tickets...</span>
+          </div>
+        } @else if (pageError()) {
+          <div class="to-tickets__state">
+            <i class="pi pi-exclamation-triangle"></i>
+
+            <strong>
+              Tickets could not be loaded
+            </strong>
+
+            <span>{{ pageError() }}</span>
+
+            <p-button
+              label="Try Again"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [outlined]="true"
+              (click)="refresh()"
+            />
+          </div>
+        } @else {
+          <div class="to-tickets__table">
+            <div class="to-tickets__table-header">
+              <span>Ticket</span>
+              <span>Priority</span>
+              <span>Status</span>
+              <span>Site</span>
+              <span>Device</span>
+              <span>Technician</span>
+              <span>Created</span>
+              <span></span>
+            </div>
+
+            @for (
+              ticket of filteredTickets();
+              track ticket.id
+            ) {
+              <button
+                type="button"
+                class="to-tickets__row"
+                [class.to-tickets__row--selected]="
+                  selectedTicket()?.id === ticket.id
+                "
+                [attr.data-testid]="
+                  'ticket-row-' + ticket.id
+                "
+                (click)="selectTicket(ticket)"
+              >
+                <span class="to-tickets__ticket">
+                  <span
+                    class="to-tickets__priority-line"
+                    [class.to-tickets__priority-line--critical]="
+                      ticket.priority === 'CRITICAL'
+                    "
+                    [class.to-tickets__priority-line--high]="
+                      ticket.priority === 'HIGH'
+                    "
+                    [class.to-tickets__priority-line--medium]="
+                      ticket.priority === 'MEDIUM'
+                    "
+                  ></span>
+
+                  <span>
+                    <strong>
+                      {{ ticket.title }}
+                    </strong>
+
+                    <small>
+                      {{ ticket.ticketCode }}
+                      ·
+                      {{ ticket.description }}
+                    </small>
+                  </span>
+                </span>
+
+                <span>
+                  <p-tag
+                    [value]="ticket.priority"
+                    [severity]="
+                      prioritySeverity(
+                        ticket.priority
+                      )
+                    "
+                  />
+                </span>
+
+                <span>
+                  <p-tag
+                    [value]="ticket.status"
+                    [severity]="
+                      statusSeverity(
+                        ticket.status
+                      )
+                    "
+                  />
+                </span>
+
+                <span>
+                  <strong>
+                    {{
+                      ticket.siteName ||
+                      'Unknown site'
+                    }}
+                  </strong>
+
+                  <small>
+                    {{ ticket.siteCode || '—' }}
+                  </small>
+                </span>
+
+                <span>
+                  <strong>
+                    {{
+                      ticket.deviceName ||
+                      'No device'
+                    }}
+                  </strong>
+
+                  <small>
+                    {{ ticket.deviceCode || '—' }}
+                  </small>
+                </span>
+
+                <span>
+                  <strong>
+                    {{
+                      ticket.assignedTechnicianName ||
+                      'Unassigned'
+                    }}
+                  </strong>
+
+                  <small>
+                    {{
+                      ticket.assignedTechnicianCode ||
+                      '—'
+                    }}
+                  </small>
+                </span>
+
+                <span>
+                  {{
+                    ticket.createdAt
+                      | date:'MMM d, h:mm a'
+                  }}
+                </span>
+
+                <span>
+                  <i class="pi pi-angle-right"></i>
+                </span>
+              </button>
+            } @empty {
+              <div class="to-tickets__state">
+                <i class="pi pi-ticket"></i>
+
+                <strong>No tickets found</strong>
+
+                <span>
+                  Adjust the filters or create a new ticket.
+                </span>
+
+                <p-button
+                  label="Create Ticket"
+                  icon="pi pi-plus"
+                  (click)="createTicket()"
+                />
+              </div>
+            }
+          </div>
+        }
+      </main>
+
+      @if (selectedTicket(); as ticket) {
+        <aside class="to-tickets__details">
+          <header>
+            <div>
+              <span>{{ ticket.ticketCode }}</span>
+              <h2>{{ ticket.title }}</h2>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Close ticket details"
+              data-testid="close-ticket-details-btn"
+              (click)="closeDetails()"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </header>
+
+          <div class="to-tickets__details-body">
+            <div class="to-tickets__tags">
+              <p-tag
+                [value]="ticket.priority"
+                [severity]="
+                  prioritySeverity(
+                    ticket.priority
+                  )
+                "
+              />
+
+              <p-tag
+                [value]="ticket.status"
+                [severity]="
+                  statusSeverity(
+                    ticket.status
+                  )
+                "
+              />
+
+              <p-tag
+                [value]="ticket.severity"
+                [severity]="
+                  severityTag(
+                    ticket.severity
+                  )
+                "
+              />
+            </div>
+
+            <section>
+              <span>Description</span>
+              <p>{{ ticket.description }}</p>
+            </section>
+
+            <section>
+              <span>Site</span>
+
+              <button
+                type="button"
+                [disabled]="!ticket.siteId"
+                data-testid="open-ticket-site-btn"
+                (click)="openSite(ticket)"
+              >
+                {{
+                  ticket.siteName ||
+                  'Unknown site'
+                }}
+
+                <i class="pi pi-arrow-right"></i>
+              </button>
+            </section>
+
+            <section>
+              <span>Device</span>
+
+              <button
+                type="button"
+                [disabled]="!ticket.deviceId"
+                data-testid="open-ticket-device-btn"
+                (click)="openDevice(ticket)"
+              >
+                {{
+                  ticket.deviceName ||
+                  'No device linked'
+                }}
+
+                <i class="pi pi-arrow-right"></i>
+              </button>
+            </section>
+
+            <section>
+              <span>Assigned Technician</span>
+
+              <strong>
+                {{
+                  ticket.assignedTechnicianName ||
+                  'Unassigned'
+                }}
+              </strong>
+
+              <small>
+                {{
+                  ticket.assignedTechnicianCode ||
+                  'No technician assigned'
+                }}
+              </small>
+            </section>
+
+            <section>
+              <span>Source</span>
+
+              <strong>
+                {{ ticket.source | titlecase }}
+              </strong>
+            </section>
+
+            <section>
+              <span>Created At</span>
+
+              <strong>
+                {{
+                  ticket.createdAt
+                    | date:'MMM d, y, h:mm a'
+                }}
+              </strong>
+            </section>
+
+            @if (ticket.responseDueAt) {
+              <section>
+                <span>Response Due</span>
+
+                <strong>
+                  {{
+                    ticket.responseDueAt
+                      | date:'MMM d, y, h:mm a'
+                  }}
+                </strong>
+              </section>
+            }
+
+            @if (ticket.resolutionDueAt) {
+              <section>
+                <span>Resolution Due</span>
+
+                <strong>
+                  {{
+                    ticket.resolutionDueAt
+                      | date:'MMM d, y, h:mm a'
+                  }}
+                </strong>
+              </section>
+            }
+
+            @if (ticket.alertId) {
+              <section>
+                <span>Related Alert</span>
+
+                <button
+                  type="button"
+                  data-testid="open-ticket-alert-btn"
+                  (click)="openAlert(ticket)"
+                >
+                  {{
+                    ticket.alertCode ||
+                    ticket.alertId
+                  }}
+
+                  <i class="pi pi-arrow-right"></i>
+                </button>
+              </section>
+            }
+
+            @if (ticket.workOrderId) {
+              <section>
+                <span>Work Order</span>
+
+                <button
+                  type="button"
+                  data-testid="open-ticket-work-order-btn"
+                  (click)="openWorkOrder(ticket)"
+                >
+                  {{
+                    ticket.workOrderCode ||
+                    ticket.workOrderId
+                  }}
+
+                  <i class="pi pi-arrow-right"></i>
+                </button>
+              </section>
+            }
+
+            @if (ticket.estimatedResolutionAt) {
+              <section>
+                <span>Estimated Resolution</span>
+
+                <strong>
+                  {{
+                    ticket.estimatedResolutionAt
+                      | date:'MMM d, y, h:mm a'
+                  }}
+                </strong>
+              </section>
+            }
+
+            @if (ticket.resolution) {
+              <section>
+                <span>Resolution</span>
+                <p>{{ ticket.resolution }}</p>
+              </section>
+            }
+
+            @if (ticket.remarks) {
+              <section>
+                <span>Remarks</span>
+                <p>{{ ticket.remarks }}</p>
+              </section>
+            }
+          </div>
+
+          <footer>
+            <p-button
+              label="Edit"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [outlined]="true"
+              data-testid="edit-ticket-btn"
+              (click)="editTicket(ticket)"
+            />
+
+            <p-button
+              label="Open Ticket"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              data-testid="open-ticket-btn"
+              (click)="openTicket(ticket)"
+            />
+          </footer>
+        </aside>
+      }
+    </div>
+  }
+</section>

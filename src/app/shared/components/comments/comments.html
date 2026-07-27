@@ -1,0 +1,427 @@
+<section
+  class="to-comments"
+  data-testid="comments-component"
+>
+  <header class="to-comments__header">
+    <div>
+      <span class="to-comments__header-icon">
+        <i class="pi pi-comments"></i>
+      </span>
+
+      <div>
+        <h2>Comments</h2>
+        <p>{{ commentCount() }} comments</p>
+      </div>
+    </div>
+
+    @if (!readOnly() && !composerOpen()) {
+      <p-button
+        label="Add Comment"
+        icon="pi pi-plus"
+        severity="secondary"
+        [outlined]="true"
+        data-testid="open-comment-composer-btn"
+        (click)="openComposer()"
+      />
+    }
+  </header>
+
+  @if (composerOpen() && !readOnly()) {
+    <section
+      class="to-comments__composer"
+      data-testid="comment-composer"
+    >
+      <label for="commentMessage">
+        Add comment
+      </label>
+
+      <textarea
+        id="commentMessage"
+        pTextarea
+        rows="4"
+        maxlength="3000"
+        placeholder="Share an update, observation or resolution note..."
+        [ngModel]="draftMessage()"
+        (ngModelChange)="draftMessage.set($event)"
+        data-testid="comment-message-input"
+      ></textarea>
+
+      @if (selectedFiles().length) {
+        <div class="to-comments__selected-files">
+          @for (
+            file of selectedFiles();
+            track file.name + file.size + file.lastModified
+          ) {
+            <article>
+              <span class="to-comments__file-icon">
+                <i
+                  [class]="fileIcon(file.type || file.name)"
+                ></i>
+              </span>
+
+              <div>
+                <strong>{{ file.name }}</strong>
+
+                <small>
+                  {{ formatFileSize(file.size) }}
+                </small>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Remove selected file"
+                [attr.data-testid]="
+                  'remove-comment-file-' + $index
+                "
+                (click)="removeSelectedFile(file)"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </article>
+          }
+        </div>
+      }
+
+      @if (validationMessage()) {
+        <p
+          class="to-comments__validation"
+          role="alert"
+        >
+          <i class="pi pi-exclamation-circle"></i>
+
+          {{ validationMessage() }}
+        </p>
+      }
+
+      <footer class="to-comments__composer-footer">
+        <div>
+          @if (allowAttachments()) {
+            <label
+              class="to-comments__attach"
+              for="commentAttachments"
+              data-testid="attach-comment-file-btn"
+            >
+              <i class="pi pi-paperclip"></i>
+              Attach files
+            </label>
+
+            <input
+              id="commentAttachments"
+              class="to-comments__file-input"
+              type="file"
+              multiple
+              [accept]="acceptedFileTypes()"
+              (change)="onFilesSelected($event)"
+            />
+          }
+
+          <small>
+            {{ draftMessage().length }}/3000
+          </small>
+        </div>
+
+        <div class="to-comments__composer-actions">
+          <p-button
+            type="button"
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            [disabled]="submitting()"
+            data-testid="cancel-comment-btn"
+            (click)="closeComposer()"
+          />
+
+          <p-button
+            type="button"
+            label="Comment"
+            icon="pi pi-send"
+            [loading]="submitting()"
+            [disabled]="!canSubmit()"
+            data-testid="submit-comment-btn"
+            (click)="submitComment()"
+          />
+        </div>
+      </footer>
+    </section>
+  }
+
+  <div class="to-comments__content">
+    @if (loading()) {
+      <div
+        class="to-comments__skeletons"
+        aria-label="Loading comments"
+      >
+        @for (item of [1, 2, 3]; track item) {
+          <article class="to-comments__skeleton">
+            <span></span>
+
+            <div>
+              <i></i>
+              <i></i>
+              <i></i>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      @for (
+        group of groupedComments();
+        track group.key
+      ) {
+        <section class="to-comments__group">
+          <div class="to-comments__date-divider">
+            <span>{{ group.label }}</span>
+          </div>
+
+          @for (
+            comment of group.comments;
+            track comment.id
+          ) {
+            <article
+              class="to-comment"
+              [attr.data-testid]="
+                'comment-' + comment.id
+              "
+            >
+              <div class="to-comment__avatar">
+                @if (comment.createdByAvatar) {
+                  <img
+                    [src]="comment.createdByAvatar"
+                    [alt]="comment.createdByName"
+                  />
+                } @else {
+                  <span>
+                    {{ initials(comment.createdByName) }}
+                  </span>
+                }
+              </div>
+
+              <div class="to-comment__body">
+                <header class="to-comment__header">
+                  <div>
+                    <strong>
+                      {{ comment.createdByName }}
+                    </strong>
+
+                    <span>
+                      {{
+                        comment.createdAt
+                          | date:'h:mm a'
+                      }}
+                    </span>
+
+                    @if (comment.edited) {
+                      <small>Edited</small>
+                    }
+                  </div>
+
+                  @if (canManageComment(comment)) {
+                    <div class="to-comment__actions">
+                      <button
+                        type="button"
+                        aria-label="Edit comment"
+                        [attr.data-testid]="
+                          'edit-comment-' + comment.id
+                        "
+                        (click)="startEdit(comment)"
+                      >
+                        <i class="pi pi-pencil"></i>
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-label="Delete comment"
+                        [attr.data-testid]="
+                          'delete-comment-' + comment.id
+                        "
+                        (click)="requestDelete(comment)"
+                      >
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    </div>
+                  }
+                </header>
+
+                @if (
+                  editingCommentId() === comment.id
+                ) {
+                  <div class="to-comment__edit">
+                    <textarea
+                      pTextarea
+                      rows="3"
+                      maxlength="3000"
+                      [ngModel]="editingMessage()"
+                      (ngModelChange)="
+                        editingMessage.set($event)
+                      "
+                      [attr.data-testid]="
+                        'edit-comment-input-' +
+                        comment.id
+                      "
+                    ></textarea>
+
+                    <div>
+                      <p-button
+                        type="button"
+                        label="Cancel"
+                        severity="secondary"
+                        [text]="true"
+                        [disabled]="submitting()"
+                        [attr.data-testid]="
+                          'cancel-edit-comment-' +
+                          comment.id
+                        "
+                        (click)="cancelEdit()"
+                      />
+
+                      <p-button
+                        type="button"
+                        label="Save"
+                        icon="pi pi-check"
+                        [loading]="submitting()"
+                        [disabled]="
+                          submitting() ||
+                          !editingMessage().trim()
+                        "
+                        [attr.data-testid]="
+                          'save-edit-comment-' +
+                          comment.id
+                        "
+                        (click)="saveEdit(comment)"
+                      />
+                    </div>
+                  </div>
+                } @else {
+                  <p class="to-comment__message">
+                    {{ comment.message }}
+                  </p>
+                }
+
+                @if (comment.mentions?.length) {
+                  <div class="to-comment__mentions">
+                    @for (
+                      mention of comment.mentions;
+                      track mention
+                    ) {
+                      <span>
+                        @{{ mention }}
+                      </span>
+                    }
+                  </div>
+                }
+
+                @if (comment.attachments?.length) {
+                  <div class="to-comment__attachments">
+                    @for (
+                      attachment of comment.attachments;
+                      track attachment.id
+                    ) {
+                      <button
+                        type="button"
+                        [attr.data-testid]="
+                          'comment-attachment-' +
+                          attachment.id
+                        "
+                        (click)="
+                          openAttachment(attachment)
+                        "
+                      >
+                        <span class="to-comments__file-icon">
+                          <i
+                            [class]="
+                              fileIcon(
+                                attachment.fileType ||
+                                attachment.fileName
+                              )
+                            "
+                          ></i>
+                        </span>
+
+                        <span>
+                          <strong>
+                            {{ attachment.fileName }}
+                          </strong>
+
+                          <small>
+                            {{
+                              formatFileSize(
+                                attachment.fileSize
+                              )
+                            }}
+                          </small>
+                        </span>
+
+                        <i class="pi pi-arrow-up-right"></i>
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (
+                  deletingCommentId() === comment.id
+                ) {
+                  <div
+                    class="to-comment__delete-confirmation"
+                    role="alert"
+                  >
+                    <span>
+                      Delete this comment?
+                    </span>
+
+                    <div>
+                      <button
+                        type="button"
+                        [attr.data-testid]="
+                          'cancel-delete-comment-' +
+                          comment.id
+                        "
+                        (click)="cancelDelete()"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        class="to-comment__delete-action"
+                        [attr.data-testid]="
+                          'confirm-delete-comment-' +
+                          comment.id
+                        "
+                        (click)="confirmDelete(comment)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        </section>
+      } @empty {
+        <div class="to-comments__empty">
+          <span>
+            <i class="pi pi-comments"></i>
+          </span>
+
+          <strong>No comments yet</strong>
+
+          <p>
+            Start the discussion by adding the first comment.
+          </p>
+
+          @if (!readOnly()) {
+            <p-button
+              label="Add Comment"
+              icon="pi pi-plus"
+              severity="secondary"
+              [outlined]="true"
+              data-testid="empty-add-comment-btn"
+              (click)="openComposer()"
+            />
+          }
+        </div>
+      }
+    }
+  </div>
+</section>

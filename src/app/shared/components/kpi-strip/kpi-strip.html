@@ -1,0 +1,115 @@
+<section
+  class="to-kpi-strip"
+  [class.to-kpi-strip--compact]="compact()"
+  [style]="gridStyle()"
+  [attr.data-testid]="dataTestId()"
+>
+  @for (
+    item of items();
+    track item.id
+  ) {
+    <article
+      class="to-kpi-strip__item"
+      [class.to-kpi-strip__item--clickable]="
+        item.clickable === true
+      "
+      [class.to-kpi-strip__item--active]="
+        item.active === true
+      "
+      [class.to-kpi-strip__item--disabled]="
+        item.disabled === true
+      "
+      [class]="
+        'to-kpi-strip__item--' +
+        itemTone(item)
+      "
+      [attr.data-testid]="
+        item.dataTestId ??
+        'kpi-item-' + item.id
+      "
+      [attr.tabindex]="
+        item.clickable === true &&
+        item.disabled !== true
+          ? 0
+          : null
+      "
+      [attr.role]="
+        item.clickable === true
+          ? 'button'
+          : null
+      "
+      (click)="selectItem(item)"
+      (keydown.enter)="selectItem(item)"
+      (keydown.space)="selectItem(item)"
+    >
+      <span class="to-kpi-strip__accent"></span>
+
+      <div class="to-kpi-strip__content">
+        <div class="to-kpi-strip__top">
+          <span class="to-kpi-strip__label">
+            {{ item.label }}
+          </span>
+
+          @if (item.icon) {
+            <span class="to-kpi-strip__icon">
+              <i [class]="item.icon"></i>
+            </span>
+          }
+        </div>
+
+        @if (item.loading === true) {
+          <div
+            class="to-kpi-strip__value-skeleton"
+            aria-label="Loading KPI"
+          ></div>
+        } @else {
+          <strong class="to-kpi-strip__value">
+            {{ displayValue(item) }}
+          </strong>
+        }
+
+        @if (
+          item.description ||
+          item.trend !== null &&
+          item.trend !== undefined
+        ) {
+          <div class="to-kpi-strip__footer">
+            @if (
+              item.trend !== null &&
+              item.trend !== undefined
+            ) {
+              <span
+                class="to-kpi-strip__trend"
+                [class.to-kpi-strip__trend--up]="
+                  trendDirection(item.trend) === 'up'
+                "
+                [class.to-kpi-strip__trend--down]="
+                  trendDirection(item.trend) === 'down'
+                "
+              >
+                <i
+                  [class]="trendIcon(item.trend)"
+                ></i>
+
+                {{
+                  item.trend
+                    | number:'1.0-1'
+                }}%
+              </span>
+            }
+
+            @if (item.trendLabel) {
+              <span>
+                {{ item.trendLabel }}
+              </span>
+            } @else if (item.description) {
+              <span>
+                {{ item.description }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </article>
+  }
+</section>

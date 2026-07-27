@@ -1,0 +1,330 @@
+<section
+  class="to-filter-bar"
+  [attr.data-testid]="dataTestId()"
+>
+  <div class="to-filter-bar__main">
+    <div class="to-filter-bar__fields">
+      @for (
+        field of visiblePrimaryFields();
+        track field.key
+      ) {
+        <ng-container
+          [ngTemplateOutlet]="filterField"
+          [ngTemplateOutletContext]="{
+            $implicit: field
+          }"
+        />
+      }
+    </div>
+
+    <div class="to-filter-bar__actions">
+      @if (
+        collapsible() &&
+        hasAdvancedFields()
+      ) {
+        <p-button
+          type="button"
+          severity="secondary"
+          [outlined]="true"
+          [icon]="
+            advancedOpen()
+              ? 'pi pi-chevron-up'
+              : 'pi pi-sliders-h'
+          "
+          [label]="
+            advancedOpen()
+              ? 'Hide Filters'
+              : 'More Filters'
+          "
+          [badge]="
+            activeCount()
+              ? activeCount().toString()
+              : undefined
+          "
+          (click)="toggleAdvanced()"
+        />
+      }
+
+      @if (showClear()) {
+        <p-button
+          type="button"
+          severity="secondary"
+          [text]="true"
+          icon="pi pi-filter-slash"
+          [label]="clearLabel()"
+          [disabled]="
+            !hasActiveFilters() ||
+            loading()
+          "
+          (click)="clearFilters()"
+        />
+      }
+
+      @if (
+        showApply() ||
+        !autoApply()
+      ) {
+        <p-button
+          type="button"
+          icon="pi pi-check"
+          [label]="applyLabel()"
+          [loading]="loading()"
+          (click)="applyFilters()"
+        />
+      }
+    </div>
+  </div>
+
+  @if (
+    advancedOpen() &&
+    hasAdvancedFields()
+  ) {
+    <div class="to-filter-bar__advanced">
+      @for (
+        field of visibleAdvancedFields();
+        track field.key
+      ) {
+        <ng-container
+          [ngTemplateOutlet]="filterField"
+          [ngTemplateOutletContext]="{
+            $implicit: field
+          }"
+        />
+      }
+    </div>
+  }
+</section>
+
+<ng-template
+  #filterField
+  let-field
+>
+  <div
+    class="to-filter-bar__field"
+    [class.to-filter-bar__field--search]="
+      field.type === 'search'
+    "
+  >
+    @if (field.label) {
+      <label>
+        {{ field.label }}
+      </label>
+    }
+
+    @switch (field.type) {
+      @case ('search') {
+        <p-iconfield>
+          <p-inputicon>
+            <i
+              [class]="
+                field.icon ??
+                'pi pi-search'
+              "
+            ></i>
+          </p-inputicon>
+
+          <input
+            pInputText
+            type="search"
+            [placeholder]="
+              field.placeholder ??
+              'Search...'
+            "
+            [ngModel]="
+              stringValue(field.key)
+            "
+            [disabled]="
+              field.disabled === true
+            "
+            [attr.data-testid]="
+              field.dataTestId ??
+              'filter-' + field.key
+            "
+            (ngModelChange)="
+              updateFilter(
+                field,
+                $event
+              )
+            "
+          />
+        </p-iconfield>
+      }
+
+      @case ('select') {
+        <p-select
+          [options]="field.options ?? []"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="
+            field.placeholder ??
+            'Select'
+          "
+          [showClear]="
+            field.clearable !== false
+          "
+          [filter]="
+            field.searchable === true
+          "
+          [disabled]="
+            field.disabled === true
+          "
+          [ngModel]="
+            selectValue(field.key)
+          "
+          [attr.data-testid]="
+            field.dataTestId ??
+            'filter-' + field.key
+          "
+          (ngModelChange)="
+            updateFilter(
+              field,
+              $event
+            )
+          "
+        />
+      }
+
+      @case ('multiselect') {
+        <p-multiselect
+          [options]="field.options ?? []"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="
+            field.placeholder ??
+            'Select'
+          "
+          [filter]="
+            field.searchable !== false
+          "
+          [showClear]="
+            field.clearable !== false
+          "
+          [disabled]="
+            field.disabled === true
+          "
+          [ngModel]="
+            multiSelectValue(
+              field.key
+            )
+          "
+          [attr.data-testid]="
+            field.dataTestId ??
+            'filter-' + field.key
+          "
+          (ngModelChange)="
+            updateFilter(
+              field,
+              $event
+            )
+          "
+        />
+      }
+
+      @case ('date') {
+        <p-datepicker
+          [placeholder]="
+            field.placeholder ??
+            'Select date'
+          "
+          [dateFormat]="
+            field.dateFormat ??
+            'dd M yy'
+          "
+          [showIcon]="true"
+          [showClear]="
+            field.clearable !== false
+          "
+          [minDate]="field.minDate"
+          [maxDate]="field.maxDate"
+          [disabled]="
+            field.disabled === true
+          "
+          [ngModel]="
+            dateValue(field.key)
+          "
+          [attr.data-testid]="
+            field.dataTestId ??
+            'filter-' + field.key
+          "
+          (ngModelChange)="
+            updateFilter(
+              field,
+              $event
+            )
+          "
+        />
+      }
+
+      @case ('daterange') {
+        <p-datepicker
+          selectionMode="range"
+          [placeholder]="
+            field.placeholder ??
+            'Select date range'
+          "
+          [dateFormat]="
+            field.dateFormat ??
+            'dd M yy'
+          "
+          [showIcon]="true"
+          [showClear]="
+            field.clearable !== false
+          "
+          [minDate]="field.minDate"
+          [maxDate]="field.maxDate"
+          [disabled]="
+            field.disabled === true
+          "
+          [ngModel]="
+            dateRangeValue(
+              field.key
+            )
+          "
+          [attr.data-testid]="
+            field.dataTestId ??
+            'filter-' + field.key
+          "
+          (ngModelChange)="
+            updateFilter(
+              field,
+              $event
+            )
+          "
+        />
+      }
+
+      @case ('toggle') {
+        <div class="to-filter-bar__toggle">
+          <p-toggleswitch
+            [ngModel]="
+              toggleValue(field.key)
+            "
+            [disabled]="
+              field.disabled === true
+            "
+            [attr.data-testid]="
+              field.dataTestId ??
+              'filter-' + field.key
+            "
+            (ngModelChange)="
+              updateFilter(
+                field,
+                $event
+              )
+            "
+          />
+
+          <span>
+            {{
+              toggleValue(field.key)
+                ? field.trueLabel ??
+                  'Enabled'
+                : field.falseLabel ??
+                  'Disabled'
+            }}
+          </span>
+        </div>
+      }
+    }
+  </div>
+</ng-template>

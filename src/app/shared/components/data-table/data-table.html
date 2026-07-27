@@ -1,0 +1,542 @@
+<section
+  class="to-data-table"
+  [attr.data-testid]="dataTestId()"
+>
+  <header class="to-data-table__toolbar">
+    <div class="to-data-table__toolbar-left">
+      @if (showGlobalSearch()) {
+        <div class="to-data-table__search">
+          <i class="pi pi-search"></i>
+
+          <input
+            pInputText
+            type="search"
+            [placeholder]="globalSearchPlaceholder()"
+            [ngModel]="globalSearch()"
+            (ngModelChange)="onGlobalSearch($event)"
+            data-testid="table-global-search"
+          />
+
+          @if (globalSearch()) {
+            <button
+              type="button"
+              aria-label="Clear global search"
+              data-testid="clear-global-search-btn"
+              (click)="clearGlobalSearch()"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          }
+        </div>
+      }
+
+      @if (hasActiveFilters()) {
+        <button
+          type="button"
+          class="to-data-table__clear"
+          data-testid="clear-table-filters-btn"
+          (click)="clearFilters()"
+        >
+          <i class="pi pi-filter-slash"></i>
+          Clear filters
+        </button>
+      }
+    </div>
+
+    <div class="to-data-table__toolbar-right">
+      @if (showResultCount()) {
+        <span class="to-data-table__count">
+          {{ resultLabel() }}
+        </span>
+      }
+
+      @if (showColumnVisibility()) {
+        <div class="to-data-table__visibility">
+          <p-button
+            icon="pi pi-table"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            ariaLabel="Manage columns"
+            data-testid="manage-table-columns-btn"
+            (click)="toggleVisibilityMenu()"
+          />
+
+          @if (visibilityOpen()) {
+            <div
+              class="to-data-table__visibility-menu"
+              data-testid="table-column-menu"
+            >
+              <header>
+                <strong>Columns</strong>
+
+                <button
+                  type="button"
+                  aria-label="Close column menu"
+                  data-testid="close-column-menu-btn"
+                  (click)="closeVisibilityMenu()"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+              </header>
+
+              <div>
+                @for (
+                  column of columns();
+                  track column.field
+                ) {
+            <label
+  [class.to-data-table__visibility-option--locked]="
+    column.locked === true
+  "
+>
+  <p-checkbox
+    [binary]="true"
+    [disabled]="column.locked === true"
+    [ngModel]="isColumnVisible(column)"
+    (ngModelChange)="
+      toggleColumnVisibility(column)
+    "
+  />
+
+  <span>{{ column.header }}</span>
+</label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="to-data-table__state">
+      <span class="to-data-table__state-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </span>
+
+      <strong>{{ errorTitle() }}</strong>
+
+      <p>{{ error() }}</p>
+
+      <p-button
+        label="Try Again"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        data-testid="retry-table-load-btn"
+        (click)="retryLoad()"
+      />
+    </div>
+  } @else {
+    <p-table
+      [value]="displayedRows()"
+      [dataKey]="rowKey()"
+      [loading]="loading()"
+      [lazy]="lazy()"
+      [paginator]="paginator()"
+      [rows]="currentPageSize()"
+      [first]="first()"
+      [totalRecords]="effectiveTotalRecords()"
+      [rowsPerPageOptions]="rowsPerPageOptions()"
+      [rowHover]="rowHover()"
+      [scrollable]="true"
+      [tableStyle]="{
+        'min-width': minTableWidth()
+      }"
+      [selectionMode]="primeSelectionMode()"
+      [selection]="selectionValue()"
+      [sortField]="currentSort()?.field"
+      [sortOrder]="
+        currentSort()?.direction === 'desc'
+          ? -1
+          : 1
+      "
+      (selectionChange)="onSelectionChange($event)"
+      (onPage)="onPage($event)"
+      (onLazyLoad)="onPrimeLazyLoad($event)"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          @if (isMultipleSelection()) {
+            <th class="to-data-table__selection-column">
+              <p-tableHeaderCheckbox />
+            </th>
+          }
+
+          @for (
+            column of visibleColumns();
+            track column.field
+          ) {
+       <th
+  [style]="columnStyle(column)"
+  [class]="column.className"
+  [class.to-data-table__cell--center]="
+    column.align === 'center'
+  "
+  [class.to-data-table__cell--right]="
+    column.align === 'right'
+  "
+  [pSortableColumn]="
+    column.sortable === true
+      ? sortField(column)
+      : undefined
+  "
+  [pSortableColumnDisabled]="
+    column.sortable !== true
+  "
+  (click)="
+    !lazy() &&
+    column.sortable === true &&
+    onClientSort(sortField(column))
+  "
+>
+              <span class="to-data-table__header-content">
+                <span>{{ column.header }}</span>
+
+                @if (column.sortable) {
+                  <p-sortIcon
+                    [field]="sortField(column)"
+                  />
+                }
+              </span>
+            </th>
+          }
+        </tr>
+
+        @if (hasColumnFilters()) {
+          <tr class="to-data-table__filter-row">
+            @if (isMultipleSelection()) {
+              <th></th>
+            }
+
+            @for (
+              column of visibleColumns();
+              track column.field
+            ) {
+              <th [style]="columnStyle(column)">
+                @if (column.filterable) {
+                  @switch (
+                    column.filterType ?? 'text'
+                  ) {
+                    @case ('select') {
+                      <p-select
+                        [options]="
+                          column.filterOptions ?? []
+                        "
+                        optionLabel="label"
+                        optionValue="value"
+                        [showClear]="true"
+                        appendTo="body"
+                        [placeholder]="
+                          column.filterPlaceholder ??
+                          'All'
+                        "
+                        [ngModel]="filterValue(column)"
+                        (ngModelChange)="
+                          onFilterChange(
+                            column,
+                            $event
+                          )
+                        "
+                      />
+                    }
+
+                    @case ('boolean') {
+                      <p-select
+                        [options]="[
+                          {
+                            label:
+                              column.trueLabel ??
+                              'Yes',
+                            value: true
+                          },
+                          {
+                            label:
+                              column.falseLabel ??
+                              'No',
+                            value: false
+                          }
+                        ]"
+                        optionLabel="label"
+                        optionValue="value"
+                        [showClear]="true"
+                        appendTo="body"
+                        placeholder="All"
+                        [ngModel]="filterValue(column)"
+                        (ngModelChange)="
+                          onFilterChange(
+                            column,
+                            $event
+                          )
+                        "
+                      />
+                    }
+
+                    @case ('number') {
+                      <input
+                        pInputText
+                        type="number"
+                        [placeholder]="
+                          column.filterPlaceholder ??
+                          'Search'
+                        "
+                        [ngModel]="filterValue(column)"
+                        (ngModelChange)="
+                          onFilterChange(
+                            column,
+                            $event
+                          )
+                        "
+                      />
+                    }
+
+                    @default {
+                      <input
+                        pInputText
+                        type="search"
+                        [placeholder]="
+                          column.filterPlaceholder ??
+                          'Search'
+                        "
+                        [ngModel]="filterValue(column)"
+                        (ngModelChange)="
+                          onFilterChange(
+                            column,
+                            $event
+                          )
+                        "
+                      />
+                    }
+                  }
+                }
+              </th>
+            }
+          </tr>
+        }
+      </ng-template>
+
+      <ng-template
+        pTemplate="body"
+        let-row
+        let-rowIndex="rowIndex"
+      >
+        <tr
+          [pSelectableRow]="primeSelectableRow(row)"
+          [pSelectableRowIndex]="rowIndex"
+          (click)="onRowClick(row, $event)"
+          (dblclick)="onRowDoubleClick(row)"
+        >
+          @if (isMultipleSelection()) {
+            <td class="to-data-table__selection-column">
+              <p-tableCheckbox [value]="row" />
+            </td>
+          }
+
+          @for (
+            column of visibleColumns();
+            track column.field
+          ) {
+            <td
+              [style]="columnStyle(column)"
+              [class]="column.className"
+              [class.to-data-table__cell--center]="
+                column.align === 'center'
+              "
+              [class.to-data-table__cell--right]="
+                column.align === 'right'
+              "
+              [class.to-data-table__cell--wrap]="
+                column.wrap
+              "
+            >
+              @if (
+                cellTemplate(column);
+                as customTemplate
+              ) {
+                <ng-container
+                  [ngTemplateOutlet]="customTemplate"
+                  [ngTemplateOutletContext]="{
+                    $implicit: row,
+                    row,
+                    column,
+                    value: value(row, column),
+                    rowIndex
+                  }"
+                />
+              } @else {
+                @switch (
+                  column.type ?? 'text'
+                ) {
+                  @case ('date') {
+                    @if (
+                      hasDateValue(
+                        row,
+                        column
+                      )
+                    ) {
+                      {{
+                        dateValue(
+                          row,
+                          column
+                        )
+                          | date:
+                              (
+                                column.dateFormat ??
+                                'MMM d, y'
+                              )
+                      }}
+                    } @else {
+                      {{
+                        column.emptyValue ??
+                        '—'
+                      }}
+                    }
+                  }
+
+                  @case ('number') {
+                    @if (
+                      hasNumberValue(
+                        row,
+                        column
+                      )
+                    ) {
+                      {{
+                        numberValue(
+                          row,
+                          column
+                        )
+                          | number:
+                              (
+                                column.numberDigits ??
+                                '1.0-2'
+                              )
+                      }}
+                    } @else {
+                      {{
+                        column.emptyValue ??
+                        '—'
+                      }}
+                    }
+                  }
+
+                  @case ('boolean') {
+                    <span
+                      class="to-data-table__boolean"
+                      [class.to-data-table__boolean--true]="
+                        booleanValue(
+                          row,
+                          column
+                        )
+                      "
+                    >
+                      <i
+                        [class]="
+                          booleanValue(
+                            row,
+                            column
+                          )
+                            ? 'pi pi-check-circle'
+                            : 'pi pi-times-circle'
+                        "
+                      ></i>
+
+                      {{
+                        booleanLabel(
+                          booleanValue(
+                            row,
+                            column
+                          ),
+                          column
+                        )
+                      }}
+                    </span>
+                  }
+
+                  @case ('tag') {
+                    <p-tag
+                      [value]="
+                        tagLabel(
+                          value(
+                            row,
+                            column
+                          ),
+                          column
+                        )
+                      "
+                      [severity]="
+                        tagSeverity(
+                          value(
+                            row,
+                            column
+                          ),
+                          column
+                        )
+                      "
+                    />
+                  }
+
+                  @default {
+                    <span
+                      class="to-data-table__text"
+                      [title]="
+                        displayValue(
+                          row,
+                          column
+                        )
+                      "
+                    >
+                      {{
+                        displayValue(
+                          row,
+                          column
+                        )
+                      }}
+                    </span>
+                  }
+                }
+              }
+            </td>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="tableColumnSpan()">
+            <div class="to-data-table__state">
+              <span class="to-data-table__state-icon">
+                <i [class]="emptyIcon()"></i>
+              </span>
+
+              <strong>{{ emptyTitle() }}</strong>
+
+              <p>{{ emptyMessage() }}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="tableColumnSpan()">
+            <div class="to-data-table__loading">
+              <i class="pi pi-spin pi-spinner"></i>
+
+              <span>{{ loadingMessage() }}</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="paginatorleft">
+        @if (showResultCount()) {
+          <span class="to-data-table__paginator-count">
+            {{ resultLabel() }}
+          </span>
+        }
+      </ng-template>
+    </p-table>
+  }
+</section>

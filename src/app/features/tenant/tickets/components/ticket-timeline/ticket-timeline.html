@@ -1,0 +1,156 @@
+<section
+  class="to-ticket-timeline"
+  data-testid="ticket-timeline"
+>
+  <header class="to-ticket-timeline__header">
+    <div>
+      <span class="to-ticket-timeline__header-icon">
+        <i class="pi pi-history"></i>
+      </span>
+
+      <div>
+        <h2>Timeline</h2>
+
+        <p>
+          {{ timeline().length }}
+          {{
+            timeline().length === 1
+              ? 'activity'
+              : 'activities'
+          }}
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div class="to-ticket-timeline__content">
+    @if (loading()) {
+      <div
+        class="to-ticket-timeline__loading"
+        aria-label="Loading ticket timeline"
+      >
+        @for (
+          item of [1, 2, 3, 4];
+          track item
+        ) {
+          <article class="to-ticket-timeline__skeleton">
+            <span></span>
+
+            <div>
+              <i></i>
+              <i></i>
+              <i></i>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      @for (
+        item of sortedTimeline();
+        track item.id;
+        let last = $last
+      ) {
+        <article
+          class="to-ticket-timeline__item"
+          [class.to-ticket-timeline__item--last]="last"
+          [attr.data-testid]="
+            'ticket-timeline-item-' + item.id
+          "
+        >
+          <div class="to-ticket-timeline__rail">
+            <span
+              class="to-ticket-timeline__marker"
+              [class]="
+                'to-ticket-timeline__marker--' +
+                tone(item)
+              "
+            >
+              <i [class]="icon(item)"></i>
+            </span>
+
+            @if (!last) {
+              <span class="to-ticket-timeline__line"></span>
+            }
+          </div>
+
+          <div class="to-ticket-timeline__body">
+            <header>
+              <div>
+                <strong>
+                  {{ actionLabel(item.action) }}
+                </strong>
+
+                <span>
+                  {{
+                    item.performedAt
+                      | date:'MMM d, y, h:mm a'
+                  }}
+                </span>
+              </div>
+
+              <span
+                class="to-ticket-timeline__actor"
+                [title]="
+                  item.performedBy ||
+                  'System'
+                "
+              >
+                {{
+                  initials(item.performedBy)
+                }}
+              </span>
+            </header>
+
+            <p>
+              {{
+                item.description ||
+                'No additional information provided.'
+              }}
+            </p>
+
+            <div class="to-ticket-timeline__performed-by">
+              <i class="pi pi-user"></i>
+
+              <span>
+                {{
+                  item.performedBy ||
+                  'System'
+                }}
+              </span>
+            </div>
+
+            @if (
+              metadataEntries(item.metadata).length
+            ) {
+              <dl class="to-ticket-timeline__metadata">
+                @for (
+                  metadata of metadataEntries(
+                    item.metadata
+                  );
+                  track metadata.key
+                ) {
+                  <div>
+                    <dt>{{ metadata.label }}</dt>
+                    <dd>{{ metadata.value }}</dd>
+                  </div>
+                }
+              </dl>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="to-ticket-timeline__empty">
+          <span>
+            <i class="pi pi-history"></i>
+          </span>
+
+          <strong>No activity yet</strong>
+
+          <p>
+            Ticket lifecycle events will appear here.
+          </p>
+        </div>
+      }
+    }
+  </div>
+</section>

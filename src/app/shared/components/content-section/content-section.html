@@ -1,0 +1,174 @@
+<section
+  class="to-content-section"
+  [ngClass]="sectionClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  @if (
+    showHeader() &&
+    hasHeaderContent()
+  ) {
+    <header
+      class="to-content-section__header"
+    >
+      <div
+        class="to-content-section__heading"
+      >
+        @if (icon()) {
+          <span
+            class="to-content-section__icon"
+          >
+            <i [class]="icon()"></i>
+          </span>
+        }
+
+        <div
+          class="to-content-section__heading-copy"
+        >
+          @if (eyebrow()) {
+            <span
+              class="to-content-section__eyebrow"
+            >
+              {{ eyebrow() }}
+            </span>
+          }
+
+          <div
+            class="to-content-section__title-row"
+          >
+            @if (title()) {
+              <h2>
+                {{ title() }}
+              </h2>
+            }
+
+            @if (count() !== null) {
+              <span
+                class="to-content-section__count"
+              >
+                {{ count() }}
+              </span>
+            }
+          </div>
+
+          @if (subtitle()) {
+            <p>
+              {{ subtitle() }}
+            </p>
+          }
+        </div>
+      </div>
+
+      <div
+        class="to-content-section__header-actions"
+      >
+        <ng-content
+          select="[contentSectionActions]"
+        />
+
+        @for (
+          action of visibleActions();
+          track action.id
+        ) {
+          <p-button
+            type="button"
+            [label]="action.label"
+            [icon]="action.icon"
+            [severity]="
+              action.severity ??
+              'secondary'
+            "
+            [outlined]="
+              action.outlined === true
+            "
+            [text]="
+              action.text === true
+            "
+            [rounded]="
+              action.rounded === true
+            "
+            [disabled]="
+              action.disabled === true
+            "
+            [loading]="
+              action.loading === true
+            "
+            [pTooltip]="
+              action.tooltip ??
+              action.label
+            "
+            tooltipPosition="top"
+            [attr.data-testid]="
+              action.dataTestId ??
+              'content-section-action-' +
+              action.id
+            "
+            (click)="
+              requestAction(action)
+            "
+          />
+        }
+
+        @if (collapsible()) {
+          <p-button
+            type="button"
+            [icon]="collapseIcon()"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            [pTooltip]="collapseLabel()"
+            tooltipPosition="top"
+            [attr.aria-label]="
+              collapseLabel()
+            "
+            [attr.aria-expanded]="
+              !isCollapsed()
+            "
+            data-testid="content-section-toggle"
+            (click)="toggleCollapsed()"
+          />
+        }
+      </div>
+    </header>
+  }
+
+  @if (
+    showHeader() &&
+    hasHeaderContent() &&
+    showDivider() &&
+    !isCollapsed()
+  ) {
+    <div
+      class="to-content-section__divider"
+    ></div>
+  }
+
+  @if (!isCollapsed()) {
+    <div
+      class="to-content-section__body"
+    >
+      @if (loading()) {
+        <div
+          class="to-content-section__loading"
+          role="status"
+          aria-live="polite"
+        >
+          <p-progress-spinner
+            strokeWidth="4"
+            animationDuration=".8s"
+            ariaLabel="Loading section"
+          />
+
+          <span>
+            Loading...
+          </span>
+        </div>
+      } @else {
+        <ng-content />
+      }
+    </div>
+
+    <ng-content
+      select="[contentSectionFooter]"
+    />
+  }
+</section>

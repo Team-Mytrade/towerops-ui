@@ -1,1 +1,553 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'primeicons/primeicons.css';
+
+@layer reset, primeng, towerops;
+
+@layer reset {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    min-width: 320px;
+    min-height: 100%;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  img,
+  picture,
+  svg,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@layer towerops {
+  :root {
+    /* =====================================================
+       Primary palette
+       Base primary: #4aaa87
+       ===================================================== */
+
+    --to-primary-50: #f1faf7;
+    --to-primary-100: #ddf3eb;
+    --to-primary-200: #c7e6de;
+    --to-primary-300: #9fd6c3;
+    --to-primary-400: #72c3a5;
+    --to-primary-500: #4aaa87;
+    --to-primary-600: #398e70;
+    --to-primary-700: #30735d;
+    --to-primary-800: #295d4d;
+    --to-primary-900: #244d41;
+    --to-primary-950: #102c24;
+
+    --to-primary: var(--to-primary-500);
+    --to-primary-hover: var(--to-primary-600);
+    --to-primary-active: var(--to-primary-700);
+
+    --to-primary-soft: var(--to-primary-50);
+    --to-primary-subtle: var(--to-primary-100);
+    --to-primary-border: var(--to-primary-200);
+    --to-primary-text: var(--to-primary-700);
+
+    /* =====================================================
+       Secondary palette
+       Base secondary: #c7e6de
+       ===================================================== */
+
+    --to-secondary-50: #f6fcfa;
+    --to-secondary-100: #eaf7f3;
+    --to-secondary-200: #c7e6de;
+    --to-secondary-300: #acd9cd;
+    --to-secondary-400: #83c5b3;
+    --to-secondary-500: #60ae98;
+    --to-secondary-600: #478f7c;
+    --to-secondary-700: #3a7466;
+    --to-secondary-800: #315e54;
+    --to-secondary-900: #2a4e46;
+    --to-secondary-950: #142d29;
+
+    --to-secondary: var(--to-secondary-200);
+    --to-secondary-hover: var(--to-secondary-300);
+    --to-secondary-active: var(--to-secondary-400);
+    --to-secondary-text: var(--to-secondary-800);
+
+    /* =====================================================
+       PrimeNG primary semantic tokens
+       ===================================================== */
+
+    --p-primary-50: var(--to-primary-50);
+    --p-primary-100: var(--to-primary-100);
+    --p-primary-200: var(--to-primary-200);
+    --p-primary-300: var(--to-primary-300);
+    --p-primary-400: var(--to-primary-400);
+    --p-primary-500: var(--to-primary-500);
+    --p-primary-600: var(--to-primary-600);
+    --p-primary-700: var(--to-primary-700);
+    --p-primary-800: var(--to-primary-800);
+    --p-primary-900: var(--to-primary-900);
+    --p-primary-950: var(--to-primary-950);
+
+    --p-primary-color: var(--to-primary);
+    --p-primary-contrast-color: #ffffff;
+    --p-primary-hover-color: var(--to-primary-hover);
+    --p-primary-active-color: var(--to-primary-active);
+
+    --p-highlight-background: var(--to-primary-soft);
+    --p-highlight-color: var(--to-primary-text);
+
+    --p-highlight-focus-background: var(--to-primary-subtle);
+    --p-highlight-focus-color: var(--to-primary-800);
+
+    --p-focus-ring-color: rgb(74 170 135 / 35%);
+
+    /* =====================================================
+       Application surfaces
+       ===================================================== */
+
+    --to-background: #f0fffd;
+
+    --to-surface: #ffffff;
+    --to-surface-raised: #ffffff;
+    --to-surface-muted: #f5fbf9;
+    --to-surface-soft: #f8fdfb;
+    --to-surface-hover: #eff9f6;
+    --to-surface-selected: var(--to-primary-50);
+
+    --to-overlay: rgb(16 44 36 / 36%);
+    --to-overlay-soft: rgb(16 44 36 / 16%);
+
+    /* =====================================================
+       Borders
+       ===================================================== */
+
+    --to-border: #d6ebe5;
+    --to-border-soft: #e8f5f1;
+    --to-border-strong: #b7d9cf;
+    --to-border-primary: var(--to-primary-200);
+
+    /* =====================================================
+       Text
+       ===================================================== */
+
+    --to-text: #17372e;
+    --to-text-secondary: #58746c;
+    --to-text-muted: #829b94;
+    --to-text-disabled: #a8bab5;
+    --to-text-inverse: #ffffff;
+
+    /* =====================================================
+       Status
+       ===================================================== */
+
+    --to-success: #24a46d;
+    --to-success-hover: #1d895b;
+    --to-success-soft: #eafaf2;
+    --to-success-border: #b8ebd1;
+
+    --to-warning: #f59e0b;
+    --to-warning-hover: #d97706;
+    --to-warning-soft: #fff8e6;
+    --to-warning-border: #fde2a7;
+
+    --to-danger: #ef4444;
+    --to-danger-hover: #dc2626;
+    --to-danger-soft: #fff1f1;
+    --to-danger-border: #fecaca;
+
+    --to-info: #3b82f6;
+    --to-info-hover: #2563eb;
+    --to-info-soft: #eff6ff;
+    --to-info-border: #bfdbfe;
+
+    /* =====================================================
+       Increased radius
+       ===================================================== */
+
+    --to-radius-xs: 0.5rem;
+    --to-radius-sm: 0.625rem;
+    --to-radius-md: 0.75rem;
+    --to-radius-lg: 1rem;
+    --to-radius-xl: 1.25rem;
+    --to-radius-2xl: 1.5rem;
+    --to-radius-3xl: 2rem;
+    --to-radius-round: 9999px;
+
+    /* PrimeNG radius tokens */
+
+    --p-border-radius-xs: var(--to-radius-xs);
+    --p-border-radius-sm: var(--to-radius-sm);
+    --p-border-radius-md: var(--to-radius-md);
+    --p-border-radius-lg: var(--to-radius-lg);
+    --p-border-radius-xl: var(--to-radius-xl);
+
+    /* =====================================================
+       Enhanced shadows
+       ===================================================== */
+
+    --to-shadow-xs:
+      0 1px 2px rgb(16 44 36 / 5%);
+
+    --to-shadow-sm:
+      0 2px 4px rgb(16 44 36 / 5%),
+      0 4px 12px rgb(74 170 135 / 6%);
+
+    --to-shadow-md:
+      0 8px 20px rgb(16 44 36 / 7%),
+      0 2px 8px rgb(74 170 135 / 7%);
+
+    --to-shadow-lg:
+      0 18px 42px rgb(16 44 36 / 10%),
+      0 6px 18px rgb(74 170 135 / 8%);
+
+    --to-shadow-xl:
+      0 28px 70px rgb(16 44 36 / 14%),
+      0 10px 28px rgb(74 170 135 / 10%);
+
+    --to-shadow-primary:
+      0 12px 28px rgb(74 170 135 / 24%);
+
+    --to-shadow-focus:
+      0 0 0 4px rgb(74 170 135 / 16%);
+
+    --to-shadow-inset:
+      inset 0 1px 2px rgb(16 44 36 / 6%);
+
+    /* =====================================================
+       Typography
+       ===================================================== */
+
+    --to-font-heading:
+      'Outfit',
+      system-ui,
+      sans-serif;
+
+    --to-font-body:
+      'Satoshi',
+      'Inter',
+      system-ui,
+      sans-serif;
+
+    --to-font-mono:
+      'JetBrains Mono',
+      monospace;
+
+    /* =====================================================
+       Transitions
+       ===================================================== */
+
+    --to-transition-fast: 140ms ease;
+    --to-transition-normal: 220ms ease;
+    --to-transition-slow: 320ms ease;
+  }
+
+  html {
+    background: var(--to-background);
+  }
+
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(circle at top left,
+        rgb(199 230 222 / 30%),
+        transparent 28rem),
+      var(--to-background);
+
+    color: var(--to-text);
+    font-family: var(--to-font-body);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 0;
+    color: var(--to-text);
+    font-family: var(--to-font-heading);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: var(--to-font-body);
+  }
+
+  ::selection {
+    color: var(--to-primary-950);
+    background: var(--to-secondary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--to-primary);
+    outline-offset: 2px;
+  }
+
+  /* =====================================================
+     Shared application surfaces
+     ===================================================== */
+
+  .to-card {
+    border: 1px solid var(--to-border-soft);
+    border-radius: var(--to-radius-xl);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-sm);
+    transition:
+      border-color var(--to-transition-normal),
+      box-shadow var(--to-transition-normal),
+      transform var(--to-transition-normal);
+  }
+
+  .to-card:hover {
+    border-color: var(--to-border);
+    box-shadow: var(--to-shadow-md);
+  }
+
+  .to-card--interactive:hover {
+    transform: translateY(-2px);
+  }
+
+  .to-panel {
+    border: 1px solid var(--to-border);
+    border-radius: var(--to-radius-2xl);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-md);
+  }
+
+  .to-surface-muted {
+    border-radius: var(--to-radius-lg);
+    background: var(--to-surface-muted);
+  }
+
+  /* =====================================================
+     PrimeNG global refinements
+     ===================================================== */
+
+  .p-button {
+    border-radius: var(--to-radius-md);
+    box-shadow: var(--to-shadow-xs);
+    transition:
+      background-color var(--to-transition-fast),
+      border-color var(--to-transition-fast),
+      color var(--to-transition-fast),
+      box-shadow var(--to-transition-fast),
+      transform var(--to-transition-fast);
+  }
+
+  .p-button:not(:disabled):hover {
+    box-shadow: var(--to-shadow-sm);
+    transform: translateY(-1px);
+  }
+
+  .p-button:not(:disabled):active {
+    box-shadow: var(--to-shadow-xs);
+    transform: translateY(0);
+  }
+
+  .p-button.p-button-primary,
+  .p-button:not(.p-button-secondary):not(.p-button-success):not(.p-button-info):not(.p-button-warning):not(.p-button-danger):not(.p-button-contrast) {
+    box-shadow: var(--to-shadow-primary);
+  }
+
+  .p-inputtext,
+  .p-textarea,
+  .p-select,
+  .p-multiselect,
+  .p-datepicker-input,
+  .p-inputnumber-input,
+  .p-password-input,
+  .p-autocomplete-input {
+    border-radius: var(--to-radius-md);
+    border-color: var(--to-border);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-inset);
+    transition:
+      border-color var(--to-transition-fast),
+      box-shadow var(--to-transition-fast);
+  }
+
+  .p-inputtext:hover,
+  .p-textarea:hover,
+  .p-select:hover,
+  .p-multiselect:hover,
+  .p-datepicker-input:hover,
+  .p-inputnumber-input:hover,
+  .p-password-input:hover,
+  .p-autocomplete-input:hover {
+    border-color: var(--to-border-strong);
+  }
+
+  .p-inputtext:focus,
+  .p-textarea:focus,
+  .p-select.p-focus,
+  .p-multiselect.p-focus,
+  .p-datepicker-input:focus,
+  .p-inputnumber-input:focus,
+  .p-password-input:focus,
+  .p-autocomplete-input:focus {
+    border-color: var(--to-primary);
+    box-shadow: var(--to-shadow-focus);
+  }
+
+  .p-select-overlay,
+  .p-multiselect-overlay,
+  .p-datepicker-panel,
+  .p-popover,
+  .p-menu,
+  .p-tieredmenu,
+  .p-contextmenu,
+  .p-autocomplete-overlay {
+    overflow: hidden;
+    border: 1px solid var(--to-border);
+    border-radius: var(--to-radius-xl);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-lg);
+  }
+
+  .p-dialog {
+    overflow: hidden;
+    border: 1px solid var(--to-border-soft);
+    border-radius: var(--to-radius-2xl);
+    box-shadow: var(--to-shadow-xl);
+  }
+
+  .p-drawer {
+    border-color: var(--to-border-soft);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-xl);
+  }
+
+  .p-drawer-left {
+    border-radius: 0 var(--to-radius-2xl) var(--to-radius-2xl) 0;
+  }
+
+  .p-drawer-right {
+    border-radius: var(--to-radius-2xl) 0 0 var(--to-radius-2xl);
+  }
+
+  .p-drawer-top {
+    border-radius: 0 0 var(--to-radius-2xl) var(--to-radius-2xl);
+  }
+
+  .p-drawer-bottom {
+    border-radius: var(--to-radius-2xl) var(--to-radius-2xl) 0 0;
+  }
+
+  .p-datatable {
+    overflow: hidden;
+    border: 1px solid var(--to-border-soft);
+    border-radius: var(--to-radius-xl);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-sm);
+  }
+
+  .p-datatable-thead>tr>th {
+    border-color: var(--to-border-soft);
+    background: var(--to-surface-muted);
+    color: var(--to-text-secondary);
+  }
+
+  .p-datatable-tbody>tr {
+    transition: background-color var(--to-transition-fast);
+  }
+
+  .p-datatable-tbody>tr:hover {
+    background: var(--to-surface-hover);
+  }
+
+  .p-datatable-tbody>tr.p-datatable-row-selected {
+    background: var(--to-surface-selected);
+    color: var(--to-text);
+  }
+
+  .p-paginator {
+    border-color: var(--to-border-soft);
+    background: var(--to-surface);
+  }
+
+  .p-paginator-page,
+  .p-paginator-first,
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-last {
+    border-radius: var(--to-radius-sm);
+  }
+
+  .p-card {
+    overflow: hidden;
+    border: 1px solid var(--to-border-soft);
+    border-radius: var(--to-radius-xl);
+    background: var(--to-surface);
+    box-shadow: var(--to-shadow-sm);
+  }
+
+  .p-toast-message {
+    overflow: hidden;
+    border-radius: var(--to-radius-xl);
+    box-shadow: var(--to-shadow-lg);
+  }
+
+  .p-tooltip-text {
+    border-radius: var(--to-radius-sm);
+    box-shadow: var(--to-shadow-md);
+  }
+
+  .p-tag {
+    border-radius: var(--to-radius-round);
+  }
+
+  .p-chip {
+    border-radius: var(--to-radius-round);
+  }
+
+  .p-tabs,
+  .p-tablist {
+    border-radius: var(--to-radius-lg);
+  }
+
+  .p-tab {
+    border-radius: var(--to-radius-md);
+  }
+
+  .p-accordionpanel {
+    overflow: hidden;
+    border-radius: var(--to-radius-lg);
+  }
+
+  .p-checkbox-box,
+  .p-radiobutton-box,
+  .p-toggleswitch-slider {
+    box-shadow: var(--to-shadow-xs);
+  }
+}

@@ -1,0 +1,187 @@
+<section
+  class="to-attachments"
+  [attr.data-testid]="dataTestId()"
+>
+  <header class="to-attachments__header">
+    <div>
+      <span class="to-attachments__header-icon">
+        <i class="pi pi-paperclip"></i>
+      </span>
+
+      <div>
+        <h2>Attachments</h2>
+
+        <p>
+          {{ attachmentCount() }}
+          {{
+            attachmentCount() === 1
+              ? 'file'
+              : 'files'
+          }}
+        </p>
+      </div>
+    </div>
+
+    @if (
+      allowUpload() &&
+      !readOnly()
+    ) {
+      <label
+        class="to-attachments__upload"
+        [class.to-attachments__upload--disabled]="
+          uploading()
+        "
+        data-testid="attachment-upload-btn"
+      >
+        @if (uploading()) {
+          <i class="pi pi-spin pi-spinner"></i>
+          Uploading
+        } @else {
+          <i class="pi pi-plus"></i>
+          Add Files
+        }
+
+        <input
+          type="file"
+          hidden
+          [multiple]="allowMultiple()"
+          [accept]="accept()"
+          [disabled]="uploading()"
+          (change)="onFilesSelected($event)"
+        />
+      </label>
+    }
+  </header>
+
+  @if (validationMessage()) {
+    <div
+      class="to-attachments__validation"
+      role="alert"
+    >
+      <i class="pi pi-exclamation-circle"></i>
+
+      <span>
+        {{ validationMessage() }}
+      </span>
+    </div>
+  }
+
+  <div class="to-attachments__content">
+    @if (loading()) {
+      <div class="to-attachments__loading">
+        @for (
+          item of [1, 2, 3];
+          track item
+        ) {
+          <article>
+            <span></span>
+
+            <div>
+              <i></i>
+              <i></i>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      @for (
+        attachment of attachments();
+        track attachment.id
+      ) {
+        <article
+          class="to-attachment"
+          [attr.data-testid]="
+            attachment.dataTestId ??
+            'attachment-' + attachment.id
+          "
+        >
+          <button
+            type="button"
+            class="to-attachment__main"
+            [disabled]="
+              !canPreview(attachment)
+            "
+            (click)="openAttachment(attachment)"
+          >
+            <span
+              class="to-attachment__icon"
+              [class]="
+                'to-attachment__icon--' +
+                attachmentKind(
+                  attachment
+                ).toLowerCase()
+              "
+            >
+              <i [class]="icon(attachment)"></i>
+            </span>
+
+            <span class="to-attachment__content">
+              <strong>
+                {{ attachment.fileName }}
+              </strong>
+
+              <small>
+                {{ formatFileSize(attachment.fileSize) }}
+
+                @if (attachment.uploadedBy) {
+                  · {{ attachment.uploadedBy }}
+                }
+
+                @if (attachment.uploadedAt) {
+                  ·
+                  {{
+                    attachment.uploadedAt
+                      | date:'MMM d, y'
+                  }}
+                }
+              </small>
+            </span>
+
+            @if (canPreview(attachment)) {
+              <i class="pi pi-arrow-up-right"></i>
+            }
+          </button>
+
+          @if (
+            attachment.removable === true &&
+            !readOnly()
+          ) {
+            <button
+              type="button"
+              class="to-attachment__remove"
+              aria-label="Remove attachment"
+              [disabled]="
+                attachment.deleting === true
+              "
+              [attr.data-testid]="
+                'remove-attachment-' +
+                attachment.id
+              "
+              (click)="removeAttachment(attachment)"
+            >
+              @if (attachment.deleting) {
+                <i class="pi pi-spin pi-spinner"></i>
+              } @else {
+                <i class="pi pi-trash"></i>
+              }
+            </button>
+          }
+        </article>
+      } @empty {
+        <div class="to-attachments__empty">
+          <span>
+            <i class="pi pi-paperclip"></i>
+          </span>
+
+          <strong>
+            {{ emptyTitle() }}
+          </strong>
+
+          <p>
+            {{ emptyMessage() }}
+          </p>
+        </div>
+      }
+    }
+  </div>
+</section>

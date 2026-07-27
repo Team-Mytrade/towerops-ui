@@ -1,0 +1,226 @@
+<section
+  class="to-form-card"
+  [formGroup]="form()"
+  data-testid="work-order-resolution-card"
+>
+  <header class="to-form-card__header">
+    <div class="to-form-card__heading">
+      <span class="to-form-card__icon">
+        <i class="pi pi-check-circle"></i>
+      </span>
+
+      <div>
+        <h2>Resolution & Work Log</h2>
+
+        <p>
+          Record execution time, completion details
+          and technician observations.
+        </p>
+      </div>
+    </div>
+
+    <span
+      class="to-form-card__hint"
+      pTooltip="Resolution and labor hours are required before completing the work order."
+      tooltipPosition="left"
+    >
+      <i class="pi pi-info-circle"></i>
+    </span>
+  </header>
+
+  <div class="to-form-card__content">
+    <div class="to-form-grid">
+      <div class="to-form-field">
+        <label for="work-order-started-at">
+          Started date and time
+        </label>
+
+        <p-datepicker
+          inputId="work-order-started-at"
+          formControlName="startedAt"
+          placeholder="Select start time"
+          dateFormat="dd M yy"
+          [showIcon]="true"
+          [showTime]="true"
+          [hourFormat]="'24'"
+          [showButtonBar]="true"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-started-at"
+          (onSelect)="onStartedAtChange($event)"
+          (onClear)="onStartedAtChange(null)"
+        />
+
+        <small class="to-form-field__support">
+          When the technician started the task.
+        </small>
+
+        @if (isInvalid('startedAt')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('startedAt') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-completed-at">
+          Completed date and time
+
+          @if (completionRequired()) {
+            <span class="to-required">*</span>
+          }
+        </label>
+
+        <p-datepicker
+          inputId="work-order-completed-at"
+          formControlName="completedAt"
+          placeholder="Select completion time"
+          dateFormat="dd M yy"
+          [showIcon]="true"
+          [showTime]="true"
+          [hourFormat]="'24'"
+          [showButtonBar]="true"
+          [disabled]="readonly()"
+          appendTo="body"
+          styleClass="to-field-control"
+          data-testid="work-order-completed-at"
+          (onSelect)="onCompletedAtChange($event)"
+          (onClear)="onCompletedAtChange(null)"
+        />
+
+        <small class="to-form-field__support">
+          Must be later than the started time.
+        </small>
+
+        @if (invalidCompletionRange()) {
+          <small class="to-form-field__error">
+            Completion time cannot be earlier than
+            the started time.
+          </small>
+        }
+
+        @if (isInvalid('completedAt')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('completedAt') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field">
+        <label for="work-order-labor-hours">
+          Labor hours
+
+          @if (completionRequired()) {
+            <span class="to-required">*</span>
+          }
+        </label>
+
+        <p-inputnumber
+          inputId="work-order-labor-hours"
+          formControlName="laborHours"
+          mode="decimal"
+          suffix=" hrs"
+          placeholder="0.00"
+          [min]="laborHoursMin"
+          [max]="laborHoursMax"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          [useGrouping]="false"
+          [disabled]="readonly()"
+          styleClass="to-field-control"
+          data-testid="work-order-labor-hours"
+          (onInput)="
+            onLaborHoursChange($event.value)
+          "
+        />
+
+        <small class="to-form-field__support">
+          Total technician effort spent on the task.
+        </small>
+
+        @if (isInvalid('laborHours')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('laborHours') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field to-form-field--wide">
+        <label for="work-order-resolution">
+          Resolution
+
+          @if (completionRequired()) {
+            <span class="to-required">*</span>
+          }
+        </label>
+
+        <textarea
+          pTextarea
+          id="work-order-resolution"
+          formControlName="resolution"
+          rows="6"
+          placeholder="Describe the issue identified, corrective action taken and final outcome"
+          [maxlength]="resolutionMaxLength"
+          [readonly]="readonly()"
+          data-testid="work-order-resolution"
+        ></textarea>
+
+        <div class="to-field-footer">
+          <small class="to-form-field__support">
+            Include diagnosis, action taken and
+            restored condition.
+          </small>
+
+          <small class="to-character-count">
+            {{ resolutionLength() }}
+            /
+            {{ resolutionMaxLength }}
+          </small>
+        </div>
+
+        @if (isInvalid('resolution')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('resolution') }}
+          </small>
+        }
+      </div>
+
+      <div class="to-form-field to-form-field--wide">
+        <label for="work-order-remarks">
+          Remarks
+        </label>
+
+        <textarea
+          pTextarea
+          id="work-order-remarks"
+          formControlName="remarks"
+          rows="4"
+          placeholder="Add internal notes, follow-up requirements or additional observations"
+          [maxlength]="remarksMaxLength"
+          [readonly]="readonly()"
+          data-testid="work-order-remarks"
+        ></textarea>
+
+        <div class="to-field-footer">
+          <small class="to-form-field__support">
+            Optional operational notes for reviewers
+            and administrators.
+          </small>
+
+          <small class="to-character-count">
+            {{ remarksLength() }}
+            /
+            {{ remarksMaxLength }}
+          </small>
+        </div>
+
+        @if (isInvalid('remarks')) {
+          <small class="to-form-field__error">
+            {{ getErrorMessage('remarks') }}
+          </small>
+        }
+      </div>
+    </div>
+  </div>
+</section>

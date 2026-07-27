@@ -1,0 +1,243 @@
+<section
+  class="to-context-action-bar"
+  [ngClass]="barClasses()"
+  [attr.data-testid]="dataTestId()"
+  aria-label="Record actions"
+>
+  @if (hasSummary()) {
+    <div
+      class="to-context-action-bar__summary"
+    >
+      @if (icon()) {
+        <span
+          class="to-context-action-bar__summary-icon"
+        >
+          <i [class]="icon()"></i>
+        </span>
+      }
+
+      <div
+        class="to-context-action-bar__summary-copy"
+      >
+        @if (title()) {
+          <strong>
+            {{ title() }}
+          </strong>
+        }
+
+        @if (subtitle()) {
+          <small>
+            {{ subtitle() }}
+          </small>
+        }
+      </div>
+
+      <ng-content
+        select="[contextActionBarSummary]"
+      />
+    </div>
+  }
+
+  <div
+    class="to-context-action-bar__actions"
+  >
+    <ng-content
+      select="[contextActionBarBeforeActions]"
+    />
+
+    @for (
+      action of secondaryActions();
+      track action.id
+    ) {
+      <span
+        class="to-context-action-bar__action-wrapper"
+      >
+        <p-button
+          type="button"
+          [label]="
+            compact()
+              ? undefined
+              : action.label
+          "
+          [icon]="action.icon"
+          [severity]="
+            actionSeverity(action)
+          "
+          [outlined]="
+            action.outlined !== false
+          "
+          [text]="
+            action.text === true
+          "
+          [rounded]="
+            action.rounded === true ||
+            compact()
+          "
+          size="small"
+          [disabled]="
+            disabled() ||
+            action.disabled === true
+          "
+          [loading]="
+            action.loading === true
+          "
+          [pTooltip]="
+            actionTooltip(action)
+          "
+          tooltipPosition="top"
+          [attr.aria-label]="
+            action.label
+          "
+          [attr.data-testid]="
+            action.dataTestId ??
+            'context-action-' +
+              action.id
+          "
+          (click)="
+            requestAction(action)
+          "
+        />
+
+        @if (actionBadge(action)) {
+          <span
+            class="to-context-action-bar__badge"
+          >
+            {{ actionBadge(action) }}
+          </span>
+        }
+      </span>
+    }
+
+    @if (
+      secondaryActions().length &&
+      primaryActions().length
+    ) {
+      <span
+        class="to-context-action-bar__divider"
+        aria-hidden="true"
+      ></span>
+    }
+
+    @for (
+      action of primaryActions();
+      track action.id
+    ) {
+      <span
+        class="to-context-action-bar__action-wrapper"
+      >
+        <p-button
+          type="button"
+          [label]="
+            compact()
+              ? undefined
+              : action.label
+          "
+          [icon]="action.icon"
+          [severity]="
+            actionSeverity(action)
+          "
+          [outlined]="
+            action.outlined === true
+          "
+          [text]="
+            action.text === true
+          "
+          [rounded]="
+            action.rounded === true ||
+            compact()
+          "
+          size="small"
+          [disabled]="
+            disabled() ||
+            action.disabled === true
+          "
+          [loading]="
+            action.loading === true
+          "
+          [pTooltip]="
+            actionTooltip(action)
+          "
+          tooltipPosition="top"
+          [attr.aria-label]="
+            action.label
+          "
+          [attr.data-testid]="
+            action.dataTestId ??
+            'context-action-' +
+              action.id
+          "
+          (click)="
+            requestAction(action)
+          "
+        />
+
+        @if (actionBadge(action)) {
+          <span
+            class="to-context-action-bar__badge"
+          >
+            {{ actionBadge(action) }}
+          </span>
+        }
+      </span>
+    }
+
+    <ng-content
+      select="[contextActionBarAfterActions]"
+    />
+
+    @if (
+      showRefresh() ||
+      showClose()
+    ) {
+      <span
+        class="to-context-action-bar__divider"
+        aria-hidden="true"
+      ></span>
+    }
+
+    @if (showRefresh()) {
+      <p-button
+        type="button"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        [disabled]="
+          disabled() ||
+          loading()
+        "
+        [loading]="refreshLoading()"
+        [pTooltip]="refreshLabel()"
+        tooltipPosition="top"
+        [attr.aria-label]="
+          refreshLabel()
+        "
+        data-testid="context-action-refresh"
+        (click)="requestRefresh()"
+      />
+    }
+
+    @if (showClose()) {
+      <p-button
+        type="button"
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        [disabled]="
+          disabled() ||
+          loading()
+        "
+        [pTooltip]="closeLabel()"
+        tooltipPosition="top"
+        [attr.aria-label]="
+          closeLabel()
+        "
+        data-testid="context-action-close"
+        (click)="requestClose()"
+      />
+    }
+  </div>
+</section>

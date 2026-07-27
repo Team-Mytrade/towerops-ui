@@ -1,0 +1,203 @@
+<section
+  class="to-entry"
+  data-testid="tenant-entry-page"
+>
+  @if (loadingCategories()) {
+    <div class="to-entry__state">
+      <p-progress-spinner
+        strokeWidth="3"
+        ariaLabel="Loading site categories"
+      />
+
+      <div>
+        <h1>Preparing your workspace</h1>
+        <p>Loading configured site categories...</p>
+      </div>
+    </div>
+  } @else if (pageError()) {
+    <div class="to-entry__state">
+      <span class="to-entry__state-icon to-entry__state-icon--error">
+        <i class="pi pi-exclamation-triangle"></i>
+      </span>
+
+      <div>
+        <h1>Categories could not be loaded</h1>
+        <p>{{ pageError() }}</p>
+      </div>
+
+      <p-button
+        label="Try again"
+        icon="pi pi-refresh"
+        data-testid="retry-category-summary-btn"
+        (click)="retry()"
+      />
+    </div>
+  } @else if (!hasCategories()) {
+    <div class="to-entry__state">
+      <span class="to-entry__state-icon">
+        <i class="pi pi-map-marker"></i>
+      </span>
+
+      <div>
+        <h1>No sites configured</h1>
+        <p>
+          Create the first site to begin infrastructure monitoring.
+        </p>
+      </div>
+
+      <p-button
+        label="Create Site"
+        icon="pi pi-plus"
+        data-testid="create-first-site-btn"
+        (click)="navigateByUrl('/tenant/sites/create')"
+      />
+    </div>
+  } @else {
+    <header class="to-entry__header">
+      <div>
+        <p class="to-entry__eyebrow">Tenant workspace</p>
+
+        <h1>Select an operational category</h1>
+
+        <p>
+          Choose the infrastructure group you want to monitor.
+        </p>
+      </div>
+
+      <div class="to-entry__summary">
+        <article>
+          <span>Total Sites</span>
+          <strong>{{ totalSites() }}</strong>
+        </article>
+
+        <article>
+          <span>Open Alerts</span>
+          <strong>{{ totalAlerts() }}</strong>
+        </article>
+
+        <article>
+          <span>Critical Sites</span>
+          <strong>{{ totalCriticalSites() }}</strong>
+        </article>
+      </div>
+    </header>
+
+    <div class="to-entry__grid">
+      @for (
+        category of categories();
+        track category.category
+      ) {
+        <button
+          type="button"
+          class="to-category-card"
+          [attr.data-testid]="
+            'category-' +
+            category.category.toLowerCase()
+          "
+          (click)="selectCategory(category)"
+        >
+          <div class="to-category-card__header">
+            <span class="to-category-card__icon">
+              <i
+                [class]="getConfig(category.category).icon"
+              ></i>
+            </span>
+
+            <span class="to-category-card__arrow">
+              <i class="pi pi-arrow-up-right"></i>
+            </span>
+          </div>
+
+          <div class="to-category-card__content">
+            <span class="to-category-card__count">
+              {{ category.count }} sites
+            </span>
+
+            <h2>
+              {{ getConfig(category.category).label }}
+            </h2>
+
+            <p>
+              {{ getConfig(category.category).description }}
+            </p>
+          </div>
+
+          <div class="to-category-card__health">
+            <div class="to-category-card__health-row">
+              <span>Health distribution</span>
+
+              <small>
+                {{ category.openAlerts ?? 0 }}
+                open alerts
+              </small>
+            </div>
+
+            <div class="to-category-card__health-bar">
+              <span
+                class="to-health-segment to-health-segment--healthy"
+                [style.width.%]="
+                  getHealthPercentage(
+                    category,
+                    category.healthy
+                  )
+                "
+              ></span>
+
+              <span
+                class="to-health-segment to-health-segment--warning"
+                [style.width.%]="
+                  getHealthPercentage(
+                    category,
+                    category.warning
+                  )
+                "
+              ></span>
+
+              <span
+                class="to-health-segment to-health-segment--critical"
+                [style.width.%]="
+                  getHealthPercentage(
+                    category,
+                    category.critical
+                  )
+                "
+              ></span>
+
+              <span
+                class="to-health-segment to-health-segment--offline"
+                [style.width.%]="
+                  getHealthPercentage(
+                    category,
+                    category.offline
+                  )
+                "
+              ></span>
+            </div>
+
+            <div class="to-category-card__stats">
+              <span>
+                <i class="to-status-dot to-status-dot--healthy"></i>
+                {{ category.healthy ?? 0 }} healthy
+              </span>
+
+              <span>
+                <i class="to-status-dot to-status-dot--warning"></i>
+                {{ category.warning ?? 0 }} warning
+              </span>
+
+              <span>
+                <i class="to-status-dot to-status-dot--critical"></i>
+                {{ category.critical ?? 0 }} critical
+              </span>
+
+              <span>
+                <i class="to-status-dot to-status-dot--offline"></i>
+                {{ category.offline ?? 0 }} offline
+              </span>
+            </div>
+          </div>
+        </button>
+      }
+    </div>
+  }
+</section>

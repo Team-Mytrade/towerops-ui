@@ -1,0 +1,204 @@
+<section
+  class="to-view-mode-switcher"
+  [ngClass]="componentClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  <div
+    class="to-view-mode-switcher__modes"
+    role="radiogroup"
+    [attr.aria-label]="ariaLabel()"
+  >
+    @for (
+      mode of visibleModes();
+      track mode.id;
+      let index = $index
+    ) {
+      <button
+        #modeButton
+        type="button"
+        class="to-view-mode-switcher__mode"
+        [class.to-view-mode-switcher__mode--active]="
+          isActive(mode)
+        "
+        [disabled]="
+          disabled() ||
+          loading() ||
+          mode.disabled === true
+        "
+        [attr.role]="'radio'"
+        [attr.aria-checked]="
+          isActive(mode)
+        "
+        [attr.tabindex]="
+          isActive(mode) ||
+          (
+            activeMode() === null &&
+            index === 0
+          )
+            ? 0
+            : -1
+        "
+        [attr.aria-label]="mode.label"
+        [attr.data-testid]="
+          mode.dataTestId ??
+          'view-mode-' +
+            mode.id.toLowerCase()
+        "
+        [pTooltip]="
+          modeTooltip(mode)
+        "
+        tooltipPosition="bottom"
+        (click)="selectMode(mode)"
+        (keydown)="
+          handleModeKeydown(
+            $event,
+            index
+          )
+        "
+      >
+        <span
+          class="to-view-mode-switcher__mode-icon"
+        >
+          <i
+            [class]="modeIcon(mode)"
+          ></i>
+
+          @if (modeBadge(mode)) {
+            <span
+              class="to-view-mode-switcher__mode-badge"
+            >
+              {{ modeBadge(mode) }}
+            </span>
+          }
+        </span>
+
+        @if (
+          showLabels() &&
+          !iconOnly()
+        ) {
+          <span
+            class="to-view-mode-switcher__mode-label"
+          >
+            {{ mode.label }}
+          </span>
+        }
+
+        @if (
+          showCounts() &&
+          modeCount(mode)
+        ) {
+          <span
+            class="to-view-mode-switcher__mode-count"
+          >
+            {{ modeCount(mode) }}
+          </span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (
+    showDensity() ||
+    showRefresh()
+  ) {
+    <div
+      class="to-view-mode-switcher__actions"
+    >
+      <span
+        class="to-view-mode-switcher__divider"
+        aria-hidden="true"
+      ></span>
+
+      @if (showDensity()) {
+        <p-select
+          class="to-view-mode-switcher__density"
+          [options]="densityOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="density()"
+          [disabled]="
+            disabled() ||
+            loading()
+          "
+          appendTo="body"
+          [attr.aria-label]="
+            densityLabel()
+          "
+          [pTooltip]="densityLabel()"
+          tooltipPosition="bottom"
+          data-testid="view-density-select"
+          (ngModelChange)="
+            selectDensity($event)
+          "
+        >
+          <ng-template
+            #selectedItem
+            let-option
+          >
+            @if (option) {
+              <span
+                class="to-view-mode-switcher__density-option"
+              >
+                <i
+                  [class]="option.icon"
+                ></i>
+
+                @if (
+                  !compact() &&
+                  !iconOnly()
+                ) {
+                  <span>
+                    {{ option.label }}
+                  </span>
+                }
+              </span>
+            }
+          </ng-template>
+
+          <ng-template
+            #item
+            let-option
+          >
+            <span
+              class="to-view-mode-switcher__density-option"
+            >
+              <i
+                [class]="option.icon"
+              ></i>
+              <span>
+                {{ option.label }}
+              </span>
+            </span>
+          </ng-template>
+        </p-select>
+      }
+
+      @if (showRefresh()) {
+        <p-button
+          type="button"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          [rounded]="true"
+          size="small"
+          [loading]="refreshLoading()"
+          [disabled]="
+            disabled() ||
+            loading()
+          "
+          [pTooltip]="refreshLabel()"
+          tooltipPosition="bottom"
+          [attr.aria-label]="
+            refreshLabel()
+          "
+          data-testid="view-mode-refresh"
+          (click)="requestRefresh()"
+        />
+      }
+
+      <ng-content
+        select="[viewModeActions]"
+      />
+    </div>
+  }
+</section>

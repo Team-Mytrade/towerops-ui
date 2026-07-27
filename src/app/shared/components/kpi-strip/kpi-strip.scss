@@ -1,0 +1,255 @@
+:host {
+  display: block;
+}
+
+.to-kpi-strip {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.65rem;
+}
+
+.to-kpi-strip__item {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 5rem;
+  overflow: hidden;
+  border: 1px solid var(--to-border);
+  border-radius: var(--to-radius-lg);
+  background: var(--to-surface);
+  box-shadow: var(--to-shadow-sm);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.to-kpi-strip__accent {
+  width: 0.22rem;
+  flex: 0 0 auto;
+  background: var(--to-primary);
+}
+
+.to-kpi-strip__content {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  align-content: center;
+  padding: 0.72rem 0.8rem;
+}
+
+.to-kpi-strip__top {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.to-kpi-strip__label {
+  overflow: hidden;
+  color: var(--to-text-muted);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.to-kpi-strip__icon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  border-radius: 0.5rem;
+  place-items: center;
+  color: var(--to-primary);
+  background: var(--to-primary-soft);
+
+  i {
+    font-size: 0.62rem;
+  }
+}
+
+.to-kpi-strip__value {
+  display: block;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  color: var(--to-text);
+  font-family: var(--to-font-heading);
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.to-kpi-strip__footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.28rem;
+
+  > span:last-child {
+    overflow: hidden;
+    color: var(--to-text-muted);
+    font-size: 0.49rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.to-kpi-strip__trend {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--to-text-muted);
+  font-size: 0.49rem;
+  font-weight: 700;
+
+  i {
+    font-size: 0.45rem;
+  }
+}
+
+.to-kpi-strip__trend--up {
+  color: var(--to-success);
+}
+
+.to-kpi-strip__trend--down {
+  color: var(--to-danger);
+}
+
+.to-kpi-strip__item--success {
+  .to-kpi-strip__accent {
+    background: var(--to-success);
+  }
+
+  .to-kpi-strip__icon {
+    color: var(--to-success);
+    background: var(--to-success-soft);
+  }
+}
+
+.to-kpi-strip__item--warning {
+  .to-kpi-strip__accent {
+    background: var(--to-warning);
+  }
+
+  .to-kpi-strip__icon {
+    color: var(--to-warning);
+    background: var(--to-warning-soft);
+  }
+}
+
+.to-kpi-strip__item--danger {
+  .to-kpi-strip__accent {
+    background: var(--to-danger);
+  }
+
+  .to-kpi-strip__icon {
+    color: var(--to-danger);
+    background: var(--to-danger-soft);
+  }
+}
+
+.to-kpi-strip__item--info {
+  .to-kpi-strip__accent {
+    background: var(--to-info);
+  }
+
+  .to-kpi-strip__icon {
+    color: var(--to-info);
+    background: var(--to-info-soft);
+  }
+}
+
+.to-kpi-strip__item--secondary {
+  .to-kpi-strip__accent {
+    background: var(--to-text-muted);
+  }
+
+  .to-kpi-strip__icon {
+    color: var(--to-text-secondary);
+    background: var(--to-surface-muted);
+  }
+}
+
+.to-kpi-strip__item--clickable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--to-primary);
+    box-shadow: var(--to-shadow-md);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--to-primary);
+    outline-offset: 2px;
+  }
+}
+
+.to-kpi-strip__item--active {
+  border-color: var(--to-primary);
+  background: var(--to-primary-soft);
+}
+
+.to-kpi-strip__item--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.to-kpi-strip__value-skeleton {
+  width: 4rem;
+  height: 1.15rem;
+  margin-top: 0.3rem;
+  border-radius: 999px;
+  background: var(--to-surface-muted);
+  animation: to-kpi-pulse 1.3s infinite;
+}
+
+.to-kpi-strip--compact {
+  gap: 0.5rem;
+
+  .to-kpi-strip__item {
+    min-height: 4.2rem;
+  }
+
+  .to-kpi-strip__content {
+    padding: 0.58rem 0.7rem;
+  }
+
+  .to-kpi-strip__value {
+    font-size: 1rem;
+  }
+}
+
+@keyframes to-kpi-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .to-kpi-strip {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .to-kpi-strip {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,252 @@
+<nav
+  class="to-record-navigator"
+  [ngClass]="navigatorClasses()"
+  [attr.data-testid]="dataTestId()"
+  aria-label="Record navigation"
+>
+  <div
+    class="to-record-navigator__leading"
+  >
+    @if (showBack()) {
+      <p-button
+        type="button"
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        [disabled]="
+          disabled() ||
+          loading()
+        "
+        [pTooltip]="backLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="backLabel()"
+        data-testid="record-navigator-back"
+        (click)="requestBack()"
+      />
+    }
+
+    @if (showSelector()) {
+      <p-select
+        class="to-record-navigator__selector"
+        [options]="selectorOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="activeItemId()"
+        [disabled]="
+          disabled() ||
+          loading() ||
+          !hasItems()
+        "
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        placeholder="Select record"
+        ariaLabel="Select record"
+        data-testid="record-navigator-selector"
+        (ngModelChange)="
+          selectItem($event)
+        "
+      >
+        <ng-template
+          #selectedItem
+          let-option
+        >
+          @if (option) {
+            <div
+              class="to-record-navigator__selected-item"
+            >
+              <i
+                [class]="
+                  option.item.icon ??
+                  'pi pi-file'
+                "
+              ></i>
+
+              <div>
+                <strong>
+                  {{ option.item.label }}
+                </strong>
+
+                @if (
+                  option.item.code ||
+                  option.item.subtitle
+                ) {
+                  <small>
+                    {{
+                      option.item.code ??
+                      option.item.subtitle
+                    }}
+                  </small>
+                }
+              </div>
+            </div>
+          }
+        </ng-template>
+
+        <ng-template
+          #item
+          let-option
+        >
+          <div
+            class="to-record-navigator__option"
+          >
+            <i
+              [class]="
+                option.item.icon ??
+                'pi pi-file'
+              "
+            ></i>
+
+            <div>
+              <strong>
+                {{ option.item.label }}
+              </strong>
+
+              @if (
+                option.item.code ||
+                option.item.subtitle
+              ) {
+                <small>
+                  @if (option.item.code) {
+                    <span>
+                      {{ option.item.code }}
+                    </span>
+                  }
+
+                  @if (
+                    option.item.subtitle
+                  ) {
+                    <span>
+                      {{
+                        option.item.subtitle
+                      }}
+                    </span>
+                  }
+                </small>
+              }
+            </div>
+          </div>
+        </ng-template>
+      </p-select>
+    }
+  </div>
+
+  <div
+    class="to-record-navigator__navigation"
+  >
+    @if (showFirstLast()) {
+      <p-button
+        type="button"
+        icon="pi pi-step-backward"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        [disabled]="
+          disabled() ||
+          loading() ||
+          activeIndex() <= 0
+        "
+        [pTooltip]="firstLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="firstLabel()"
+        data-testid="record-navigator-first"
+        (click)="goFirst()"
+      />
+    }
+
+    <p-button
+      type="button"
+      icon="pi pi-angle-left"
+      severity="secondary"
+      [outlined]="true"
+      [rounded]="true"
+      [disabled]="
+        disabled() ||
+        loading() ||
+        !hasPrevious()
+      "
+      [pTooltip]="previousLabel()"
+      tooltipPosition="bottom"
+      [attr.aria-label]="previousLabel()"
+      data-testid="record-navigator-previous"
+      (click)="goPrevious()"
+    />
+
+    @if (showPosition()) {
+      <span
+        class="to-record-navigator__position"
+        aria-live="polite"
+      >
+        {{ positionLabel() }}
+      </span>
+    }
+
+    <p-button
+      type="button"
+      icon="pi pi-angle-right"
+      severity="secondary"
+      [outlined]="true"
+      [rounded]="true"
+      [disabled]="
+        disabled() ||
+        loading() ||
+        !hasNext()
+      "
+      [pTooltip]="nextLabel()"
+      tooltipPosition="bottom"
+      [attr.aria-label]="nextLabel()"
+      data-testid="record-navigator-next"
+      (click)="goNext()"
+    />
+
+    @if (showFirstLast()) {
+      <p-button
+        type="button"
+        icon="pi pi-step-forward"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        [disabled]="
+          disabled() ||
+          loading() ||
+          activeIndex() >=
+            total() - 1
+        "
+        [pTooltip]="lastLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="lastLabel()"
+        data-testid="record-navigator-last"
+        (click)="goLast()"
+      />
+    }
+
+    @if (showRefresh()) {
+      <span
+        class="to-record-navigator__divider"
+      ></span>
+
+      <p-button
+        type="button"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [text]="true"
+        [rounded]="true"
+        [loading]="loading()"
+        [disabled]="
+          disabled() ||
+          !activeItem()
+        "
+        [pTooltip]="refreshLabel()"
+        tooltipPosition="bottom"
+        [attr.aria-label]="refreshLabel()"
+        data-testid="record-navigator-refresh"
+        (click)="requestRefresh()"
+      />
+    }
+
+    <ng-content
+      select="[recordNavigatorActions]"
+    />
+  </div>
+</nav>

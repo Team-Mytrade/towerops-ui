@@ -1,0 +1,210 @@
+<section
+  class="to-activity-timeline"
+  [class.to-activity-timeline--compact]="compact()"
+  [attr.data-testid]="dataTestId()"
+>
+  @if (loading()) {
+    <div class="to-activity-timeline__loading">
+      @for (
+        item of [1, 2, 3, 4];
+        track item
+      ) {
+        <article>
+          <span class="to-activity-timeline__loading-marker"></span>
+
+          <div>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    @for (
+      item of items();
+      track item.id;
+      let last = $last
+    ) {
+      <article
+        class="to-activity-timeline__item"
+        [ngClass]="itemClasses(item)"
+        [attr.data-testid]="
+          item.dataTestId ??
+          'timeline-item-' + item.id
+        "
+        [attr.role]="
+          clickable()
+            ? 'button'
+            : null
+        "
+        [attr.tabindex]="
+          clickable()
+            ? 0
+            : null
+        "
+        (click)="selectItem(item)"
+        (keydown.enter)="selectItem(item)"
+        (keydown.space)="selectItem(item)"
+      >
+        <div class="to-activity-timeline__rail">
+          <span class="to-activity-timeline__marker">
+            <i [class]="itemIcon(item)"></i>
+          </span>
+
+          @if (
+            showConnector() &&
+            !last
+          ) {
+            <span class="to-activity-timeline__connector"></span>
+          }
+        </div>
+
+        <div class="to-activity-timeline__content">
+          <header>
+            <div>
+              <h3>
+                {{ item.title }}
+              </h3>
+
+              @if (
+                hasTimelineDate(item)
+              ) {
+                <time>
+                  {{
+                    timelineDate(item)
+                      | date:dateFormat()
+                  }}
+                </time>
+              }
+            </div>
+
+            @if (item.actions?.length) {
+              <div class="to-activity-timeline__actions">
+                @for (
+                  action of item.actions;
+                  track action.id
+                ) {
+                  @if (isActionVisible(action)) {
+                    <p-button
+                      type="button"
+                      [label]="action.label"
+                      [icon]="action.icon"
+                      [severity]="action.severity"
+                      [outlined]="action.outlined === true"
+                      [text]="action.text !== false"
+                      [disabled]="action.disabled === true"
+                      [loading]="action.loading === true"
+                      size="small"
+                      [attr.data-testid]="
+                        action.dataTestId ??
+                        'timeline-action-' +
+                        action.id
+                      "
+                      (click)="
+                        triggerAction(
+                          $event,
+                          item,
+                          action
+                        )
+                      "
+                    />
+                  }
+                }
+              </div>
+            }
+          </header>
+
+          @if (item.description) {
+            <p class="to-activity-timeline__description">
+              {{ item.description }}
+            </p>
+          }
+
+          @if (
+            showMetadata() &&
+            metadataEntries(item).length
+          ) {
+            <dl class="to-activity-timeline__metadata">
+              @for (
+                metadata of metadataEntries(item);
+                track metadata.key
+              ) {
+                <div>
+                  <dt>
+                    {{
+                      displayMetadataKey(
+                        metadata.key
+                      )
+                    }}
+                  </dt>
+
+                  <dd>
+                    {{ metadata.value }}
+                  </dd>
+                </div>
+              }
+            </dl>
+          }
+
+          @if (
+            showActor() &&
+            (
+              item.actorName ||
+              item.actorRole
+            )
+          ) {
+            <footer class="to-activity-timeline__actor">
+              @if (item.actorAvatarUrl) {
+                <img
+                  [src]="item.actorAvatarUrl"
+                  [alt]="
+                    item.actorName ??
+                    'Activity user'
+                  "
+                />
+              } @else {
+                <span>
+                  {{
+                    actorInitials(
+                      item.actorName
+                    )
+                  }}
+                </span>
+              }
+
+              <div>
+                <strong>
+                  {{
+                    item.actorName ??
+                    'System'
+                  }}
+                </strong>
+
+                @if (item.actorRole) {
+                  <small>
+                    {{ item.actorRole }}
+                  </small>
+                }
+              </div>
+            </footer>
+          }
+        </div>
+      </article>
+    } @empty {
+      <div class="to-activity-timeline__empty">
+        <span>
+          <i class="pi pi-history"></i>
+        </span>
+
+        <strong>
+          {{ emptyTitle() }}
+        </strong>
+
+        <p>
+          {{ emptyMessage() }}
+        </p>
+      </div>
+    }
+  }
+</section>

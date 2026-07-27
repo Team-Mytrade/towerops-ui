@@ -1,0 +1,209 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.to-form-card {
+  overflow: hidden;
+  background:
+    var(--to-surface, #ffffff);
+  border:
+    1px solid var(--to-border, #e5e7eb);
+  border-radius: 18px;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 4%);
+}
+
+.to-form-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom:
+    1px solid
+    var(--to-border-soft, #eef0f3);
+}
+
+.to-form-card__heading {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 0.875rem;
+
+  h2 {
+    margin: 0;
+    color:
+      var(--to-text, #111827);
+    font-size: 0.975rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  p {
+    max-width: 36rem;
+    margin: 0.25rem 0 0;
+    color:
+      var(--to-text-muted, #667085);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+}
+
+.to-form-card__icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  color:
+    var(--to-success, #15803d);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 11px;
+
+  i {
+    font-size: 0.95rem;
+  }
+}
+
+.to-form-card__hint {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  color:
+    var(--to-text-muted, #667085);
+  cursor: help;
+  border-radius: 50%;
+
+  &:hover {
+    color:
+      var(--to-text, #111827);
+    background:
+      var(--to-surface-muted, #f6f7f9);
+  }
+}
+
+.to-form-card__content {
+  padding: 1.25rem;
+}
+
+.to-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 1.125rem;
+}
+
+.to-form-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.4375rem;
+
+  label {
+    color:
+      var(--to-text, #111827);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+  textarea {
+    width: 100%;
+    resize: vertical;
+  }
+}
+
+.to-form-field--wide {
+  grid-column: 1 / -1;
+}
+
+.to-required {
+  color:
+    var(--to-danger, #dc2626);
+}
+
+.to-form-field__support,
+.to-form-field__error,
+.to-character-count {
+  display: block;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.to-form-field__support,
+.to-character-count {
+  color:
+    var(--to-text-subtle, #98a2b3);
+}
+
+.to-form-field__error {
+  color:
+    var(--to-danger, #dc2626);
+}
+
+.to-character-count {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.to-field-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+:host ::ng-deep {
+  .to-field-control {
+    width: 100%;
+  }
+
+  .to-field-control.p-datepicker,
+  .to-field-control.p-inputnumber {
+    width: 100%;
+  }
+
+  .to-field-control .p-inputtext,
+  .to-field-control.p-inputnumber {
+    min-height: 2.75rem;
+  }
+
+  .p-inputnumber-input {
+    width: 100%;
+  }
+
+  .ng-invalid.ng-dirty,
+  .ng-invalid.ng-touched {
+    &.p-datepicker,
+    &.p-inputnumber,
+    &.p-inputtextarea,
+    .p-inputtext {
+      border-color:
+        var(--to-danger, #dc2626);
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .to-form-card__header,
+  .to-form-card__content {
+    padding-inline: 1rem;
+  }
+
+  .to-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .to-form-field--wide {
+    grid-column: auto;
+  }
+
+  .to-field-footer {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

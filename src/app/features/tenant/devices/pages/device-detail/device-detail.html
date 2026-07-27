@@ -1,0 +1,527 @@
+<section
+  class="to-device-detail"
+  data-testid="device-detail-page"
+>
+  @if (loading()) {
+    <div class="to-device-detail__state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading device details...</span>
+    </div>
+  } @else if (pageError()) {
+    <div class="to-device-detail__state">
+      <i class="pi pi-exclamation-triangle"></i>
+
+      <strong>
+        Device details unavailable
+      </strong>
+
+      <span>{{ pageError() }}</span>
+
+      <p-button
+        label="Try again"
+        icon="pi pi-refresh"
+        (click)="refresh()"
+      />
+    </div>
+  } @else if (device(); as currentDevice) {
+    <header class="to-device-detail__header">
+      <div class="to-device-detail__heading">
+        <button
+          type="button"
+          class="to-device-detail__back"
+          aria-label="Back to devices"
+          (click)="goBack()"
+        >
+          <i class="pi pi-arrow-left"></i>
+        </button>
+
+        <div>
+          <div class="to-device-detail__heading-meta">
+            <span>
+              {{ currentDevice.deviceCode }}
+            </span>
+
+            <p-tag
+              [value]="currentDevice.status"
+              [severity]="
+                statusSeverity(
+                  currentDevice.status
+                )
+              "
+            />
+          </div>
+
+          <h1>
+            {{ currentDevice.deviceName }}
+          </h1>
+
+          <p>
+            {{ currentDevice.serialNumber }}
+            ·
+            {{ currentDevice.category | titlecase }}
+          </p>
+        </div>
+      </div>
+
+      <div class="to-device-detail__actions">
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          (click)="refresh()"
+        />
+
+        <p-button
+          label="Edit Device"
+          icon="pi pi-pencil"
+          (click)="editDevice()"
+        />
+      </div>
+    </header>
+
+    @if (health(); as deviceHealth) {
+      <div class="to-device-detail__kpis">
+        <article>
+          <span class="to-device-detail__kpi-icon">
+            <i class="pi pi-heart"></i>
+          </span>
+
+          <div>
+            <span>Health Score</span>
+            <strong>
+              {{ healthScore() }}%
+            </strong>
+            <small>
+              {{ deviceHealth.healthStatus }}
+            </small>
+          </div>
+        </article>
+
+        <article
+          [class.to-device-detail__kpi--success]="
+            deviceHealth.connected
+          "
+          [class.to-device-detail__kpi--danger]="
+            !deviceHealth.connected
+          "
+        >
+          <span class="to-device-detail__kpi-icon">
+            <i class="pi pi-wifi"></i>
+          </span>
+
+          <div>
+            <span>Connectivity</span>
+            <strong>
+              {{ connectivityLabel() }}
+            </strong>
+            <small>
+              {{
+                deviceHealth.lastSeenAt
+                  ? (
+                      deviceHealth.lastSeenAt
+                        | date:'MMM d, h:mm a'
+                    )
+                  : 'Never connected'
+              }}
+            </small>
+          </div>
+        </article>
+
+        <article>
+          <span class="to-device-detail__kpi-icon">
+            <i class="pi pi-chart-line"></i>
+          </span>
+
+          <div>
+            <span>Uptime</span>
+            <strong>
+              {{
+                deviceHealth.uptimePercentage
+                  ?? 0
+              }}%
+            </strong>
+            <small>Availability</small>
+          </div>
+        </article>
+
+        <article class="to-device-detail__kpi--warning">
+          <span class="to-device-detail__kpi-icon">
+            <i class="pi pi-bell"></i>
+          </span>
+
+          <div>
+            <span>Open Alerts</span>
+            <strong>
+              {{ deviceHealth.openAlerts }}
+            </strong>
+            <small>
+              {{ deviceHealth.criticalAlerts }}
+              critical
+            </small>
+          </div>
+        </article>
+
+        <article>
+          <span class="to-device-detail__kpi-icon">
+            <i class="pi pi-signal"></i>
+          </span>
+
+          <div>
+            <span>Signal</span>
+            <strong>
+              {{
+                deviceHealth.signalStrength
+                  !== null &&
+                deviceHealth.signalStrength
+                  !== undefined
+                  ? deviceHealth.signalStrength + '%'
+                  : '—'
+              }}
+            </strong>
+            <small>Current strength</small>
+          </div>
+        </article>
+      </div>
+    }
+
+    <div class="to-device-detail__layout">
+      <main class="to-device-detail__main">
+        <article class="to-device-detail__card">
+          <header class="to-device-detail__card-header">
+            <div>
+              <span>Live monitoring</span>
+              <h2>Latest Telemetry</h2>
+            </div>
+
+            @if (health()?.lastTelemetryAt) {
+              <small>
+                Updated
+                {{
+                  health()?.lastTelemetryAt
+                    | date:'MMM d, h:mm a'
+                }}
+              </small>
+            }
+          </header>
+
+          <div class="to-device-detail__telemetry">
+            @for (
+              metric of telemetry();
+              track metric.metric
+            ) {
+              <article
+                [class]="
+                  healthClass(metric.status)
+                "
+              >
+                <span>{{ metric.label }}</span>
+
+                <strong>
+                  {{ telemetryValue(metric) }}
+                </strong>
+
+                @if (metric.recordedAt) {
+                  <small>
+                    {{
+                      metric.recordedAt
+                        | date:'h:mm a'
+                    }}
+                  </small>
+                }
+              </article>
+            } @empty {
+              <div class="to-device-detail__empty">
+                <i class="pi pi-chart-line"></i>
+                <span>No telemetry available</span>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="to-device-detail__card">
+          <header class="to-device-detail__card-header">
+            <div>
+              <span>Device activity</span>
+              <h2>Recent Events</h2>
+            </div>
+          </header>
+
+          <div class="to-device-detail__timeline">
+            @for (
+              event of events();
+              track event.id
+            ) {
+              <article>
+                <span
+                  class="to-device-detail__timeline-dot"
+                  [class.to-device-detail__timeline-dot--danger]="
+                    event.severity === 'CRITICAL' ||
+                    event.severity === 'ERROR'
+                  "
+                  [class.to-device-detail__timeline-dot--warning]="
+                    event.severity === 'HIGH' ||
+                    event.severity === 'MEDIUM'
+                  "
+                ></span>
+
+                <div>
+                  <div>
+                    <strong>
+                      {{ event.eventType | titlecase }}
+                    </strong>
+
+                    <p-tag
+                      [value]="event.severity"
+                      [severity]="
+                        severityTag(event.severity)
+                      "
+                    />
+                  </div>
+
+                  <p>{{ event.message }}</p>
+
+                  <small>
+                    {{
+                      event.createdAt
+                        | date:'MMM d, y, h:mm a'
+                    }}
+                  </small>
+                </div>
+              </article>
+            } @empty {
+              <div class="to-device-detail__empty">
+                <i class="pi pi-history"></i>
+                <span>No events recorded</span>
+              </div>
+            }
+          </div>
+        </article>
+      </main>
+
+      <aside class="to-device-detail__side">
+        <article class="to-device-detail__card">
+          <header class="to-device-detail__card-header">
+            <div>
+              <span>Assignment</span>
+              <h2>Assigned Site</h2>
+            </div>
+          </header>
+
+          <div class="to-device-detail__site-card">
+            <span class="to-device-detail__site-icon">
+              <i class="pi pi-map-marker"></i>
+            </span>
+
+            <div>
+              <strong>
+                {{
+                  currentDevice.siteName ||
+                  'Unassigned'
+                }}
+              </strong>
+
+              <span>
+                {{
+                  currentDevice.siteCode ||
+                  'No site code'
+                }}
+              </span>
+            </div>
+
+            @if (currentDevice.siteId) {
+              <button
+                type="button"
+                aria-label="Open assigned site"
+                (click)="openSite()"
+              >
+                <i class="pi pi-arrow-right"></i>
+              </button>
+            }
+          </div>
+        </article>
+
+        <article class="to-device-detail__card">
+          <header class="to-device-detail__card-header">
+            <div>
+              <span>Configuration</span>
+              <h2>Device Information</h2>
+            </div>
+          </header>
+
+          <dl class="to-device-detail__details">
+            <div>
+              <dt>Device Model</dt>
+              <dd>
+                {{
+                  currentDevice.deviceModelName ||
+                  currentDevice.deviceModelCode ||
+                  'Not available'
+                }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Manufacturer</dt>
+              <dd>
+                {{
+                  currentDevice.manufacturer ||
+                  'Not available'
+                }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Firmware</dt>
+              <dd>
+                {{
+                  currentDevice.firmwareVersion ||
+                  'Not available'
+                }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>IP Address</dt>
+              <dd>
+                {{
+                  currentDevice.ipAddress ||
+                  'Not available'
+                }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>MAC Address</dt>
+              <dd>
+                {{
+                  currentDevice.macAddress ||
+                  'Not available'
+                }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Serial Number</dt>
+              <dd>
+                {{ currentDevice.serialNumber }}
+              </dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="to-device-detail__card">
+          <header class="to-device-detail__card-header">
+            <div>
+              <span>Immediate attention</span>
+              <h2>Open Alerts</h2>
+            </div>
+
+            <button
+              type="button"
+              (click)="viewAllAlerts()"
+            >
+              View all
+            </button>
+          </header>
+
+          <div class="to-device-detail__compact-list">
+            @for (
+              alert of alerts();
+              track alert.id
+            ) {
+              <button
+                type="button"
+                (click)="openAlert(alert)"
+              >
+                <span
+                  class="to-device-detail__alert-line"
+                  [class.to-device-detail__alert-line--critical]="
+                    alert.severity === 'CRITICAL' ||
+                    alert.severity === 'ERROR'
+                  "
+                ></span>
+
+                <div>
+                  <strong>
+                    {{ alert.message }}
+                  </strong>
+
+                  <span>
+                    {{ alert.alertCode }}
+                  </span>
+
+                  <small>
+                    {{
+                      alert.createdAt
+                        | date:'MMM d, h:mm a'
+                    }}
+                  </small>
+                </div>
+
+                <p-tag
+                  [value]="alert.severity"
+                  [severity]="
+                    severityTag(alert.severity)
+                  "
+                />
+              </button>
+            } @empty {
+              <div class="to-device-detail__empty">
+                <i class="pi pi-check-circle"></i>
+                <span>No open alerts</span>
+              </div>
+            }
+          </div>
+        </article>
+
+        <article class="to-device-detail__card">
+          <header class="to-device-detail__card-header">
+            <div>
+              <span>Security</span>
+              <h2>Credentials</h2>
+            </div>
+          </header>
+
+          <div class="to-device-detail__credentials">
+            @for (
+              credential of credentials();
+              track credential.id
+            ) {
+              <article>
+                <span class="to-device-detail__credential-icon">
+                  <i class="pi pi-key"></i>
+                </span>
+
+                <div>
+                  <strong>
+                    {{
+                      credential.credentialType
+                        | titlecase
+                    }}
+                  </strong>
+
+                  <span>
+                    {{
+                      credential.username ||
+                      'Managed credential'
+                    }}
+                  </span>
+
+                  <small>
+                    Status: {{ credential.status }}
+                  </small>
+                </div>
+              </article>
+            } @empty {
+              <div class="to-device-detail__empty">
+                <i class="pi pi-key"></i>
+                <span>No credentials configured</span>
+              </div>
+            }
+          </div>
+        </article>
+      </aside>
+    </div>
+  }
+</section>

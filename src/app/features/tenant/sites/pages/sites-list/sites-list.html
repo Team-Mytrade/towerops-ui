@@ -1,0 +1,295 @@
+<section
+  class="to-sites"
+  [class.to-sites--detail-open]="selectedSite()"
+  data-testid="sites-page"
+>
+  <header class="to-sites__header">
+    <div>
+      <p class="to-sites__eyebrow">Infrastructure</p>
+      <h1>Sites</h1>
+      <p>
+        Monitor and manage tenant infrastructure locations.
+      </p>
+    </div>
+
+    <div class="to-sites__header-actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        (click)="refresh()"
+      />
+
+      <p-button
+        label="Create Site"
+        icon="pi pi-plus"
+        data-testid="create-site-btn"
+        (click)="createSite()"
+      />
+    </div>
+  </header>
+  @if (formMode(); as mode) {
+  <to-site-form
+    [mode]="mode"
+    [site]="editingSite()"
+    (saved)="onSiteSaved($event)"
+    (cancelled)="closeForm()"
+  />
+} @else {
+
+  <div class="to-sites__summary">
+    <article>
+      <span>Total Sites</span>
+      <strong>{{ totalSites() }}</strong>
+    </article>
+
+    <article class="to-sites__summary-card--healthy">
+      <span>Healthy</span>
+      <strong>{{ healthySites() }}</strong>
+    </article>
+
+    <article class="to-sites__summary-card--critical">
+      <span>Critical</span>
+      <strong>{{ criticalSites() }}</strong>
+    </article>
+
+    <article class="to-sites__summary-card--offline">
+      <span>Offline</span>
+      <strong>{{ offlineSites() }}</strong>
+    </article>
+  </div>
+
+  <div class="to-sites__toolbar">
+    <div class="to-sites__filters">
+      <div class="to-sites__search">
+        <i class="pi pi-search"></i>
+
+        <input
+          pInputText
+          type="search"
+          placeholder="Search site name, code or address"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          data-testid="site-search-input"
+        />
+      </div>
+
+      <p-select
+        [options]="categoryOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Category"
+        [ngModel]="categoryFilter()"
+        (ngModelChange)="categoryFilter.set($event)"
+      />
+
+      <p-select
+        [options]="healthOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Health"
+        [ngModel]="healthFilter()"
+        (ngModelChange)="healthFilter.set($event)"
+      />
+
+      <button
+        type="button"
+        class="to-sites__clear"
+        (click)="clearFilters()"
+      >
+        Clear filters
+      </button>
+    </div>
+
+    <div class="to-sites__view-switcher">
+      <button
+        type="button"
+        [class.to-sites__view-button--active]="
+          viewMode() === 'LIST'
+        "
+        aria-label="List view"
+        (click)="setViewMode('LIST')"
+      >
+        <i class="pi pi-list"></i>
+      </button>
+
+      <button
+        type="button"
+        [class.to-sites__view-button--active]="
+          viewMode() === 'MAP'
+        "
+        aria-label="Map view"
+        (click)="setViewMode('MAP')"
+      >
+        <i class="pi pi-map"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="to-sites__workspace">
+    <main class="to-sites__content">
+      @if (loading()) {
+        <div class="to-sites__state">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading sites...</span>
+        </div>
+      } @else if (pageError()) {
+        <div class="to-sites__state">
+          <i class="pi pi-exclamation-triangle"></i>
+          <strong>Sites could not be loaded</strong>
+          <span>{{ pageError() }}</span>
+        </div>
+      } @else if (viewMode() === 'MAP') {
+        <to-map
+          [markers]="mapMarkers()"
+          height="calc(100dvh - 18rem)"
+          [autoFitBounds]="true"
+          (markerSelected)="onMarkerSelected($event)"
+        />
+      } @else {
+        <div class="to-sites__table">
+          <div class="to-sites__table-header">
+            <span>Site</span>
+            <span>Category</span>
+            <span>Health</span>
+            <span>Devices</span>
+            <span>Alerts</span>
+            <span>Status</span>
+            <span></span>
+          </div>
+
+          @for (
+            site of filteredSites();
+            track site.id
+          ) {
+            <button
+              type="button"
+              class="to-sites__row"
+              [class.to-sites__row--selected]="
+                selectedSite()?.id === site.id
+              "
+              (click)="selectSite(site)"
+            >
+              <span class="to-sites__site">
+                <span class="to-sites__site-icon">
+                  <i class="pi pi-map-marker"></i>
+                </span>
+
+                <span>
+                  <strong>{{ site.siteName }}</strong>
+                  <small>
+                    {{ site.siteCode }} ·
+                    {{ formatAddress(site.address) }}
+                  </small>
+                </span>
+              </span>
+
+              <span>
+                {{ site.category | titlecase }}
+              </span>
+
+              <span>
+                <p-tag
+                  [value]="site.healthStatus ?? 'UNKNOWN'"
+                  [severity]="
+                    healthSeverity(site.healthStatus)
+                  "
+                />
+              </span>
+
+              <span>{{ site.deviceCount ?? 0 }}</span>
+              <span>{{ site.openAlerts ?? 0 }}</span>
+
+              <span>
+                {{ site.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+
+              <span>
+                <i class="pi pi-angle-right"></i>
+              </span>
+            </button>
+          } @empty {
+            <div class="to-sites__state">
+              <i class="pi pi-map-marker"></i>
+              <strong>No sites found</strong>
+              <span>
+                Adjust the filters or create a new site.
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </main>
+
+    @if (selectedSite(); as site) {
+      <aside class="to-sites__details">
+        <header>
+          <div>
+            <span>{{ site.siteCode }}</span>
+            <h2>{{ site.siteName }}</h2>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Close site details"
+            (click)="closeDetails()"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </header>
+
+        <div class="to-sites__details-body">
+          <section>
+            <span>Health</span>
+
+            <p-tag
+              [value]="site.healthStatus ?? 'UNKNOWN'"
+              [severity]="healthSeverity(site.healthStatus)"
+            />
+          </section>
+
+          <section>
+            <span>Category</span>
+            <strong>{{ site.category | titlecase }}</strong>
+          </section>
+
+          <section>
+            <span>Address</span>
+            <strong>{{ formatAddress(site.address) }}</strong>
+          </section>
+
+          <div class="to-sites__details-metrics">
+            <article>
+              <span>Devices</span>
+              <strong>{{ site.deviceCount ?? 0 }}</strong>
+            </article>
+
+            <article>
+              <span>Open Alerts</span>
+              <strong>{{ site.openAlerts ?? 0 }}</strong>
+            </article>
+          </div>
+
+          <section>
+            <span>Description</span>
+            <p>
+              {{ site.description || 'No description provided.' }}
+            </p>
+          </section>
+        </div>
+
+        <footer>
+          <p-button
+            label="Open Site"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (click)="openSite(site)"
+          />
+        </footer>
+      </aside>
+    }
+  </div>
+}
+</section>

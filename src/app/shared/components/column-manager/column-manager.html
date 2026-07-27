@@ -1,0 +1,509 @@
+<section
+  class="to-column-manager"
+  [ngClass]="componentClasses()"
+  [attr.data-testid]="dataTestId()"
+  aria-label="Column manager"
+>
+  <header
+    class="to-column-manager__header"
+  >
+    <div
+      class="to-column-manager__heading"
+    >
+      <span
+        class="to-column-manager__heading-icon"
+      >
+        <i class="pi pi-table"></i>
+      </span>
+
+      <div>
+        <strong>
+          {{ title() }}
+        </strong>
+
+        @if (subtitle()) {
+          <small>
+            {{ subtitle() }}
+          </small>
+        }
+      </div>
+    </div>
+
+    <div
+      class="to-column-manager__summary"
+    >
+      <span>
+        {{ visibleColumnCount() }}
+        of
+        {{ totalColumnCount() }}
+        visible
+      </span>
+
+      @if (dirty()) {
+        <span
+          class="to-column-manager__dirty"
+          pTooltip="Column configuration has unsaved changes"
+          tooltipPosition="bottom"
+        >
+          <i class="pi pi-circle-fill"></i>
+          Modified
+        </span>
+      }
+    </div>
+  </header>
+
+  @if (
+    showSearch() ||
+    showBulkActions()
+  ) {
+    <div
+      class="to-column-manager__toolbar"
+    >
+      @if (showSearch()) {
+        <span
+          class="to-column-manager__search"
+        >
+          <i class="pi pi-search"></i>
+
+          <input
+            pInputText
+            type="search"
+            autocomplete="off"
+            [placeholder]="
+              searchPlaceholder()
+            "
+            [ngModel]="search()"
+            (ngModelChange)="
+              search.set($event)
+            "
+            data-testid="column-manager-search"
+          />
+
+          @if (search()) {
+            <button
+              type="button"
+              class="to-column-manager__search-clear"
+              aria-label="Clear column search"
+              (click)="search.set('')"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          }
+        </span>
+      }
+
+      @if (showBulkActions()) {
+        <div
+          class="to-column-manager__bulk-actions"
+        >
+          <p-button
+            type="button"
+            label="Show all"
+            icon="pi pi-eye"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [disabled]="
+              disabled() ||
+              loading() ||
+              !canShowAll()
+            "
+            data-testid="column-manager-show-all"
+            (click)="showAllColumns()"
+          />
+
+          <p-button
+            type="button"
+            label="Required only"
+            icon="pi pi-eye-slash"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [disabled]="
+              disabled() ||
+              loading() ||
+              !canHideOptionalColumns()
+            "
+            data-testid="column-manager-required-only"
+            (click)="
+              hideOptionalColumns()
+            "
+          />
+        </div>
+      }
+    </div>
+  }
+
+  <div
+    class="to-column-manager__content"
+  >
+    @if (hasColumns()) {
+      <div
+        class="to-column-manager__list"
+        role="list"
+      >
+        @for (
+          column of filteredColumns();
+          track column.key
+        ) {
+          <article
+            class="to-column-manager__item"
+            [class.to-column-manager__item--hidden]="
+              !column.visible
+            "
+            [class.to-column-manager__item--locked]="
+              isRequiredColumn(column)
+            "
+            [class.to-column-manager__item--dragging]="
+              draggedColumnKey() ===
+              column.key
+            "
+            [class.to-column-manager__item--drag-over]="
+              dragOverColumnKey() ===
+              column.key
+            "
+            [attr.draggable]="
+              allowReorder() &&
+              !disabled() &&
+              !loading() &&
+              !column.disabled
+            "
+            role="listitem"
+            (dragstart)="
+              handleDragStart(
+                $event,
+                column
+              )
+            "
+            (dragover)="
+              handleDragOver(
+                $event,
+                column
+              )
+            "
+            (drop)="
+              handleDrop(
+                $event,
+                column
+              )
+            "
+            (dragend)="
+              handleDragEnd()
+            "
+          >
+            <div
+              class="to-column-manager__drag-handle"
+              [class.to-column-manager__drag-handle--disabled]="
+                !allowReorder() ||
+                column.disabled
+              "
+              pTooltip="Drag to reorder"
+              tooltipPosition="left"
+              aria-hidden="true"
+            >
+              <i class="pi pi-bars"></i>
+            </div>
+
+            <div
+              class="to-column-manager__visibility"
+            >
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="column.visible"
+                [disabled]="
+                  disabled() ||
+                  loading() ||
+                  column.disabled ||
+                  (
+                    column.visible &&
+                    !canHideColumn(
+                      column
+                    )
+                  )
+                "
+                [inputId]="
+                  'column-visible-' +
+                  column.key
+                "
+                (ngModelChange)="
+                  toggleColumn(
+                    column,
+                    $event
+                  )
+                "
+              />
+            </div>
+
+            <label
+              class="to-column-manager__identity"
+              [for]="
+                'column-visible-' +
+                column.key
+              "
+            >
+              @if (column.icon) {
+                <span
+                  class="to-column-manager__column-icon"
+                >
+                  <i
+                    [class]="column.icon"
+                  ></i>
+                </span>
+              }
+
+              <div>
+                <span
+                  class="to-column-manager__column-title"
+                >
+                  {{ column.label }}
+
+                  @if (
+                    isRequiredColumn(
+                      column
+                    )
+                  ) {
+                    <i
+                      class="pi pi-lock"
+                      pTooltip="This column is required"
+                      tooltipPosition="top"
+                    ></i>
+                  }
+                </span>
+
+                @if (
+                  showDescriptions() &&
+                  column.description
+                ) {
+                  <small>
+                    {{
+                      column.description
+                    }}
+                  </small>
+                }
+
+                @if (column.group) {
+                  <span
+                    class="to-column-manager__group"
+                  >
+                    {{ column.group }}
+                  </span>
+                }
+              </div>
+            </label>
+
+            @if (showWidths()) {
+              <div
+                class="to-column-manager__width"
+              >
+                <label
+                  [for]="
+                    'column-width-' +
+                    column.key
+                  "
+                >
+                  Width
+                </label>
+
+                <p-inputNumber
+                  [inputId]="
+                    'column-width-' +
+                    column.key
+                  "
+                  [ngModel]="
+                    column.width
+                  "
+                  [min]="
+                    column.minimumWidth ??
+                    80
+                  "
+                  [max]="
+                    column.maximumWidth ??
+                    600
+                  "
+                  [step]="10"
+                  suffix=" px"
+                  [showButtons]="false"
+                  [disabled]="
+  disabled() ||
+  loading() ||
+  column.disabled === true ||
+  (
+    column.visible &&
+    !canHideColumn(column)
+  )
+"
+                  placeholder="Auto"
+                  (ngModelChange)="
+                    updateWidth(
+                      column,
+                      $event
+                    )
+                  "
+                />
+              </div>
+            }
+
+            <div
+              class="to-column-manager__order"
+            >
+              <span
+                class="to-column-manager__position"
+              >
+                {{
+                  columnPosition(
+                    column
+                  )
+                }}
+              </span>
+
+              <p-button
+                type="button"
+                icon="pi pi-angle-up"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                [disabled]="
+                  disabled() ||
+                  loading() ||
+                  !allowReorder() ||
+                  column.disabled ||
+                  isFirstColumn(
+                    column
+                  )
+                "
+                pTooltip="Move column up"
+                tooltipPosition="top"
+                [attr.aria-label]="
+                  'Move ' +
+                  column.label +
+                  ' up'
+                "
+                (click)="
+                  moveColumnUp(
+                    column
+                  )
+                "
+              />
+
+              <p-button
+                type="button"
+                icon="pi pi-angle-down"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                [disabled]="
+                  disabled() ||
+                  loading() ||
+                  !allowReorder() ||
+                  column.disabled ||
+                  isLastColumn(
+                    column
+                  )
+                "
+                pTooltip="Move column down"
+                tooltipPosition="top"
+                [attr.aria-label]="
+                  'Move ' +
+                  column.label +
+                  ' down'
+                "
+                (click)="
+                  moveColumnDown(
+                    column
+                  )
+                "
+              />
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div
+        class="to-column-manager__empty"
+      >
+        <span>
+          <i class="pi pi-search"></i>
+        </span>
+
+        <strong>
+          {{ emptyTitle() }}
+        </strong>
+
+        <p>
+          {{ emptyMessage() }}
+        </p>
+
+        @if (search()) {
+          <p-button
+            type="button"
+            label="Clear search"
+            icon="pi pi-times"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            (click)="search.set('')"
+          />
+        }
+      </div>
+    }
+  </div>
+
+  @if (
+    showReset() ||
+    showApply()
+  ) {
+    <footer
+      class="to-column-manager__footer"
+    >
+      <div>
+        <ng-content
+          select="[columnManagerFooterLeading]"
+        />
+      </div>
+
+      <div
+        class="to-column-manager__footer-actions"
+      >
+        @if (showReset()) {
+          <p-button
+            type="button"
+            [label]="resetLabel()"
+            icon="pi pi-refresh"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [disabled]="
+              disabled() ||
+              loading() ||
+              !dirty()
+            "
+            data-testid="column-manager-reset"
+            (click)="resetColumns()"
+          />
+        }
+
+        @if (showApply()) {
+          <p-button
+            type="button"
+            [label]="applyLabel()"
+            icon="pi pi-check"
+            size="small"
+            [disabled]="
+              disabled() ||
+              loading() ||
+              !dirty()
+            "
+            data-testid="column-manager-apply"
+            (click)="applyColumns()"
+          />
+        }
+
+        <ng-content
+          select="[columnManagerFooterActions]"
+        />
+      </div>
+    </footer>
+  }
+</section>

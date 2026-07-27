@@ -1,0 +1,423 @@
+<section
+  class="to-ticket-form"
+  data-testid="ticket-form"
+>
+  <header class="to-ticket-form__header">
+    <div>
+      <p>
+        {{
+          mode() === 'edit'
+            ? 'Update ticket'
+            : 'New ticket'
+        }}
+      </p>
+
+      <h2>
+        {{
+          mode() === 'edit'
+            ? 'Edit Ticket'
+            : 'Create Ticket'
+        }}
+      </h2>
+
+      <span>
+        Configure the incident, related infrastructure,
+        assignment and expected resolution.
+      </span>
+    </div>
+
+    <button
+      type="button"
+      class="to-ticket-form__close"
+      aria-label="Close ticket form"
+      data-testid="close-ticket-form-btn"
+      [disabled]="submitting()"
+      (click)="cancel()"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </header>
+
+  @if (loadingLookups()) {
+    <div class="to-ticket-form__lookup-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+
+      <div>
+        <strong>Loading form data</strong>
+        <span>
+          Preparing sites, devices, alerts and technicians.
+        </span>
+      </div>
+    </div>
+  }
+
+  <form
+    class="to-ticket-form__body"
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    novalidate
+  >
+    <section class="to-ticket-form__section">
+      <header>
+        <span>01</span>
+
+        <div>
+          <h3>Incident details</h3>
+          <p>
+            Describe the issue and assign operational priority.
+          </p>
+        </div>
+      </header>
+
+      <div class="to-ticket-form__grid">
+        <div class="to-field to-field--wide">
+          <label for="title">
+            Title
+            <span>*</span>
+          </label>
+
+          <input
+            id="title"
+            pInputText
+            formControlName="title"
+            placeholder="Enter a concise ticket title"
+            data-testid="ticket-title-input"
+          />
+
+          @if (error('title', 'Title')) {
+            <small>
+              {{ error('title', 'Title') }}
+            </small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="priority">
+            Priority
+            <span>*</span>
+          </label>
+
+          <p-select
+            inputId="priority"
+            formControlName="priority"
+            [options]="priorityOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select priority"
+            appendTo="body"
+            data-testid="ticket-priority-select"
+          />
+
+          @if (error('priority', 'Priority')) {
+            <small>
+              {{ error('priority', 'Priority') }}
+            </small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="severity">
+            Severity
+            <span>*</span>
+          </label>
+
+          <p-select
+            inputId="severity"
+            formControlName="severity"
+            [options]="severityOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select severity"
+            appendTo="body"
+            data-testid="ticket-severity-select"
+          />
+
+          @if (error('severity', 'Severity')) {
+            <small>
+              {{ error('severity', 'Severity') }}
+            </small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="source">
+            Source
+            <span>*</span>
+          </label>
+
+          <p-select
+            inputId="source"
+            formControlName="source"
+            [options]="sourceOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select source"
+            appendTo="body"
+            data-testid="ticket-source-select"
+          />
+
+          @if (error('source', 'Source')) {
+            <small>
+              {{ error('source', 'Source') }}
+            </small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="estimatedResolutionAt">
+            Estimated Resolution
+          </label>
+
+          <p-datepicker
+            inputId="estimatedResolutionAt"
+            formControlName="estimatedResolutionAt"
+            [showTime]="true"
+            [showIcon]="true"
+            [showButtonBar]="true"
+            dateFormat="dd M yy"
+            hourFormat="12"
+            appendTo="body"
+            placeholder="Select expected date and time"
+            data-testid="ticket-resolution-date-input"
+          />
+        </div>
+
+        <div class="to-field to-field--wide">
+          <label for="description">
+            Description
+            <span>*</span>
+          </label>
+
+          <textarea
+            id="description"
+            pTextarea
+            formControlName="description"
+            rows="5"
+            maxlength="3000"
+            placeholder="Describe the issue, symptoms and operational impact"
+            data-testid="ticket-description-input"
+          ></textarea>
+
+          <div class="to-field__meta">
+            @if (
+              error(
+                'description',
+                'Description'
+              )
+            ) {
+              <small>
+                {{
+                  error(
+                    'description',
+                    'Description'
+                  )
+                }}
+              </small>
+            } @else {
+              <span></span>
+            }
+
+            <span>
+              {{
+                form.controls.description.value.length
+              }}/3000
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="to-ticket-form__section">
+      <header>
+        <span>02</span>
+
+        <div>
+          <h3>Infrastructure</h3>
+          <p>
+            Link the ticket to its site, device and source alert.
+          </p>
+        </div>
+      </header>
+
+      <div class="to-ticket-form__grid">
+        <div class="to-field">
+          <label for="siteId">
+            Site
+            <span>*</span>
+          </label>
+
+          <p-select
+            inputId="siteId"
+            formControlName="siteId"
+            [options]="siteOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [showClear]="false"
+            placeholder="Select site"
+            appendTo="body"
+            data-testid="ticket-site-select"
+          />
+
+          @if (error('siteId', 'Site')) {
+            <small>
+              {{ error('siteId', 'Site') }}
+            </small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="deviceId">
+            Device
+          </label>
+
+          <p-select
+            inputId="deviceId"
+            formControlName="deviceId"
+            [options]="deviceOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [showClear]="true"
+            [disabled]="
+              !form.controls.siteId.value
+            "
+            placeholder="Select device"
+            appendTo="body"
+            data-testid="ticket-device-select"
+          />
+
+          <small class="to-field__hint">
+            {{
+              form.controls.siteId.value
+                ? 'Optional device assignment'
+                : 'Select a site first'
+            }}
+          </small>
+        </div>
+
+        <div class="to-field to-field--wide">
+          <label for="alertId">
+            Related Alert
+          </label>
+
+          <p-select
+            inputId="alertId"
+            formControlName="alertId"
+            [options]="alertOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [showClear]="true"
+            [disabled]="
+              !form.controls.siteId.value
+            "
+            placeholder="Select related alert"
+            appendTo="body"
+            data-testid="ticket-alert-select"
+          />
+
+          <small class="to-field__hint">
+            Alerts are filtered by the selected site and device.
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <section class="to-ticket-form__section">
+      <header>
+        <span>03</span>
+
+        <div>
+          <h3>Assignment</h3>
+          <p>
+            Assign a technician and add operational remarks.
+          </p>
+        </div>
+      </header>
+
+      <div class="to-ticket-form__grid">
+        <div class="to-field to-field--wide">
+          <label for="assignedTechnicianId">
+            Assigned Technician
+          </label>
+
+          <p-select
+            inputId="assignedTechnicianId"
+            formControlName="assignedTechnicianId"
+            [options]="technicianOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [showClear]="true"
+            placeholder="Select technician"
+            appendTo="body"
+            data-testid="ticket-technician-select"
+          />
+        </div>
+
+        <div class="to-field to-field--wide">
+          <label for="remarks">
+            Remarks
+          </label>
+
+          <textarea
+            id="remarks"
+            pTextarea
+            formControlName="remarks"
+            rows="4"
+            maxlength="1000"
+            placeholder="Add assignment notes, investigation context or instructions"
+            data-testid="ticket-remarks-input"
+          ></textarea>
+
+          <div class="to-field__meta">
+            <span></span>
+
+            <span>
+              {{
+                form.controls.remarks.value.length
+              }}/1000
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="to-ticket-form__footer">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="submitting()"
+        data-testid="cancel-ticket-form-btn"
+        (click)="cancel()"
+      />
+
+      <p-button
+        type="submit"
+        [label]="
+          mode() === 'edit'
+            ? 'Save Changes'
+            : 'Create Ticket'
+        "
+        [icon]="
+          mode() === 'edit'
+            ? 'pi pi-check'
+            : 'pi pi-plus'
+        "
+        [loading]="submitting()"
+        [disabled]="
+          submitting() ||
+          loadingLookups()
+        "
+        data-testid="save-ticket-btn"
+      />
+    </footer>
+  </form>
+</section>

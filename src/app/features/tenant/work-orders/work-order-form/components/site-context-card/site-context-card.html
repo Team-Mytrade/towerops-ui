@@ -1,0 +1,261 @@
+<aside
+  class="to-context-card"
+  data-testid="work-order-site-context-card"
+>
+  <header class="to-context-card__header">
+    <div class="to-context-card__heading">
+      <span class="to-context-card__icon">
+        <i class="pi pi-building"></i>
+      </span>
+
+      <div>
+        <h2>Site Context</h2>
+
+        <p>
+          Live operational summary for the
+          selected site.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="to-context-card__content">
+      <div class="to-context-skeleton">
+        <p-skeleton
+          width="55%"
+          height="1.2rem"
+        />
+
+        <p-skeleton
+          width="35%"
+          height="0.8rem"
+        />
+
+        <p-skeleton
+          width="5rem"
+          height="1.5rem"
+          borderRadius="999px"
+        />
+      </div>
+
+      <div class="to-metric-grid">
+        @for (
+          item of [1, 2, 3, 4];
+          track item
+        ) {
+          <div class="to-metric-card">
+            <p-skeleton
+              width="2rem"
+              height="2rem"
+              borderRadius="10px"
+            />
+
+            <div>
+              <p-skeleton
+                width="3rem"
+                height="0.7rem"
+              />
+
+              <p-skeleton
+                width="2rem"
+                height="1.25rem"
+              />
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (context(); as siteContext) {
+    <div class="to-context-card__content">
+      <section class="to-site-identity">
+        <div class="to-site-identity__top">
+          <div>
+            <span class="to-site-eyebrow">
+              {{ siteContext.category || 'SITE' }}
+            </span>
+
+            <h3>
+              {{ siteContext.siteName }}
+            </h3>
+
+            <p>
+              {{ siteContext.siteCode }}
+            </p>
+          </div>
+
+          <p-tag
+            [value]="healthLabel()"
+            [severity]="healthSeverity()"
+            [rounded]="true"
+          />
+        </div>
+
+        <div class="to-site-health">
+          <div class="to-site-health__header">
+            <span>Device availability</span>
+
+            <strong>
+              {{ deviceHealthPercentage() }}%
+            </strong>
+          </div>
+
+          <div
+            class="to-site-health__track"
+            role="progressbar"
+            aria-label="Device availability"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="
+              deviceHealthPercentage()
+            "
+          >
+            <span
+              [style.width.%]="
+                deviceHealthPercentage()
+              "
+            ></span>
+          </div>
+
+          <div class="to-site-health__footer">
+            <span>
+              {{ siteContext.devices.online }}
+              online
+            </span>
+
+            <span>
+              {{ siteContext.devices.offline }}
+              offline
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="to-metric-grid">
+        <article class="to-metric-card">
+          <span
+            class="to-metric-card__icon"
+            data-variant="devices"
+          >
+            <i class="pi pi-microchip"></i>
+          </span>
+
+          <div>
+            <span>Devices</span>
+
+            <strong>
+              {{ siteContext.devices.total }}
+            </strong>
+          </div>
+        </article>
+
+        <article class="to-metric-card">
+          <span
+            class="to-metric-card__icon"
+            data-variant="alerts"
+          >
+            <i class="pi pi-bell"></i>
+          </span>
+
+          <div>
+            <span>Open alerts</span>
+
+            <strong>
+              {{ siteContext.alerts.open }}
+            </strong>
+
+            @if (
+              siteContext.alerts.critical > 0
+            ) {
+              <small>
+                {{
+                  siteContext.alerts.critical
+                }}
+                critical
+              </small>
+            }
+          </div>
+        </article>
+
+        <article class="to-metric-card">
+          <span
+            class="to-metric-card__icon"
+            data-variant="tickets"
+          >
+            <i class="pi pi-ticket"></i>
+          </span>
+
+          <div>
+            <span>Open tickets</span>
+
+            <strong>
+              {{ siteContext.tickets.open }}
+            </strong>
+          </div>
+        </article>
+
+        <article class="to-metric-card">
+          <span
+            class="to-metric-card__icon"
+            data-variant="work-orders"
+          >
+            <i class="pi pi-wrench"></i>
+          </span>
+
+          <div>
+            <span>Active work orders</span>
+
+            <strong>
+              {{
+                siteContext.workOrders.open
+              }}
+            </strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="to-operational-summary">
+        <div>
+          <span>
+            <i class="pi pi-chart-line"></i>
+            Operational load
+          </span>
+
+          <strong>
+            {{ openOperationsCount() }}
+          </strong>
+        </div>
+
+        <p>
+          Total open alerts, tickets and work
+          orders currently associated with this
+          site.
+        </p>
+      </section>
+    </div>
+  } @else {
+    <div class="to-context-empty">
+      <span class="to-context-empty__icon">
+        <i class="pi pi-map-marker"></i>
+      </span>
+
+      <h3>
+        @if (siteSelected()) {
+          Site details unavailable
+        } @else {
+          Select a site
+        }
+      </h3>
+
+      <p>
+        @if (siteSelected()) {
+          Operational information could not be
+          loaded for the selected site.
+        } @else {
+          Choose a site to view device health,
+          alerts, tickets and active work orders.
+        }
+      </p>
+    </div>
+  }
+</aside>

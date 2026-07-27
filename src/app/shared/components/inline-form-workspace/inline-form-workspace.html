@@ -1,0 +1,326 @@
+<section
+  class="to-inline-form-workspace"
+  [ngClass]="workspaceClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  <header
+    class="to-inline-form-workspace__header"
+  >
+    <div
+      class="to-inline-form-workspace__identity"
+    >
+      <span
+        class="to-inline-form-workspace__icon"
+      >
+        <i [class]="icon()"></i>
+      </span>
+
+      <div
+        class="to-inline-form-workspace__heading"
+      >
+        <div
+          class="to-inline-form-workspace__eyebrow-row"
+        >
+          @if (eyebrow()) {
+            <span>
+              {{ eyebrow() }}
+            </span>
+          }
+
+          <span
+            class="to-inline-form-workspace__mode"
+          >
+            {{ modeLabel() }}
+          </span>
+
+          @if (dirty()) {
+            <span
+              class="to-inline-form-workspace__dirty"
+            >
+              Unsaved changes
+            </span>
+          }
+        </div>
+
+        <h2>
+          {{ title() }}
+        </h2>
+
+        @if (subtitle()) {
+          <p>
+            {{ subtitle() }}
+          </p>
+        }
+      </div>
+    </div>
+
+    <div
+      class="to-inline-form-workspace__header-actions"
+    >
+      <ng-content
+        select="[inlineWorkspaceHeaderActions]"
+      />
+
+      @for (
+        action of visibleActions();
+        track action.id
+      ) {
+        <p-button
+          type="button"
+          [label]="action.label"
+          [icon]="action.icon"
+          [severity]="
+            action.severity ??
+            'secondary'
+          "
+          [outlined]="
+            action.outlined === true
+          "
+          [text]="
+            action.text === true
+          "
+          [disabled]="
+            action.disabled === true
+          "
+          [loading]="
+            action.loading === true
+          "
+          [attr.data-testid]="
+            action.dataTestId ??
+            'inline-workspace-action-' +
+            action.id
+          "
+          (click)="requestAction(action)"
+        />
+      }
+
+      @if (showClose()) {
+        <p-button
+          type="button"
+          icon="pi pi-times"
+          severity="secondary"
+          [text]="true"
+          [rounded]="true"
+          [pTooltip]="closeLabel()"
+          tooltipPosition="bottom"
+          [attr.aria-label]="closeLabel()"
+          data-testid="inline-workspace-close"
+          (click)="requestClose()"
+        />
+      }
+    </div>
+  </header>
+
+  @if (
+    showSteps() &&
+    visibleSteps().length
+  ) {
+    <div
+      class="to-inline-form-workspace__navigation"
+    >
+      <nav
+        class="to-inline-form-workspace__steps"
+        aria-label="Form sections"
+      >
+        @for (
+          step of visibleSteps();
+          track step.id;
+          let index = $index
+        ) {
+          <button
+            type="button"
+            class="to-inline-form-workspace__step"
+            [ngClass]="
+              stepClasses(step, index)
+            "
+            [disabled]="
+              step.disabled === true
+            "
+            [attr.aria-current]="
+              isActiveStep(step)
+                ? 'step'
+                : null
+            "
+            [attr.data-testid]="
+              'inline-workspace-step-' +
+              step.id
+            "
+            (click)="selectStep(step)"
+          >
+            <span
+              class="to-inline-form-workspace__step-index"
+            >
+              @if (step.completed) {
+                <i class="pi pi-check"></i>
+              } @else if (step.error) {
+                <i
+                  class="pi pi-exclamation"
+                ></i>
+              } @else if (step.icon) {
+                <i [class]="step.icon"></i>
+              } @else {
+                {{ index + 1 }}
+              }
+            </span>
+
+            <span
+              class="to-inline-form-workspace__step-copy"
+            >
+              <strong>
+                {{ step.label }}
+              </strong>
+
+              @if (step.description) {
+                <small>
+                  {{ step.description }}
+                </small>
+              }
+
+              @if (step.optional) {
+                <small
+                  class="to-inline-form-workspace__optional"
+                >
+                  Optional
+                </small>
+              }
+            </span>
+          </button>
+        }
+      </nav>
+
+      @if (showProgress()) {
+        <div
+          class="to-inline-form-workspace__progress"
+        >
+          <div>
+            <span>
+              {{
+                activeStepIndex() >= 0
+                  ? stepPositionLabel(
+                      activeStepIndex()
+                    )
+                  : 'No active step'
+              }}
+            </span>
+
+            <strong>
+              {{ progressValue() }}%
+            </strong>
+          </div>
+
+          <p-progressbar
+            [value]="progressValue()"
+            [showValue]="false"
+          />
+        </div>
+      }
+    </div>
+  }
+
+  <main
+    class="to-inline-form-workspace__body"
+    [attr.aria-busy]="loading()"
+  >
+    @if (loading()) {
+      <div
+        class="to-inline-form-workspace__skeleton"
+      >
+        <span></span>
+        <span></span>
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+        <span></span>
+      </div>
+    } @else {
+      <ng-content />
+    }
+  </main>
+
+  <footer
+    class="to-inline-form-workspace__footer"
+  >
+    <div
+      class="to-inline-form-workspace__footer-start"
+    >
+      <ng-content
+        select="[inlineWorkspaceFooterStart]"
+      />
+
+      @if (
+        showSteps() &&
+        visibleSteps().length
+      ) {
+        <p-button
+          type="button"
+          label="Previous"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          [outlined]="true"
+          [disabled]="
+            !isPreviousStepAvailable() ||
+            submitting()
+          "
+          data-testid="inline-workspace-previous"
+          (click)="selectPreviousStep()"
+        />
+
+        <p-button
+          type="button"
+          label="Next"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          severity="secondary"
+          [outlined]="true"
+          [disabled]="
+            !isNextStepAvailable() ||
+            submitting()
+          "
+          data-testid="inline-workspace-next"
+          (click)="selectNextStep()"
+        />
+      }
+    </div>
+
+    <div
+      class="to-inline-form-workspace__footer-end"
+    >
+      <ng-content
+        select="[inlineWorkspaceFooterActions]"
+      />
+
+      @if (showCancel()) {
+        <p-button
+          type="button"
+          [label]="cancelLabel()"
+          severity="secondary"
+          [text]="true"
+          [disabled]="submitting()"
+          data-testid="inline-workspace-cancel"
+          (click)="requestCancel()"
+        />
+      }
+
+      @if (showSubmit()) {
+        <p-button
+          type="button"
+          [label]="resolvedSubmitLabel()"
+          [icon]="submitIcon()"
+          [severity]="submitSeverity()"
+          [disabled]="
+            !valid() ||
+            loading()
+          "
+          [loading]="submitting()"
+          data-testid="inline-workspace-submit"
+          (click)="requestSubmit()"
+        />
+      }
+    </div>
+  </footer>
+</section>

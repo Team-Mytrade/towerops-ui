@@ -1,0 +1,758 @@
+<section
+  class="to-entity-list"
+  [ngClass]="listClasses()"
+  [style.--entity-data-columns]="visibleColumns().length"
+  [style.--entity-identity-column]="
+    showIdentity()
+      ? 'minmax(13rem, 1.4fr)'
+      : '0'
+  "
+  [style.--entity-status-column]="
+    showStatus()
+      ? '7rem'
+      : '0'
+  "
+  [style.--entity-actions-column]="
+    showActions()
+      ? '5rem'
+      : '0'
+  "
+  [attr.data-testid]="dataTestId()"
+>
+  @if (loading()) {
+    <div
+      class="to-entity-list__skeletons"
+      aria-label="Loading records"
+      role="status"
+    >
+      @for (
+        item of skeletonItems();
+        track item
+      ) {
+        <article
+          class="to-entity-list__skeleton"
+        >
+          <span></span>
+
+          <div>
+            <strong></strong>
+            <small></small>
+          </div>
+
+          <span></span>
+          <span></span>
+          <span></span>
+        </article>
+      }
+    </div>
+  } @else if (visibleRows().length) {
+    <div
+      class="to-entity-list__desktop"
+    >
+      @if (showHeader()) {
+        <div
+          class="to-entity-list__header"
+          role="row"
+        >
+          @if (
+            selectionMode() !== 'none'
+          ) {
+            <div
+              class="to-entity-list__selection-cell"
+            >
+              @if (
+                selectionMode() ===
+                'multiple'
+              ) {
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="allSelected()"
+                  [indeterminate]="
+                    partiallySelected()
+                  "
+                  inputId="entity-list-select-all"
+                  ariaLabel="Select all records"
+                  (click)="
+                    toggleAllSelection($event)
+                  "
+                />
+              }
+            </div>
+          }
+
+          @if (showIdentity()) {
+            <div
+              class="to-entity-list__identity-header"
+            >
+              Record
+            </div>
+          }
+
+          @for (
+            column of visibleColumns();
+            track column.id
+          ) {
+            <button
+              type="button"
+              class="to-entity-list__column-header"
+              [class.to-entity-list__column-header--sortable]="
+                column.sortable === true
+              "
+              [ngClass]="
+                alignmentClass(column)
+              "
+              [style.width]="column.width"
+              [style.min-width]="
+                column.minWidth
+              "
+              [disabled]="
+                column.sortable !== true
+              "
+              (click)="
+                requestSort(column)
+              "
+            >
+              @if (column.icon) {
+                <i
+                  [class]="column.icon"
+                ></i>
+              }
+
+              <span>
+                {{ column.label }}
+              </span>
+
+              @if (column.sortable) {
+                <i
+                  class="to-entity-list__sort-icon"
+                  [class]="
+                    sortIcon(column)
+                  "
+                ></i>
+              }
+            </button>
+          }
+
+          @if (showStatus()) {
+            <div
+              class="to-entity-list__status-header"
+            >
+              Status
+            </div>
+          }
+
+          @if (showActions()) {
+            <div
+              class="to-entity-list__actions-header"
+            >
+              Actions
+            </div>
+          }
+        </div>
+      }
+
+      <div
+        class="to-entity-list__body"
+      >
+        @for (
+          row of visibleRows();
+          track row.id
+        ) {
+          <article
+            class="to-entity-list__row"
+            [ngClass]="rowClasses(row)"
+            [attr.data-testid]="
+              row.dataTestId ??
+              'entity-list-row-' +
+                row.id
+            "
+            [attr.role]="
+              clickableRows()
+                ? 'button'
+                : 'row'
+            "
+            [attr.tabindex]="
+              clickableRows() &&
+              row.disabled !== true
+                ? 0
+                : null
+            "
+            (click)="selectRow(row)"
+            (keydown)="
+              handleRowKeydown(
+                $event,
+                row
+              )
+            "
+          >
+            @if (
+              selectionMode() !== 'none'
+            ) {
+              <div
+                class="to-entity-list__selection-cell"
+                (click)="
+                  $event.stopPropagation()
+                "
+              >
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="isSelected(row)"
+                  [disabled]="
+                    row.selectable === false ||
+                    row.disabled === true
+                  "
+                  [inputId]="
+                    'entity-select-' +
+                    row.id
+                  "
+                  [ariaLabel]="
+                    'Select ' +
+                    (
+                      row.title ??
+                      row.code ??
+                      row.id
+                    )
+                  "
+                  (click)="
+                    toggleRowSelection(
+                      $event,
+                      row
+                    )
+                  "
+                />
+              </div>
+            }
+
+            @if (showIdentity()) {
+              <div
+                class="to-entity-list__identity"
+              >
+                @if (row.imageUrl) {
+                  <img
+                    [src]="row.imageUrl"
+                    [alt]="
+                      row.title ??
+                      'Record image'
+                    "
+                  />
+                } @else {
+                  <span
+                    class="to-entity-list__identity-icon"
+                  >
+                    <i
+                      [class]="
+                        row.icon ??
+                        'pi pi-box'
+                      "
+                    ></i>
+                  </span>
+                }
+
+                <div>
+                  <strong>
+                    {{
+                      row.title ??
+                      row.code ??
+                      row.id
+                    }}
+                  </strong>
+
+                  @if (row.subtitle) {
+                    <small>
+                      {{ row.subtitle }}
+                    </small>
+                  }
+
+                  @if (
+                    row.code &&
+                    row.title
+                  ) {
+                    <code>
+                      {{ row.code }}
+                    </code>
+                  }
+                </div>
+              </div>
+            }
+
+            @for (
+              column of visibleColumns();
+              track column.id
+            ) {
+              <div
+                class="to-entity-list__cell"
+                [ngClass]="
+                  alignmentClass(column)
+                "
+                [style.width]="column.width"
+                [style.min-width]="
+                  column.minWidth
+                "
+              >
+                @if (
+                  column.type === 'status'
+                ) {
+                  <to-status-badge
+                    [value]="
+                      statusValueFor(
+                        row,
+                        column
+                      )
+                    "
+                    size="small"
+                  />
+                } @else if (
+                  column.type === 'code'
+                ) {
+                  <code>
+                    {{
+                      displayValue(
+                        row,
+                        column
+                      )
+                    }}
+                  </code>
+                } @else if (
+                  column.type ===
+                  'boolean'
+                ) {
+                  <span
+                    class="to-entity-list__boolean"
+                    [class.to-entity-list__boolean--true]="
+                      valueFor(
+                        row,
+                        column
+                      ) === true
+                    "
+                  >
+                    <i
+                      [class]="
+                        valueFor(
+                          row,
+                          column
+                        ) === true
+                          ? 'pi pi-check-circle'
+                          : 'pi pi-times-circle'
+                      "
+                    ></i>
+
+                    {{
+                      displayValue(
+                        row,
+                        column
+                      )
+                    }}
+                  </span>
+                } @else {
+                  <span>
+                    {{
+                      displayValue(
+                        row,
+                        column
+                      )
+                    }}
+                  </span>
+                }
+              </div>
+            }
+
+            @if (showStatus()) {
+              <div
+                class="to-entity-list__status"
+              >
+                @if (row.status) {
+                  <to-status-badge
+                    [value]="
+                      rowStatusValue(row)
+                    "
+                    [label]="
+                      rowStatusLabel(row)
+                    "
+                    [tone]="
+                      rowStatusTone(row)
+                    "
+                    [icon]="
+                      rowStatusIcon(row)
+                    "
+                    [pulse]="
+                      row.status.pulse ??
+                      false
+                    "
+                    size="small"
+                  />
+                } @else {
+                  <span>—</span>
+                }
+              </div>
+            }
+
+            @if (showActions()) {
+              <div
+                class="to-entity-list__actions"
+              >
+                @for (
+                  action of visibleActions(row);
+                  track action.id
+                ) {
+                  <p-button
+                    type="button"
+                    [icon]="
+                      action.icon ??
+                      'pi pi-ellipsis-h'
+                    "
+                    [severity]="
+                      action.severity ??
+                      'secondary'
+                    "
+                    [outlined]="
+                      action.outlined === true
+                    "
+                    [text]="
+                      action.text !== false
+                    "
+                    [rounded]="true"
+                    size="small"
+                    [disabled]="
+                      action.disabled === true ||
+                      row.disabled === true
+                    "
+                    [loading]="
+                      action.loading === true
+                    "
+                    [pTooltip]="action.label"
+                    tooltipPosition="top"
+                    [attr.aria-label]="
+                      action.label
+                    "
+                    [attr.data-testid]="
+                      action.dataTestId ??
+                      'entity-action-' +
+                        action.id +
+                        '-' +
+                        row.id
+                    "
+                    (click)="
+                      requestAction(
+                        $event,
+                        row,
+                        action
+                      )
+                    "
+                  />
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </div>
+
+    <div
+      class="to-entity-list__mobile"
+    >
+      @for (
+        row of visibleRows();
+        track row.id
+      ) {
+        <article
+          class="to-entity-list__mobile-card"
+          [ngClass]="rowClasses(row)"
+          [attr.data-testid]="
+            row.dataTestId ??
+            'entity-mobile-row-' +
+              row.id
+          "
+          [attr.tabindex]="
+            clickableRows() &&
+            row.disabled !== true
+              ? 0
+              : null
+          "
+          (click)="selectRow(row)"
+          (keydown)="
+            handleRowKeydown(
+              $event,
+              row
+            )
+          "
+        >
+          <header>
+            @if (
+              selectionMode() !== 'none'
+            ) {
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="isSelected(row)"
+                [disabled]="
+                  row.selectable === false ||
+                  row.disabled === true
+                "
+                [inputId]="
+                  'mobile-entity-select-' +
+                  row.id
+                "
+                [ariaLabel]="
+                  'Select ' +
+                  (
+                    row.title ??
+                    row.code ??
+                    row.id
+                  )
+                "
+                (click)="
+                  toggleRowSelection(
+                    $event,
+                    row
+                  )
+                "
+              />
+            }
+
+            <div
+              class="to-entity-list__identity"
+            >
+              @if (row.imageUrl) {
+                <img
+                  [src]="row.imageUrl"
+                  [alt]="
+                    row.title ??
+                    'Record image'
+                  "
+                />
+              } @else {
+                <span
+                  class="to-entity-list__identity-icon"
+                >
+                  <i
+                    [class]="
+                      row.icon ??
+                      'pi pi-box'
+                    "
+                  ></i>
+                </span>
+              }
+
+              <div>
+                <strong>
+                  {{
+                    row.title ??
+                    row.code ??
+                    row.id
+                  }}
+                </strong>
+
+                @if (row.subtitle) {
+                  <small>
+                    {{ row.subtitle }}
+                  </small>
+                }
+
+                @if (
+                  row.code &&
+                  row.title
+                ) {
+                  <code>
+                    {{ row.code }}
+                  </code>
+                }
+              </div>
+            </div>
+
+            @if (
+              showStatus() &&
+              row.status
+            ) {
+              <to-status-badge
+                [value]="
+                  rowStatusValue(row)
+                "
+                [label]="
+                  rowStatusLabel(row)
+                "
+                [tone]="
+                  rowStatusTone(row)
+                "
+                [icon]="
+                  rowStatusIcon(row)
+                "
+                [pulse]="
+                  row.status.pulse ??
+                  false
+                "
+                size="small"
+              />
+            }
+          </header>
+
+          @if (mobileColumns().length) {
+            <dl
+              class="to-entity-list__mobile-values"
+            >
+              @for (
+                column of mobileColumns();
+                track column.id
+              ) {
+                <div>
+                  <dt>
+                    {{ column.label }}
+                  </dt>
+
+                  <dd>
+                    @if (
+                      column.type ===
+                      'status'
+                    ) {
+                      <to-status-badge
+                        [value]="
+                          statusValueFor(
+                            row,
+                            column
+                          )
+                        "
+                        size="small"
+                      />
+                    } @else if (
+                      column.type ===
+                      'code'
+                    ) {
+                      <code>
+                        {{
+                          displayValue(
+                            row,
+                            column
+                          )
+                        }}
+                      </code>
+                    } @else if (
+                      column.type ===
+                      'boolean'
+                    ) {
+                      <span
+                        class="to-entity-list__boolean"
+                        [class.to-entity-list__boolean--true]="
+                          valueFor(
+                            row,
+                            column
+                          ) === true
+                        "
+                      >
+                        <i
+                          [class]="
+                            valueFor(
+                              row,
+                              column
+                            ) === true
+                              ? 'pi pi-check-circle'
+                              : 'pi pi-times-circle'
+                          "
+                        ></i>
+
+                        {{
+                          displayValue(
+                            row,
+                            column
+                          )
+                        }}
+                      </span>
+                    } @else {
+                      {{
+                        displayValue(
+                          row,
+                          column
+                        )
+                      }}
+                    }
+                  </dd>
+                </div>
+              }
+            </dl>
+          }
+
+          @if (
+            showActions() &&
+            visibleActions(row).length
+          ) {
+            <footer>
+              @for (
+                action of visibleActions(row);
+                track action.id
+              ) {
+                <p-button
+                  type="button"
+                  [label]="action.label"
+                  [icon]="action.icon"
+                  [severity]="
+                    action.severity ??
+                    'secondary'
+                  "
+                  [outlined]="
+                    action.outlined !== false
+                  "
+                  size="small"
+                  [disabled]="
+                    action.disabled === true ||
+                    row.disabled === true
+                  "
+                  [loading]="
+                    action.loading === true
+                  "
+                  [attr.data-testid]="
+                    action.dataTestId ??
+                    'entity-mobile-action-' +
+                      action.id +
+                      '-' +
+                      row.id
+                  "
+                  (click)="
+                    requestAction(
+                      $event,
+                      row,
+                      action
+                    )
+                  "
+                />
+              }
+            </footer>
+          }
+        </article>
+      }
+    </div>
+
+    @if (hasMore()) {
+      <div
+        class="to-entity-list__load-more"
+      >
+        <p-button
+          type="button"
+          [label]="loadMoreLabel()"
+          icon="pi pi-angle-down"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="loadingMore()"
+          data-testid="entity-list-load-more"
+          (click)="requestLoadMore()"
+        />
+      </div>
+    }
+  } @else {
+    <div
+      class="to-entity-list__empty"
+    >
+      <span>
+        <i [class]="emptyIcon()"></i>
+      </span>
+
+      <strong>
+        {{ emptyTitle() }}
+      </strong>
+
+      <p>
+        {{ emptyMessage() }}
+      </p>
+
+      <ng-content
+        select="[entityListEmptyActions]"
+      />
+    </div>
+  }
+</section>

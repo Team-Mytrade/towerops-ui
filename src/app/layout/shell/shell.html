@@ -1,0 +1,163 @@
+<section
+  class="to-shell"
+  [class.to-shell--expanded]="expanded()"
+  [class.to-shell--mobile-open]="mobileOpen()"
+  data-testid="application-shell"
+>
+  <button
+    type="button"
+    class="to-shell__backdrop"
+    aria-label="Close navigation"
+    data-testid="shell-backdrop"
+    (click)="closeMobile()"
+  ></button>
+
+  <aside class="to-shell__sidebar">
+    <header class="to-shell__brand">
+      <div class="to-shell__brand-mark">
+        <i class="pi pi-bolt"></i>
+      </div>
+
+      @if (expanded()) {
+        <div class="to-shell__brand-copy">
+          <strong>{{ appName }}</strong>
+          <span>Operations Platform</span>
+        </div>
+      }
+    </header>
+
+    <nav
+      class="to-shell__navigation"
+      aria-label="Main navigation"
+    >
+      @for (group of groups(); track group.id) {
+        <section class="to-shell__group">
+          @if (group.title && expanded()) {
+            <p class="to-shell__group-title">
+              {{ group.title }}
+            </p>
+          }
+
+          @for (item of group.items; track item.id) {
+            <a
+              class="to-shell__nav-item"
+              [routerLink]="item.route"
+              routerLinkActive="to-shell__nav-item--active"
+              [routerLinkActiveOptions]="{
+                exact: item.exact ?? false
+              }"
+              [attr.title]="expanded() ? null : item.label"
+              [attr.aria-label]="item.label"
+              [attr.data-testid]="'nav-' + item.id"
+            >
+              <i [class]="item.icon"></i>
+
+              @if (expanded()) {
+                <span>{{ item.label }}</span>
+              }
+            </a>
+          }
+        </section>
+      }
+    </nav>
+
+    <footer class="to-shell__sidebar-footer">
+      <button
+        type="button"
+        class="to-shell__collapse"
+        data-testid="shell-collapse-btn"
+        (click)="toggleExpanded()"
+      >
+        <i
+          [class]="
+            expanded()
+              ? 'pi pi-angle-left'
+              : 'pi pi-angle-right'
+          "
+        ></i>
+
+        @if (expanded()) {
+          <span>Collapse</span>
+        }
+      </button>
+
+      @if (expanded()) {
+        <div class="to-shell__build">
+          <span>Version {{ version }}</span>
+          <span>Build {{ build }}</span>
+        </div>
+      }
+    </footer>
+  </aside>
+
+  <div class="to-shell__workspace">
+    <header class="to-shell__topbar">
+      <div class="to-shell__topbar-left">
+        <button
+          type="button"
+          class="to-shell__icon-button to-shell__mobile-menu"
+          aria-label="Open navigation"
+          data-testid="mobile-navigation-btn"
+          (click)="toggleMobile()"
+        >
+          <i class="pi pi-bars"></i>
+        </button>
+
+        <div class="to-shell__page-heading">
+          <span>Workspace</span>
+          <h1>{{ pageTitle() }}</h1>
+        </div>
+      </div>
+
+      <div class="to-shell__actions">
+        <button
+          type="button"
+          class="to-shell__icon-button"
+          aria-label="Search"
+          data-testid="global-search-btn"
+        >
+          <i class="pi pi-search"></i>
+        </button>
+
+        <button
+          type="button"
+          class="to-shell__icon-button"
+          aria-label="Notifications"
+          data-testid="notifications-btn"
+        >
+          <i class="pi pi-bell"></i>
+          <span class="to-shell__notification-dot"></span>
+        </button>
+
+        <p-menu
+          #profileMenuRef
+          [model]="profileMenu"
+          [popup]="true"
+          appendTo="body"
+        />
+
+        <button
+          type="button"
+          class="to-shell__profile"
+          data-testid="profile-menu-btn"
+          (click)="profileMenuRef.toggle($event)"
+        >
+          <span class="to-shell__avatar">
+            {{ userInitials() }}
+          </span>
+
+          <span class="to-shell__profile-copy">
+            <strong>{{ currentUser()?.username }}</strong>
+            <small>{{ currentUser()?.userType }}</small>
+          </span>
+
+          <i class="pi pi-angle-down"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="to-shell__content">
+      <router-outlet />
+    </main>
+  </div>
+</section>

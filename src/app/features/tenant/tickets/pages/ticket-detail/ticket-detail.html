@@ -1,0 +1,453 @@
+<section
+  class="to-ticket-detail"
+  data-testid="ticket-detail-page"
+>
+  @if (loading()) {
+    <div class="to-ticket-detail__state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading ticket details...</span>
+    </div>
+  } @else if (pageError()) {
+    <div class="to-ticket-detail__state">
+      <i class="pi pi-exclamation-triangle"></i>
+
+      <strong>
+        Ticket details unavailable
+      </strong>
+
+      <span>{{ pageError() }}</span>
+
+      <p-button
+        label="Try Again"
+        icon="pi pi-refresh"
+        (click)="refresh()"
+      />
+    </div>
+  } @else if (ticket(); as currentTicket) {
+    <header class="to-ticket-detail__header">
+      <div class="to-ticket-detail__heading">
+        <button
+          type="button"
+          class="to-ticket-detail__back"
+          aria-label="Back to tickets"
+          (click)="goBack()"
+        >
+          <i class="pi pi-arrow-left"></i>
+        </button>
+
+        <div>
+          <div class="to-ticket-detail__meta">
+            <span>
+              {{ currentTicket.ticketCode }}
+            </span>
+
+            <p-tag
+              [value]="currentTicket.status"
+              [severity]="
+                statusSeverity(
+                  currentTicket.status
+                )
+              "
+            />
+          </div>
+
+          <h1>{{ currentTicket.title }}</h1>
+
+          <p>
+            Created
+            {{
+              currentTicket.createdAt
+                | date:'MMM d, y, h:mm a'
+            }}
+          </p>
+        </div>
+      </div>
+
+      <div class="to-ticket-detail__header-actions">
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="loading()"
+          (click)="refresh()"
+        />
+
+        @if (canEdit()) {
+          <p-button
+            label="Edit Ticket"
+            icon="pi pi-pencil"
+            (click)="editTicket()"
+          />
+        }
+      </div>
+    </header>
+
+    <div class="to-ticket-detail__summary">
+      <article>
+        <span>Priority</span>
+
+        <p-tag
+          [value]="currentTicket.priority"
+          [severity]="
+            prioritySeverity(
+              currentTicket.priority
+            )
+          "
+        />
+      </article>
+
+      <article>
+        <span>Severity</span>
+
+        <p-tag
+          [value]="currentTicket.severity"
+          [severity]="
+            severityTag(
+              currentTicket.severity
+            )
+          "
+        />
+      </article>
+
+      <article>
+        <span>Source</span>
+        <strong>
+          {{ currentTicket.source | titlecase }}
+        </strong>
+      </article>
+
+      <article>
+        <span>Technician</span>
+        <strong>
+          {{
+            currentTicket.assignedTechnicianName ||
+            'Unassigned'
+          }}
+        </strong>
+      </article>
+    </div>
+
+    @if (sla(); as ticketSla) {
+      <div class="to-ticket-detail__sla-grid">
+        <article
+          class="to-ticket-detail__sla"
+          [class]="responseSlaClass()"
+        >
+          <span>Response SLA</span>
+
+          <strong>
+            {{
+              slaLabel(
+                ticketSla.responseRemainingMinutes,
+                ticketSla.responseBreached
+              )
+            }}
+          </strong>
+
+          <small>
+            {{
+              ticketSla.responseDueAt
+                ? (
+                    ticketSla.responseDueAt
+                      | date:'MMM d, h:mm a'
+                  )
+                : 'No due date'
+            }}
+          </small>
+        </article>
+
+        <article
+          class="to-ticket-detail__sla"
+          [class]="resolutionSlaClass()"
+        >
+          <span>Resolution SLA</span>
+
+          <strong>
+            {{
+              slaLabel(
+                ticketSla.resolutionRemainingMinutes,
+                ticketSla.resolutionBreached
+              )
+            }}
+          </strong>
+
+          <small>
+            {{
+              ticketSla.resolutionDueAt
+                ? (
+                    ticketSla.resolutionDueAt
+                      | date:'MMM d, h:mm a'
+                  )
+                : 'No due date'
+            }}
+          </small>
+        </article>
+      </div>
+    }
+
+    <div class="to-ticket-detail__layout">
+      <main class="to-ticket-detail__main">
+        <article class="to-ticket-detail__card">
+          <header>
+            <div>
+              <span>Incident</span>
+              <h2>Ticket Summary</h2>
+            </div>
+          </header>
+
+          <div class="to-ticket-detail__description">
+            <p>{{ currentTicket.description }}</p>
+
+            @if (currentTicket.remarks) {
+              <section>
+                <span>Remarks</span>
+                <p>{{ currentTicket.remarks }}</p>
+              </section>
+            }
+
+            @if (currentTicket.resolution) {
+              <section>
+                <span>Resolution</span>
+                <p>{{ currentTicket.resolution }}</p>
+              </section>
+            }
+          </div>
+        </article>
+
+        <to-ticket-timeline
+          [timeline]="timeline()"
+          [loading]="loadingTimeline()"
+        />
+
+        <to-comments
+          [comments]="comments()"
+          [isloading]="loadingComments()"
+          [submitting]="submittingComment()"
+          [currentUserId]="currentUserId()"
+          (commentAdded)="addComment($event)"
+          (commentUpdated)="updateComment($event)"
+          (commentRemoved)="deleteComment($event)"
+          (attachmentSelected)="
+            openCommentAttachment($event)
+          "
+        />
+      </main>
+
+      <aside class="to-ticket-detail__side">
+        <article class="to-ticket-detail__card">
+          <header>
+            <div>
+              <span>Relationships</span>
+              <h2>Related Infrastructure</h2>
+            </div>
+          </header>
+
+          <div class="to-ticket-detail__relations">
+            <button
+              type="button"
+              [disabled]="!currentTicket.siteId"
+              (click)="openSite()"
+            >
+              <span>
+                <i class="pi pi-map-marker"></i>
+              </span>
+
+              <div>
+                <small>Site</small>
+                <strong>
+                  {{
+                    currentTicket.siteName ||
+                    'No site linked'
+                  }}
+                </strong>
+              </div>
+
+              <i class="pi pi-arrow-right"></i>
+            </button>
+
+            <button
+              type="button"
+              [disabled]="!currentTicket.deviceId"
+              (click)="openDevice()"
+            >
+              <span>
+                <i class="pi pi-microchip"></i>
+              </span>
+
+              <div>
+                <small>Device</small>
+                <strong>
+                  {{
+                    currentTicket.deviceName ||
+                    'No device linked'
+                  }}
+                </strong>
+              </div>
+
+              <i class="pi pi-arrow-right"></i>
+            </button>
+
+            <button
+              type="button"
+              [disabled]="!currentTicket.alertId"
+              (click)="openAlert()"
+            >
+              <span>
+                <i class="pi pi-bell"></i>
+              </span>
+
+              <div>
+                <small>Alert</small>
+                <strong>
+                  {{
+                    currentTicket.alertCode ||
+                    'No alert linked'
+                  }}
+                </strong>
+              </div>
+
+              <i class="pi pi-arrow-right"></i>
+            </button>
+
+            <button
+              type="button"
+              [disabled]="!currentTicket.workOrderId"
+              (click)="openWorkOrder()"
+            >
+              <span>
+                <i class="pi pi-briefcase"></i>
+              </span>
+
+              <div>
+                <small>Work Order</small>
+                <strong>
+                  {{
+                    currentTicket.workOrderCode ||
+                    'No work order'
+                  }}
+                </strong>
+              </div>
+
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </div>
+        </article>
+
+        <article class="to-ticket-detail__card">
+          <header>
+            <div>
+              <span>Files</span>
+              <h2>Attachments</h2>
+            </div>
+
+            <label class="to-ticket-detail__upload">
+              <i class="pi pi-paperclip"></i>
+              Add
+
+              <input
+                type="file"
+                multiple
+                hidden
+                (change)="
+                  onAttachmentSelected($event)
+                "
+              />
+            </label>
+          </header>
+
+          <div class="to-ticket-detail__attachments">
+            @for (
+              attachment of attachments();
+              track attachment.id
+            ) {
+              <article>
+                <span>
+                  <i class="pi pi-file"></i>
+                </span>
+
+                <div>
+                  <strong>
+                    {{ attachment.fileName }}
+                  </strong>
+
+                  <small>
+                    {{ attachment.fileType }}
+                  </small>
+                </div>
+              </article>
+            } @empty {
+              <div class="to-ticket-detail__empty">
+                <i class="pi pi-paperclip"></i>
+                <span>No attachments</span>
+              </div>
+            }
+          </div>
+        </article>
+      </aside>
+    </div>
+
+    <footer class="to-ticket-detail__actions">
+      @if (canAcknowledge()) {
+        <p-button
+          label="Acknowledge"
+          icon="pi pi-check"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="actionLoading()"
+          (click)="acknowledge()"
+        />
+      }
+
+      @if (canStart()) {
+        <p-button
+          label="Start Progress"
+          icon="pi pi-play"
+          severity="warn"
+          [loading]="actionLoading()"
+          (click)="startProgress()"
+        />
+      }
+
+      @if (canResolve()) {
+        <p-button
+          label="Resolve"
+          icon="pi pi-check-circle"
+          severity="success"
+          [loading]="actionLoading()"
+          (click)="resolve()"
+        />
+      }
+
+      @if (canConfirm()) {
+        <p-button
+          label="Confirm"
+          icon="pi pi-shield"
+          severity="success"
+          [loading]="actionLoading()"
+          (click)="confirm()"
+        />
+      }
+
+      @if (canCreateWorkOrder()) {
+        <p-button
+          label="Create Work Order"
+          icon="pi pi-briefcase"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="actionLoading()"
+          (click)="createWorkOrder()"
+        />
+      }
+
+      @if (canClose()) {
+        <p-button
+          label="Close Ticket"
+          icon="pi pi-lock"
+          [loading]="actionLoading()"
+          (click)="closeTicket()"
+        />
+      }
+    </footer>
+  }
+</section>

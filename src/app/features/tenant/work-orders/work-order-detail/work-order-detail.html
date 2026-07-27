@@ -1,0 +1,728 @@
+<section
+  class="to-work-order-detail"
+  data-testid="work-order-detail-page">
+
+  <header class="to-detail-header">
+
+    <div class="to-detail-header__leading">
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        [text]="true"
+        aria-label="Back to work orders"
+        data-testid="work-order-detail-back"
+        (click)="goBack()">
+      </button>
+
+      <div class="to-detail-header__copy">
+
+        <div class="to-detail-header__eyebrow">
+
+          <span>
+            Work Order
+          </span>
+
+          @if (!loading() && workOrder()) {
+
+            <p-tag
+              [value]="status()"
+              [severity]="statusSeverity(status())">
+            </p-tag>
+
+          }
+
+        </div>
+
+        @if (loading()) {
+
+          <p-skeleton
+            width="15rem"
+            height="2rem">
+          </p-skeleton>
+
+          <p-skeleton
+            width="22rem"
+            height="1rem">
+          </p-skeleton>
+
+        } @else {
+
+          <h1>
+            {{ pageTitle() }}
+          </h1>
+
+          <p>
+            {{ workOrder()?.title || 'Work order operational details' }}
+          </p>
+
+        }
+
+      </div>
+
+    </div>
+
+    <div class="to-detail-header__actions">
+
+      <button
+        pButton
+        type="button"
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        data-testid="refresh-work-order-btn"
+        (click)="refresh()">
+      </button>
+
+      @if (canEdit()) {
+
+        <button
+          pButton
+          type="button"
+          label="Edit Work Order"
+          icon="pi pi-pencil"
+          data-testid="edit-work-order-btn"
+          (click)="editWorkOrder()">
+        </button>
+
+      }
+
+      @if (canDelete()) {
+
+        <button
+          pButton
+          type="button"
+          label="Delete"
+          icon="pi pi-trash"
+          severity="danger"
+          [outlined]="true"
+          [loading]="deleting()"
+          data-testid="delete-work-order-btn"
+          (click)="deleteWorkOrder()">
+        </button>
+
+      }
+
+    </div>
+
+  </header>
+
+  @if (loading()) {
+
+    <div class="to-detail-loading-grid">
+
+      @for (
+        item of [1, 2, 3, 4, 5, 6];
+        track item
+      ) {
+
+        <article class="to-detail-card">
+
+          <p-skeleton
+            width="8rem"
+            height="1rem">
+          </p-skeleton>
+
+          <p-skeleton
+            width="100%"
+            height="5rem">
+          </p-skeleton>
+
+        </article>
+
+      }
+
+    </div>
+
+  } @else if (workOrder(); as item) {
+
+    <div class="to-detail-summary-grid">
+
+      <article class="to-summary-card">
+
+        <div class="to-summary-card__icon">
+          <i class="pi pi-flag"></i>
+        </div>
+
+        <div>
+          <span>
+            Current Status
+          </span>
+
+          <strong>
+            {{ item.status }}
+          </strong>
+        </div>
+
+      </article>
+
+      <article class="to-summary-card">
+
+        <div class="to-summary-card__icon">
+          <i class="pi pi-user"></i>
+        </div>
+
+        <div>
+          <span>
+            Assigned Technician
+          </span>
+
+          <strong>
+            {{ technicianDisplay() }}
+          </strong>
+        </div>
+
+      </article>
+
+      <article class="to-summary-card">
+
+        <div class="to-summary-card__icon">
+          <i class="pi pi-calendar"></i>
+        </div>
+
+        <div>
+          <span>
+            Schedule
+          </span>
+
+          <strong>
+            {{ scheduleStatus() }}
+          </strong>
+        </div>
+
+      </article>
+
+      <article class="to-summary-card">
+
+        <div class="to-summary-card__icon">
+          <i class="pi pi-clock"></i>
+        </div>
+
+        <div>
+          <span>
+            Estimated Hours
+          </span>
+
+          <strong>
+            {{ item.estimatedHours ?? 0 | number:'1.0-2' }}
+          </strong>
+        </div>
+
+      </article>
+
+    </div>
+
+    <div class="to-detail-layout">
+
+      <main class="to-detail-main">
+
+        <article class="to-detail-card">
+
+          <header class="to-detail-card__header">
+
+            <div>
+
+              <span class="to-detail-card__eyebrow">
+                Overview
+              </span>
+
+              <h2>
+                Work information
+              </h2>
+
+            </div>
+
+            <div class="to-detail-tags">
+
+ <p-tag
+  [value]="formatTagValue(item.severity)"
+  [severity]="severitySeverity(item.severity)">
+</p-tag>
+
+<p-tag
+  [value]="formatTagValue(item.priority)"
+  [severity]="prioritySeverity(item.priority)">
+</p-tag>
+
+            </div>
+
+          </header>
+
+          <div class="to-description-block">
+
+            <span>
+              Description
+            </span>
+
+            <p>
+              {{ item.description || 'No description provided.' }}
+            </p>
+
+          </div>
+
+          <p-divider></p-divider>
+
+          <dl class="to-detail-fields">
+
+            <div class="to-detail-field">
+
+              <dt>
+                Work Order Code
+              </dt>
+
+              <dd>
+                {{ formatValue(item.workOrderCode) }}
+              </dd>
+
+            </div>
+
+            <div class="to-detail-field">
+
+              <dt>
+                Status
+              </dt>
+
+              <dd>
+                {{ formatValue(item.status) }}
+              </dd>
+
+            </div>
+
+            <div class="to-detail-field">
+
+              <dt>
+                Severity
+              </dt>
+
+              <dd>
+                {{ formatValue(item.severity) }}
+              </dd>
+
+            </div>
+
+            <div class="to-detail-field">
+
+              <dt>
+                Priority
+              </dt>
+
+              <dd>
+                {{ formatValue(item.priority) }}
+              </dd>
+
+            </div>
+
+          </dl>
+
+        </article>
+
+        <article class="to-detail-card">
+
+          <header class="to-detail-card__header">
+
+            <div>
+
+              <span class="to-detail-card__eyebrow">
+                Timeline
+              </span>
+
+              <h2>
+                Work schedule
+              </h2>
+
+            </div>
+
+          </header>
+
+          <div class="to-lifecycle">
+
+            <div class="to-lifecycle-item">
+
+              <div class="to-lifecycle-item__marker">
+                <i class="pi pi-calendar-plus"></i>
+              </div>
+
+              <div>
+
+                <span>
+                  Scheduled
+                </span>
+
+                <strong>
+                  {{
+                    item.scheduledAt
+                      ? (
+                          item.scheduledAt
+                            | date:'dd MMM yyyy, hh:mm a'
+                        )
+                      : 'Not scheduled'
+                  }}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div class="to-lifecycle-line"></div>
+
+            <div class="to-lifecycle-item">
+
+              <div class="to-lifecycle-item__marker">
+                <i class="pi pi-play"></i>
+              </div>
+
+              <div>
+
+                <span>
+                  Started
+                </span>
+
+                <strong>
+                  {{
+                    item.startedAt
+                      ? (
+                          item.startedAt
+                            | date:'dd MMM yyyy, hh:mm a'
+                        )
+                      : 'Not started'
+                  }}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div class="to-lifecycle-line"></div>
+
+            <div class="to-lifecycle-item">
+
+              <div class="to-lifecycle-item__marker">
+                <i class="pi pi-check"></i>
+              </div>
+
+              <div>
+
+                <span>
+                  Completed
+                </span>
+
+                <strong>
+                  {{
+                    item.completedAt
+                      ? (
+                          item.completedAt
+                            | date:'dd MMM yyyy, hh:mm a'
+                        )
+                      : 'Not completed'
+                  }}
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </article>
+
+        <article class="to-detail-card">
+
+          <header class="to-detail-card__header">
+
+            <div>
+
+              <span class="to-detail-card__eyebrow">
+                Completion
+              </span>
+
+              <h2>
+                Resolution details
+              </h2>
+
+            </div>
+
+          </header>
+
+          <div class="to-description-block">
+
+            <span>
+              Resolution
+            </span>
+
+            <p>
+              {{ item.resolution || 'No resolution has been recorded.' }}
+            </p>
+
+          </div>
+
+          <p-divider></p-divider>
+
+          <dl class="to-detail-fields">
+
+            <div class="to-detail-field">
+
+              <dt>
+                Labor Hours
+              </dt>
+
+              <dd>
+                {{
+                  item.laborHours !== null &&
+                  item.laborHours !== undefined
+                    ? (
+                        item.laborHours
+                          | number:'1.0-2'
+                      )
+                    : '—'
+                }}
+              </dd>
+
+            </div>
+
+            <div class="to-detail-field to-detail-field--wide">
+
+              <dt>
+                Remarks
+              </dt>
+
+              <dd>
+                {{ item.remarks || '—' }}
+              </dd>
+
+            </div>
+
+          </dl>
+
+        </article>
+
+      </main>
+
+      <aside class="to-detail-sidebar">
+
+        <article class="to-detail-card">
+
+          <header class="to-detail-card__header">
+
+            <div>
+
+              <span class="to-detail-card__eyebrow">
+                Assignment
+              </span>
+
+              <h2>
+                Technician
+              </h2>
+
+            </div>
+
+          </header>
+
+          <div class="to-assignment-profile">
+
+            <div class="to-assignment-profile__avatar">
+              <i class="pi pi-user"></i>
+            </div>
+
+            <div>
+
+              <strong>
+                {{ technicianDisplay() }}
+              </strong>
+
+              <span>
+                {{
+                  item.technicianId
+                    ? 'Assigned technician'
+                    : 'Awaiting assignment'
+                }}
+              </span>
+
+            </div>
+
+          </div>
+
+          <dl class="to-sidebar-fields">
+
+            <div>
+
+              <dt>
+                Technician ID
+              </dt>
+
+              <dd>
+                {{ formatValue(item.technicianId) }}
+              </dd>
+
+            </div>
+
+            <div>
+
+              <dt>
+                Technician Code
+              </dt>
+
+              <dd>
+                {{ formatValue(item.technicianCode) }}
+              </dd>
+
+            </div>
+
+          </dl>
+
+        </article>
+
+        <article class="to-detail-card">
+
+          <header class="to-detail-card__header">
+
+            <div>
+
+              <span class="to-detail-card__eyebrow">
+                Resources
+              </span>
+
+              <h2>
+                Linked records
+              </h2>
+
+            </div>
+
+          </header>
+
+          <div class="to-linked-records">
+
+            <button
+              type="button"
+              class="to-linked-record"
+              [disabled]="!item.siteId"
+              (click)="navigateToSite()">
+
+              <span class="to-linked-record__icon">
+                <i class="pi pi-map-marker"></i>
+              </span>
+
+              <span class="to-linked-record__content">
+
+                <small>
+                  Site
+                </small>
+
+                <strong>
+                  {{
+                    item.siteId
+                      ? 'Site #' + item.siteId
+                      : 'Not linked'
+                  }}
+                </strong>
+
+              </span>
+
+              <i class="pi pi-angle-right"></i>
+
+            </button>
+
+            <button
+              type="button"
+              class="to-linked-record"
+              [disabled]="!item.deviceId"
+              (click)="navigateToDevice()">
+
+              <span class="to-linked-record__icon">
+                <i class="pi pi-server"></i>
+              </span>
+
+              <span class="to-linked-record__content">
+
+                <small>
+                  Device
+                </small>
+
+                <strong>
+                  {{
+                    item.deviceId
+                      ? 'Device #' + item.deviceId
+                      : 'Not linked'
+                  }}
+                </strong>
+
+              </span>
+
+              <i class="pi pi-angle-right"></i>
+
+            </button>
+
+            <button
+              type="button"
+              class="to-linked-record"
+              [disabled]="!item.alertId"
+              (click)="navigateToAlert()">
+
+              <span class="to-linked-record__icon">
+                <i class="pi pi-bell"></i>
+              </span>
+
+              <span class="to-linked-record__content">
+
+                <small>
+                  Alert
+                </small>
+
+                <strong>
+                  {{
+                    item.alertId
+                      ? 'Alert #' + item.alertId
+                      : 'Not linked'
+                  }}
+                </strong>
+
+              </span>
+
+              <i class="pi pi-angle-right"></i>
+
+            </button>
+
+            <button
+              type="button"
+              class="to-linked-record"
+              [disabled]="!item.ticketId"
+              (click)="navigateToTicket()">
+
+              <span class="to-linked-record__icon">
+                <i class="pi pi-ticket"></i>
+              </span>
+
+              <span class="to-linked-record__content">
+
+                <small>
+                  Ticket
+                </small>
+
+                <strong>
+                  {{
+                    item.ticketId
+                      ? 'Ticket #' + item.ticketId
+                      : 'Not linked'
+                  }}
+                </strong>
+
+              </span>
+
+              <i class="pi pi-angle-right"></i>
+
+            </button>
+
+          </div>
+
+        </article>
+
+      </aside>
+
+    </div>
+
+  }
+
+</section>

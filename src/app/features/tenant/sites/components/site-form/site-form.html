@@ -1,0 +1,312 @@
+<section
+  class="to-site-form"
+  data-testid="site-form"
+>
+  <header class="to-site-form__header">
+    <div>
+      <p>
+        {{ mode() === 'edit' ? 'Update site' : 'New site' }}
+      </p>
+
+      <h2>
+        {{
+          mode() === 'edit'
+            ? 'Edit Site'
+            : 'Create Site'
+        }}
+      </h2>
+
+      <span>
+        Configure the site identity, category, location and
+        operational status.
+      </span>
+    </div>
+
+    <button
+      type="button"
+      class="to-site-form__close"
+      aria-label="Close site form"
+      (click)="cancel()"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </header>
+
+  <form
+    class="to-site-form__body"
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    novalidate
+  >
+    <section class="to-site-form__section">
+      <header>
+        <span>01</span>
+
+        <div>
+          <h3>Site identity</h3>
+          <p>Basic information used across the platform.</p>
+        </div>
+      </header>
+
+      <div class="to-site-form__grid">
+        <div class="to-field">
+          <label for="siteCode">
+            Site Code
+            <span>*</span>
+          </label>
+
+          <input
+            id="siteCode"
+            pInputText
+            formControlName="siteCode"
+            placeholder="Example: TWR-001"
+            [attr.aria-invalid]="isControlInvalid('siteCode')"
+          />
+
+          @if (siteCodeError()) {
+            <small>{{ siteCodeError() }}</small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="siteName">
+            Site Name
+            <span>*</span>
+          </label>
+
+          <input
+            id="siteName"
+            pInputText
+            formControlName="siteName"
+            placeholder="Enter site name"
+            [attr.aria-invalid]="isControlInvalid('siteName')"
+          />
+
+          @if (siteNameError()) {
+            <small>{{ siteNameError() }}</small>
+          }
+        </div>
+
+        <div class="to-field">
+          <label for="category">
+            Category
+            <span>*</span>
+          </label>
+
+          <p-select
+            inputId="category"
+            formControlName="category"
+            [options]="categoryOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select category"
+            appendTo="body"
+          />
+
+          @if (categoryError()) {
+            <small>{{ categoryError() }}</small>
+          }
+        </div>
+
+        <div class="to-field to-field--status">
+          <div>
+            <label for="enabled">Enabled</label>
+            <span>
+              Allow monitoring and operational workflows.
+            </span>
+          </div>
+
+          <p-toggle-switch
+            inputId="enabled"
+            formControlName="enabled"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="to-site-form__section"
+      formGroupName="address"
+    >
+      <header>
+        <span>02</span>
+
+        <div>
+          <h3>Address</h3>
+          <p>Physical location and regional details.</p>
+        </div>
+      </header>
+
+      <div class="to-site-form__grid">
+        <div class="to-field to-field--wide">
+          <label for="line1">
+            Address Line 1
+            <span>*</span>
+          </label>
+
+          <input
+            id="line1"
+            pInputText
+            formControlName="line1"
+            placeholder="Street, building or landmark"
+          />
+        </div>
+
+        <div class="to-field to-field--wide">
+          <label for="line2">Address Line 2</label>
+
+          <input
+            id="line2"
+            pInputText
+            formControlName="line2"
+            placeholder="Additional location information"
+          />
+        </div>
+
+        <div class="to-field">
+          <label for="city">
+            City
+            <span>*</span>
+          </label>
+
+          <input
+            id="city"
+            pInputText
+            formControlName="city"
+            placeholder="City"
+          />
+        </div>
+
+        <div class="to-field">
+          <label for="state">
+            State / Region
+            <span>*</span>
+          </label>
+
+          <input
+            id="state"
+            pInputText
+            formControlName="state"
+            placeholder="State or region"
+          />
+        </div>
+
+        <div class="to-field">
+          <label for="country">
+            Country
+            <span>*</span>
+          </label>
+
+          <input
+            id="country"
+            pInputText
+            formControlName="country"
+            placeholder="Country"
+          />
+        </div>
+
+        <div class="to-field">
+          <label for="postalCode">
+            Postal Code
+            <span>*</span>
+          </label>
+
+          <input
+            id="postalCode"
+            pInputText
+            formControlName="postalCode"
+            placeholder="Postal code"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="to-site-form__section">
+      <header>
+        <span>03</span>
+
+        <div>
+          <h3>Map coordinates</h3>
+          <p>Coordinates used by maps and monitoring views.</p>
+        </div>
+      </header>
+
+      <div class="to-site-form__grid">
+        <div class="to-field">
+          <label for="latitude">
+            Latitude
+            <span>*</span>
+          </label>
+
+          <p-input-number
+            inputId="latitude"
+            formControlName="latitude"
+            mode="decimal"
+            [minFractionDigits]="4"
+            [maxFractionDigits]="8"
+            [min]="-90"
+            [max]="90"
+            placeholder="25.2048"
+          />
+        </div>
+
+        <div class="to-field">
+          <label for="longitude">
+            Longitude
+            <span>*</span>
+          </label>
+
+          <p-input-number
+            inputId="longitude"
+            formControlName="longitude"
+            mode="decimal"
+            [minFractionDigits]="4"
+            [maxFractionDigits]="8"
+            [min]="-180"
+            [max]="180"
+            placeholder="55.2708"
+          />
+        </div>
+
+        <div class="to-field to-field--wide">
+          <label for="description">Description</label>
+
+          <textarea
+            id="description"
+            pTextarea
+            formControlName="description"
+            rows="4"
+            placeholder="Add operational notes or site description"
+          ></textarea>
+        </div>
+      </div>
+    </section>
+
+    <footer class="to-site-form__footer">
+      <p-button
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="submitting()"
+        (click)="cancel()"
+      />
+
+      <p-button
+        type="submit"
+        [label]="
+          mode() === 'edit'
+            ? 'Save Changes'
+            : 'Create Site'
+        "
+        [icon]="
+          mode() === 'edit'
+            ? 'pi pi-check'
+            : 'pi pi-plus'
+        "
+        [loading]="submitting()"
+        [disabled]="submitting()"
+      />
+    </footer>
+  </form>
+</section>

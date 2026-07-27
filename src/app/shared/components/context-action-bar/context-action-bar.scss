@@ -1,0 +1,269 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.to-context-action-bar {
+  --context-action-accent:
+    var(--to-text-secondary);
+
+  --context-action-soft:
+    var(--to-surface-muted);
+
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--to-border);
+  border-radius: 0.75rem;
+  background:
+    color-mix(
+      in srgb,
+      var(--to-surface) 96%,
+      transparent
+    );
+  box-shadow: var(--to-shadow-sm);
+  backdrop-filter: blur(12px);
+}
+
+.to-context-action-bar--primary {
+  --context-action-accent:
+    var(--to-primary);
+
+  --context-action-soft:
+    var(--to-primary-soft);
+}
+
+.to-context-action-bar--success {
+  --context-action-accent:
+    var(--to-success);
+
+  --context-action-soft:
+    var(--to-success-soft);
+}
+
+.to-context-action-bar--info {
+  --context-action-accent:
+    var(--to-info);
+
+  --context-action-soft:
+    var(--to-info-soft);
+}
+
+.to-context-action-bar--warning {
+  --context-action-accent:
+    var(--to-warning);
+
+  --context-action-soft:
+    var(--to-warning-soft);
+}
+
+.to-context-action-bar--danger {
+  --context-action-accent:
+    var(--to-danger);
+
+  --context-action-soft:
+    var(--to-danger-soft);
+}
+
+.to-context-action-bar--sticky-top {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  border-radius: 0;
+  border-inline: 0;
+  border-top: 0;
+}
+
+.to-context-action-bar--sticky-bottom {
+  position: sticky;
+  z-index: 20;
+  bottom: 0;
+  border-radius: 0;
+  border-inline: 0;
+  border-bottom: 0;
+}
+
+.to-context-action-bar--floating-bottom {
+  position: fixed;
+  z-index: 100;
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  width: min(
+    calc(100% - 2rem),
+    76rem
+  );
+  margin-inline: auto;
+  box-shadow: var(--to-shadow-lg);
+}
+
+.to-context-action-bar--compact {
+  width: auto;
+  padding: 0.3rem;
+  border-radius: 999px;
+
+  .to-context-action-bar__summary {
+    display: none;
+  }
+}
+
+.to-context-action-bar--loading,
+.to-context-action-bar--disabled {
+  opacity: 0.7;
+}
+
+.to-context-action-bar--disabled {
+  pointer-events: none;
+}
+
+.to-context-action-bar__summary {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.to-context-action-bar__summary-icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: 0.58rem;
+  place-items: center;
+  color: var(--context-action-accent);
+  background: var(--context-action-soft);
+
+  i {
+    font-size: 0.72rem;
+  }
+}
+
+.to-context-action-bar__summary-copy {
+  min-width: 0;
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    overflow: hidden;
+    color: var(--to-text);
+    font-size: 0.56rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    margin-top: 0.08rem;
+    overflow: hidden;
+    color: var(--to-text-muted);
+    font-size: 0.42rem;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.to-context-action-bar__actions {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.to-context-action-bar__action-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.to-context-action-bar__badge {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.3rem;
+  display: grid;
+  min-width: 1rem;
+  height: 1rem;
+  padding-inline: 0.2rem;
+  border: 2px solid var(--to-surface);
+  border-radius: 999px;
+  place-items: center;
+  color: var(--to-surface);
+  background: var(--to-danger);
+  font-size: 0.36rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.to-context-action-bar__divider {
+  width: 1px;
+  height: 1.45rem;
+  margin-inline: 0.12rem;
+  background: var(--to-border);
+}
+
+@media (max-width: 760px) {
+  .to-context-action-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .to-context-action-bar__summary,
+  .to-context-action-bar__actions {
+    width: 100%;
+  }
+
+  .to-context-action-bar__actions {
+    justify-content: flex-start;
+  }
+
+  .to-context-action-bar--compact {
+    width: auto;
+    align-items: center;
+    flex-direction: row;
+
+    .to-context-action-bar__actions {
+      width: auto;
+    }
+  }
+}
+
+@media (max-width: 520px) {
+  .to-context-action-bar:not(
+    .to-context-action-bar--compact
+  ) {
+    .to-context-action-bar__actions {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    }
+
+    .to-context-action-bar__divider {
+      display: none;
+    }
+  }
+
+  :host ::ng-deep {
+    .to-context-action-bar:not(
+      .to-context-action-bar--compact
+    ) {
+      .to-context-action-bar__actions {
+        .p-button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}

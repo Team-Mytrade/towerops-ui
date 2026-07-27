@@ -1,0 +1,100 @@
+<section
+  class="to-detail-section-tabs"
+  [ngClass]="containerClasses()"
+  [attr.data-testid]="dataTestId()"
+>
+  <nav
+    class="to-detail-section-tabs__nav"
+    role="tablist"
+    [attr.aria-orientation]="orientation()"
+  >
+    @for (
+      tab of visibleTabs();
+      track tab.id
+    ) {
+      <button
+        type="button"
+        class="to-detail-section-tabs__tab"
+        [ngClass]="tabClasses(tab)"
+        role="tab"
+        [attr.data-detail-tab-id]="tab.id"
+        [attr.data-testid]="
+          tab.dataTestId ??
+          'detail-tab-' + tab.id
+        "
+        [attr.aria-selected]="isActive(tab)"
+        [attr.aria-controls]="
+          'detail-tab-panel-' + tab.id
+        "
+        [attr.tabindex]="
+          isActive(tab)
+            ? 0
+            : -1
+        "
+        [disabled]="tab.disabled === true"
+        (click)="selectTab(tab)"
+        (keydown)="
+          handleKeydown($event, tab)
+        "
+      >
+        <span
+          class="to-detail-section-tabs__tab-visual"
+        >
+          @if (tab.loading) {
+            <p-progress-spinner
+              strokeWidth="5"
+              animationDuration=".8s"
+              ariaLabel="Loading section"
+            />
+          } @else if (tab.icon) {
+            <i [class]="tab.icon"></i>
+          }
+        </span>
+
+        <span
+          class="to-detail-section-tabs__tab-copy"
+        >
+          <strong>
+            {{ tab.label }}
+          </strong>
+
+          @if (
+            showDescriptions() &&
+            tab.description
+          ) {
+            <small>
+              {{ tab.description }}
+            </small>
+          }
+        </span>
+
+        @if (hasBadge(tab)) {
+          <span
+            class="to-detail-section-tabs__badge"
+          >
+            {{ displayBadge(tab) }}
+          </span>
+        }
+      </button>
+    }
+  </nav>
+
+  @if (showContent()) {
+    <div
+      class="to-detail-section-tabs__content"
+      role="tabpanel"
+      [id]="
+        'detail-tab-panel-' +
+        resolvedActiveTabId()
+      "
+      [attr.aria-labelledby]="
+        resolvedActiveTabId()
+          ? 'detail-tab-' +
+            resolvedActiveTabId()
+          : null
+      "
+    >
+      <ng-content />
+    </div>
+  }
+</section>

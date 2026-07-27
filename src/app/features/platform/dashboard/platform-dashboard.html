@@ -1,0 +1,430 @@
+<div class="executive-dashboard" data-testid="platform-executive-dashboard">
+  <!-- FILTERS -->
+  <div class="filters">
+    <div class="filter-field">
+      <p-select
+        [options]="customers"
+        [ngModel]="selectedCustomer()"
+        (ngModelChange)="selectedCustomer.set($event)"
+        aria-label="Customer filter"
+        styleClass="to-dashboard-select"
+      />
+    </div>
+
+    <div class="filter-field">
+      <p-select
+        [options]="dateRanges"
+        [ngModel]="selectedDateRange()"
+        (ngModelChange)="selectedDateRange.set($event)"
+        aria-label="Date range filter"
+        styleClass="to-dashboard-select"
+      />
+    </div>
+
+    <div class="spacer"></div>
+
+    @if (currentTime()) {
+      <div class="clock-display">
+        <i class="pi pi-clock"></i>
+        <b>{{ currentTime() }}</b>
+      </div>
+    }
+
+    <p-button
+      label="Refresh"
+      icon="pi pi-refresh"
+      [loading]="isRefreshing()"
+      data-testid="dashboard-refresh-btn"
+      (click)="refresh()"
+    />
+
+    <p-button
+      label="Export"
+      icon="pi pi-download"
+      severity="secondary"
+      [outlined]="true"
+      data-testid="dashboard-export-btn"
+      (click)="exportData()"
+    />
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-top">
+        <div class="kpi-ico kpi-ico--blue">
+          <i class="pi pi-building"></i>
+        </div>
+        <div class="kpi-label">Total Towers</div>
+      </div>
+      <div class="kpi-val">25</div>
+      <div class="kpi-trend up">100% <span class="muted">vs last 7 days</span></div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top">
+        <div class="kpi-ico kpi-ico--green">
+          <i class="pi pi-wifi"></i>
+        </div>
+        <div class="kpi-label">Online Towers</div>
+      </div>
+      <div class="kpi-val">24</div>
+      <div class="kpi-trend up">96% <span class="muted">vs last 7 days</span></div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top">
+        <div class="kpi-ico kpi-ico--red">
+          <i class="pi pi-power-off"></i>
+        </div>
+        <div class="kpi-label">Offline Towers</div>
+      </div>
+      <div class="kpi-val kpi-val--danger">1</div>
+      <div class="kpi-trend down">4% <span class="muted">vs last 7 days</span></div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top">
+        <div class="kpi-ico kpi-ico--amber">
+          <i class="pi pi-bell"></i>
+        </div>
+        <div class="kpi-label">Active Alarms</div>
+      </div>
+      <div class="kpi-val">10</div>
+      <div class="kpi-trend down">↓ 16% <span class="muted">vs last 7 days</span></div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top">
+        <div class="kpi-ico kpi-ico--purple">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
+        <div class="kpi-label">Critical Alarms</div>
+      </div>
+      <div class="kpi-val">3</div>
+      <div class="kpi-trend down">↓ 25% <span class="muted">vs last 7 days</span></div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-top">
+        <div class="kpi-ico kpi-ico--cyan">
+          <i class="pi pi-chart-line"></i>
+        </div>
+        <div class="kpi-label">Availability</div>
+      </div>
+      <div class="kpi-val">98.7%</div>
+      <div class="kpi-trend up">↑ 0.8% <span class="muted">vs last 7 days</span></div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Map / Summary+Fuel / Recent Alarms -->
+  <div class="grid-row1">
+    <!-- MAP -->
+    <div class="card map-card">
+      <div class="card-head">
+        <div class="card-title">Network Overview Map</div>
+      </div>
+      <div class="map-container-wrapper">
+        <to-map
+          [markers]="mapMarkers"
+          height="290px"
+          [center]="[25.28, 51.52]"
+          [zoom]="8"
+          [autoFitBounds]="true"
+          (markerSelected)="onMarkerSelected($event)"
+        />
+      </div>
+    </div>
+
+    <!-- SITE SUMMARY + FUEL -->
+    <div class="col-stack">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Site Summary</div></div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="50" fill="none" class="donut-bg" stroke-width="14"/>
+              <circle cx="60" cy="60" r="50" fill="none" class="donut-segment donut-segment--green" stroke-width="14" stroke-dasharray="264 314" stroke-linecap="round"/>
+              <circle cx="60" cy="60" r="50" fill="none" class="donut-segment donut-segment--amber" stroke-width="14" stroke-dasharray="25 314" stroke-dashoffset="-264" stroke-linecap="round"/>
+              <circle cx="60" cy="60" r="50" fill="none" class="donut-segment donut-segment--red" stroke-width="14" stroke-dasharray="13 314" stroke-dashoffset="-289" stroke-linecap="round"/>
+              <circle cx="60" cy="60" r="50" fill="none" class="donut-segment donut-segment--faint" stroke-width="14" stroke-dasharray="13 314" stroke-dashoffset="-302" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-center">
+              <div class="big">25</div>
+              <div class="small">Towers</div>
+            </div>
+          </div>
+          <div class="legend-list">
+            <div class="row"><span class="sw sw--green"></span><span class="lbl">Healthy</span><b>21 (84%)</b></div>
+            <div class="row"><span class="sw sw--amber"></span><span class="lbl">Warning</span><b>2 (8%)</b></div>
+            <div class="row"><span class="sw sw--red"></span><span class="lbl">Critical</span><b>1 (4%)</b></div>
+            <div class="row"><span class="sw sw--faint"></span><span class="lbl">Offline</span><b>1 (4%)</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Fuel Overview</div></div>
+        <div class="donut-wrap">
+          <div class="donut" style="width:100px;height:100px;">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" class="donut-bg" stroke-width="12"/>
+              <circle cx="50" cy="50" r="42" fill="none" class="donut-segment donut-segment--green" stroke-width="12" stroke-dasharray="213 264" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-center">
+              <div class="big" style="font-size:18px;">81%</div>
+              <div class="small">Avg Level</div>
+            </div>
+          </div>
+          <div class="legend-list">
+            <div class="row"><span class="lbl">Fuel Alerts</span><b>2</b></div>
+            <div class="row"><span class="lbl">Avg Daily Consumption</span></div>
+            <div class="row" style="margin-top:-6px;"><b style="font-size:15px;">1,250 L</b></div>
+          </div>
+        </div>
+        <div class="card-link" style="margin-top:12px;">View Fuel Dashboard →</div>
+      </div>
+    </div>
+
+    <!-- RECENT ALARMS -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Recent Alarms</div>
+        <div class="card-link">View All</div>
+      </div>
+
+      <div class="alarm-row">
+        <div class="alarm-ico alarm-ico--red">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
+        <div class="alarm-body">
+          <div class="alarm-title">Low Fuel Level</div>
+          <div class="alarm-sub">DOH-001 • Generator</div>
+        </div>
+        <div class="alarm-right">
+          <div class="alarm-time">10:21 AM</div>
+          <to-status-badge value="CRITICAL" />
+        </div>
+      </div>
+
+      <div class="alarm-row">
+        <div class="alarm-ico alarm-ico--amber">
+          <i class="pi pi-exclamation-circle"></i>
+        </div>
+        <div class="alarm-body">
+          <div class="alarm-title">Battery Voltage Low</div>
+          <div class="alarm-sub">DOH-008 • Battery Bank</div>
+        </div>
+        <div class="alarm-right">
+          <div class="alarm-time">10:15 AM</div>
+          <to-status-badge value="MAJOR" tone="warning" />
+        </div>
+      </div>
+
+      <div class="alarm-row">
+        <div class="alarm-ico alarm-ico--amber">
+          <i class="pi pi-bolt"></i>
+        </div>
+        <div class="alarm-body">
+          <div class="alarm-title">AC Unit Failure</div>
+          <div class="alarm-sub">DOH-012 • AC Unit</div>
+        </div>
+        <div class="alarm-right">
+          <div class="alarm-time">10:10 AM</div>
+          <to-status-badge value="MAJOR" tone="warning" />
+        </div>
+      </div>
+
+      <div class="alarm-row">
+        <div class="alarm-ico alarm-ico--green">
+          <i class="pi pi-info-circle"></i>
+        </div>
+        <div class="alarm-body">
+          <div class="alarm-title">High Temperature</div>
+          <div class="alarm-sub">DOH-017 • Generator</div>
+        </div>
+        <div class="alarm-right">
+          <div class="alarm-time">10:05 AM</div>
+          <to-status-badge value="MINOR" tone="info" />
+        </div>
+      </div>
+
+      <div class="alarm-row">
+        <div class="alarm-ico alarm-ico--blue">
+          <i class="pi pi-lock"></i>
+        </div>
+        <div class="alarm-body">
+          <div class="alarm-title">Door Open</div>
+          <div class="alarm-sub">DOH-003 • Door Sensor</div>
+        </div>
+        <div class="alarm-right">
+          <div class="alarm-time">10:01 AM</div>
+          <to-status-badge value="WARNING" tone="warning" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Work Orders / Maintenance / Top Alarms / AI Insights -->
+  <div class="grid-row2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Work Orders</div>
+        <div class="card-link">View All</div>
+      </div>
+      <div class="wo-body">
+        <div class="donut" style="width:96px;height:96px;">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" fill="none" class="donut-bg" stroke-width="12"/>
+            <circle cx="48" cy="48" r="40" fill="none" class="donut-segment donut-segment--blue" stroke-width="12" stroke-dasharray="100 251" stroke-linecap="round"/>
+            <circle cx="48" cy="48" r="40" fill="none" class="donut-segment donut-segment--green" stroke-width="12" stroke-dasharray="100 251" stroke-dashoffset="-100" stroke-linecap="round"/>
+            <circle cx="48" cy="48" r="40" fill="none" class="donut-segment donut-segment--amber" stroke-width="12" stroke-dasharray="50 251" stroke-dashoffset="-200" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-center">
+            <div class="big" style="font-size:18px;">5</div>
+            <div class="small">Total</div>
+          </div>
+        </div>
+        <div class="cl-rows">
+          <div class="cl-row"><span class="l"><span class="sw sw--blue"></span>In Progress</span><b>2</b></div>
+          <div class="cl-row"><span class="l"><span class="sw sw--green"></span>Assigned</span><b>2</b></div>
+          <div class="cl-row"><span class="l"><span class="sw sw--amber"></span>Open</span><b>1</b></div>
+          <div class="cl-row"><span class="l"><span class="sw sw--faint"></span>On Hold</span><b>0</b></div>
+          <div class="cl-row"><span class="l"><span class="sw sw--purple"></span>Closed</span><b>0</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Maintenance Compliance</div>
+        <div class="card-link">View Report</div>
+      </div>
+      <div class="compliance-body">
+        <div class="donut" style="width:96px;height:96px;">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" fill="none" class="donut-bg" stroke-width="12"/>
+            <circle cx="48" cy="48" r="40" fill="none" class="donut-segment donut-segment--green" stroke-width="12" stroke-dasharray="231 251" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-center">
+            <div class="big" style="font-size:18px;">92%</div>
+            <div class="small">Compliance</div>
+          </div>
+        </div>
+        <div class="cl-rows">
+          <div class="cl-row"><span class="l">Due Today</span><b>2</b></div>
+          <div class="cl-row"><span class="l">Overdue</span><b>3</b></div>
+          <div class="cl-row"><span class="l">Due This Week</span><b>4</b></div>
+          <div class="cl-row"><span class="l">Due This Month</span><b>11</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Top Alarms (Last 7 Days)</div>
+        <div class="card-link">View Report</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>Low Fuel Level</span><span>5</span></div>
+        <p-progressbar [value]="100" [showValue]="false" styleClass="to-progress--red" />
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>Battery Voltage Low</span><span>4</span></div>
+        <p-progressbar [value]="80" [showValue]="false" styleClass="to-progress--amber" />
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>AC Unit Failure</span><span>3</span></div>
+        <p-progressbar [value]="60" [showValue]="false" styleClass="to-progress--amber" />
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>High Temperature</span><span>2</span></div>
+        <p-progressbar [value]="40" [showValue]="false" styleClass="to-progress--yellow" />
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>ATS Failure</span><span>1</span></div>
+        <p-progressbar [value]="20" [showValue]="false" styleClass="to-progress--blue" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">AI Insights</div>
+        <div class="card-link">View All</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-ico">
+          <i class="pi pi-sparkles"></i>
+        </div>
+        <div>
+          <div class="ai-title">Battery Health Degradation</div>
+          <div class="ai-text">Battery bank at DOH-008 is showing signs of capacity loss. Failure probability within 45 days is 73%.</div>
+          <div class="ai-link">View Recommendation →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER STATS -->
+  <div class="footer-stats">
+    <div class="fstat">
+      <div class="fico fico--blue">
+        <i class="pi pi-building"></i>
+      </div>
+      <div>
+        <div class="fval">25</div>
+        <div class="flabel">Total Towers</div>
+      </div>
+    </div>
+
+    <div class="fstat">
+      <div class="fico fico--purple">
+        <i class="pi pi-users"></i>
+      </div>
+      <div>
+        <div class="fval">4</div>
+        <div class="flabel">Customers</div>
+      </div>
+    </div>
+
+    <div class="fstat">
+      <div class="fico fico--cyan">
+        <i class="pi pi-box"></i>
+      </div>
+      <div>
+        <div class="fval">128</div>
+        <div class="flabel">Assets</div>
+      </div>
+    </div>
+
+    <div class="fstat">
+      <div class="fico fico--green">
+        <i class="pi pi-user"></i>
+      </div>
+      <div>
+        <div class="fval">15</div>
+        <div class="flabel">Technicians</div>
+      </div>
+    </div>
+
+    <div class="fstat">
+      <div class="fico fico--green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div>
+        <div class="fval">98.7%</div>
+        <div class="flabel">Availability (MTD)</div>
+      </div>
+    </div>
+
+    <div class="fstat">
+      <div class="fico fico--red">
+        <i class="pi pi-shield"></i>
+      </div>
+      <div>
+        <div class="fval">0</div>
+        <div class="flabel">Safety Incidents</div>
+      </div>
+    </div>
+  </div>
+</div>

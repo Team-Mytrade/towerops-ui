@@ -1,0 +1,434 @@
+<section
+  class="to-device-model-detail-page"
+  data-testid="device-model-detail-page"
+>
+  <header class="to-detail-header">
+    <div class="to-detail-header__content">
+      <button
+        type="button"
+        class="to-back-button"
+        aria-label="Back to device models"
+        (click)="goBack()"
+      >
+        <i class="pi pi-arrow-left"></i>
+      </button>
+
+      <div>
+        <p class="to-eyebrow">
+          Hardware catalog
+        </p>
+
+        <h1>
+          {{
+            deviceModel()?.modelName ||
+            'Device Model'
+          }}
+        </h1>
+
+        <p>
+          {{
+            deviceModel()?.modelCode ||
+            'Loading model information'
+          }}
+        </p>
+      </div>
+    </div>
+
+    @if (deviceModel(); as model) {
+      <div class="to-detail-header__actions">
+        <p-button
+          [label]="
+            model.enabled
+              ? 'Disable'
+              : 'Enable'
+          "
+          [icon]="
+            model.enabled
+              ? 'pi pi-ban'
+              : 'pi pi-check-circle'
+          "
+          severity="secondary"
+          [outlined]="true"
+          [loading]="updatingStatus()"
+          [disabled]="deleting()"
+          (click)="toggleStatus()"
+        />
+
+        <p-button
+          label="Edit"
+          icon="pi pi-pencil"
+          severity="secondary"
+          [outlined]="true"
+          [disabled]="deleting()"
+          (click)="editDeviceModel()"
+        />
+
+        <p-button
+          label="Delete"
+          icon="pi pi-trash"
+          severity="danger"
+          [outlined]="true"
+          [loading]="deleting()"
+          [disabled]="updatingStatus()"
+          (click)="confirmDelete()"
+        />
+      </div>
+    }
+  </header>
+
+  @if (loading()) {
+    <section class="to-loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Loading device model...</span>
+    </section>
+  } @else if (deviceModel(); as model) {
+    <section class="to-hero-card">
+      <div class="to-hero-card__main">
+        <span class="to-hero-icon">
+          <i class="pi pi-box"></i>
+        </span>
+
+        <div>
+          <div class="to-hero-title-row">
+            <h2>{{ model.modelName }}</h2>
+
+            <p-tag
+              [value]="statusLabel()"
+              [severity]="statusSeverity()"
+            />
+          </div>
+
+          <p>
+            {{
+              model.description ||
+              'No description has been provided for this device model.'
+            }}
+          </p>
+
+          <div class="to-hero-meta">
+            <span>
+              <i class="pi pi-hashtag"></i>
+              {{ model.modelCode }}
+            </span>
+
+            <span>
+              <i class="pi pi-building"></i>
+              {{
+                model.manufacturer ||
+                'Unknown manufacturer'
+              }}
+            </span>
+
+            <span>
+              <i class="pi pi-tag"></i>
+              {{ formatEnum(model.category) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="to-hero-card__stats">
+        <article>
+          <span>Protocol</span>
+          <strong>
+            {{ formatEnum(model.protocol) }}
+          </strong>
+        </article>
+
+        <article>
+          <span>Connectivity</span>
+          <strong>
+            {{
+              formatEnum(
+                model.connectivityType
+              )
+            }}
+          </strong>
+        </article>
+
+        <article>
+          <span>Firmware</span>
+          <strong>
+            {{
+              model.defaultFirmwareVersion ||
+              '—'
+            }}
+          </strong>
+        </article>
+
+        <article>
+          <span>Devices</span>
+          <strong>
+            {{ model.deviceCount ?? 0 }}
+          </strong>
+        </article>
+      </div>
+    </section>
+
+    <div class="to-detail-layout">
+      <main class="to-detail-main">
+        <section class="to-detail-card">
+          <header class="to-detail-card__header">
+            <div class="to-card-heading">
+              <span>
+                <i class="pi pi-info-circle"></i>
+              </span>
+
+              <div>
+                <h2>Overview</h2>
+                <p>
+                  General hardware model information.
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div class="to-detail-grid">
+            <article class="to-detail-field">
+              <span>Model Code</span>
+              <strong>{{ model.modelCode }}</strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Model Name</span>
+              <strong>{{ model.modelName }}</strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Manufacturer</span>
+              <strong>
+                {{ model.manufacturer || '—' }}
+              </strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Category</span>
+              <strong>
+                {{ formatEnum(model.category) }}
+              </strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Protocol</span>
+              <strong>
+                {{ formatEnum(model.protocol) }}
+              </strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Connectivity</span>
+              <strong>
+                {{
+                  formatEnum(
+                    model.connectivityType
+                  )
+                }}
+              </strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Default Firmware</span>
+              <strong>
+                {{
+                  model.defaultFirmwareVersion ||
+                  '—'
+                }}
+              </strong>
+            </article>
+
+            <article class="to-detail-field">
+              <span>Status</span>
+              <strong>{{ statusLabel() }}</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="to-detail-card">
+          <header class="to-detail-card__header">
+            <div class="to-card-heading">
+              <span>
+                <i class="pi pi-chart-line"></i>
+              </span>
+
+              <div>
+                <h2>Telemetry Configuration</h2>
+
+                <p>
+                  Default collection and heartbeat
+                  configuration for this model.
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div class="to-telemetry-summary">
+            <article>
+              <span>Sampling Interval</span>
+
+              <strong>
+                {{
+                  formatInterval(
+                    model.samplingIntervalSeconds
+                  )
+                }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Heartbeat Interval</span>
+
+              <strong>
+                {{
+                  formatInterval(
+                    model.heartbeatIntervalSeconds
+                  )
+                }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Supported Metrics</span>
+
+              <strong>
+                {{ selectedMetrics().length }}
+              </strong>
+            </article>
+          </div>
+
+          <div class="to-metrics-section">
+            <h3>Supported Metrics</h3>
+
+            @if (selectedMetrics().length) {
+              <div class="to-metrics-list">
+                @for (
+                  metric of selectedMetrics();
+                  track metric
+                ) {
+                  <span class="to-metric-chip">
+                    <i class="pi pi-chart-bar"></i>
+
+                    {{
+                      formatMetricLabel(metric)
+                    }}
+                  </span>
+                }
+              </div>
+            } @else {
+              <div class="to-empty-inline">
+                <i class="pi pi-chart-line"></i>
+
+                <div>
+                  <strong>
+                    No metrics configured
+                  </strong>
+
+                  <span>
+                    This model does not currently
+                    define supported telemetry
+                    metrics.
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      </main>
+
+      <aside class="to-detail-aside">
+        <section class="to-detail-card">
+          <header class="to-detail-card__header">
+            <div class="to-card-heading">
+              <span>
+                <i class="pi pi-clock"></i>
+              </span>
+
+              <div>
+                <h2>Activity</h2>
+                <p>Model record metadata.</p>
+              </div>
+            </div>
+          </header>
+
+          <div class="to-activity-list">
+            <article>
+              <span>Created At</span>
+              <strong>
+                {{
+                  model.createdAt
+                    ? (model.createdAt
+                      | date: 'medium')
+                    : '—'
+                }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Created By</span>
+              <strong>
+                {{ model.createdBy || '—' }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Updated At</span>
+              <strong>
+                {{
+                  model.updatedAt
+                    ? (model.updatedAt
+                      | date: 'medium')
+                    : '—'
+                }}
+              </strong>
+            </article>
+
+            <article>
+              <span>Updated By</span>
+              <strong>
+                {{ model.updatedBy || '—' }}
+              </strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="to-detail-card to-usage-card">
+          <span class="to-usage-card__icon">
+            <i class="pi pi-sitemap"></i>
+          </span>
+
+          <h3>Model Usage</h3>
+
+          <strong>
+            {{ model.deviceCount ?? 0 }}
+            devices
+          </strong>
+
+          <p>
+            Devices currently registered using this
+            hardware model.
+          </p>
+        </section>
+      </aside>
+    </div>
+  } @else {
+    <section class="to-empty-state">
+      <span>
+        <i class="pi pi-box"></i>
+      </span>
+
+      <h2>Device model unavailable</h2>
+
+      <p>
+        The requested device model could not be
+        loaded.
+      </p>
+
+      <p-button
+        label="Back to Device Models"
+        icon="pi pi-arrow-left"
+        (click)="goBack()"
+      />
+    </section>
+  }
+
+  <p-confirm-dialog />
+</section>

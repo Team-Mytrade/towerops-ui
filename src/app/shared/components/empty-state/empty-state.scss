@@ -1,0 +1,128 @@
+:host {
+  display: block;
+}
+
+.to-empty-state {
+  display: grid;
+  min-height: 16rem;
+  align-content: center;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 1.25rem;
+  border: 1px dashed var(--to-border);
+  border-radius: var(--to-radius-xl);
+  color: var(--to-text-muted);
+  background: var(--to-surface);
+  text-align: center;
+
+  > strong {
+    color: var(--to-text);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  > p {
+    max-width: 28rem;
+    margin: 0;
+    color: var(--to-text-muted);
+    font-size: 0.6rem;
+    line-height: 1.55;
+  }
+}
+
+.to-empty-state__icon {
+  display: grid;
+  width: 3.2rem;
+  height: 3.2rem;
+  margin-bottom: 0.25rem;
+  border-radius: 0.9rem;
+  place-items: center;
+  color: var(--to-primary);
+  background: var(--to-primary-soft);
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.to-empty-state__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.to-empty-state__loading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--to-text-muted);
+  font-size: 0.62rem;
+
+  i {
+    color: var(--to-primary);
+    font-size: 0.9rem;
+  }
+}
+
+.to-empty-state--success {
+  .to-empty-state__icon {
+    color: var(--to-success);
+    background: var(--to-success-soft);
+  }
+}
+
+.to-empty-state--info {
+  .to-empty-state__icon {
+    color: var(--to-info);
+    background: var(--to-info-soft);
+  }
+}
+
+.to-empty-state--warning {
+  .to-empty-state__icon {
+    color: var(--to-warning);
+    background: var(--to-warning-soft);
+  }
+}
+
+.to-empty-state--danger {
+  .to-empty-state__icon {
+    color: var(--to-danger);
+    background: var(--to-danger-soft);
+  }
+}
+
+.to-empty-state--secondary {
+  .to-empty-state__icon {
+    color: var(--to-text-secondary);
+    background: var(--to-surface-muted);
+  }
+}
+
+.to-empty-state--compact {
+  min-height: 10rem;
+  padding: 0.9rem;
+
+  .to-empty-state__icon {
+    width: 2.7rem;
+    height: 2.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .to-empty-state__actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  :host ::ng-deep {
+    .to-empty-state__actions {
+      .p-button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}

@@ -1,0 +1,161 @@
+<section
+  class="to-map"
+  [style.height]="height()"
+  data-testid="map-component"
+>
+  <div
+    #mapContainer
+    class="to-map__canvas"
+    role="application"
+    aria-label="Interactive site map"
+  ></div>
+
+  @if (showControls()) {
+    <div class="to-map__controls">
+      @if (showZoomControls()) {
+        <div class="to-map__control-group">
+          <button
+            type="button"
+            class="to-map__control"
+            aria-label="Zoom in"
+            title="Zoom in"
+            data-testid="map-zoom-in-btn"
+            (click)="zoomIn()"
+          >
+            <i class="pi pi-plus"></i>
+          </button>
+
+          <button
+            type="button"
+            class="to-map__control"
+            aria-label="Zoom out"
+            title="Zoom out"
+            data-testid="map-zoom-out-btn"
+            (click)="zoomOut()"
+          >
+            <i class="pi pi-minus"></i>
+          </button>
+        </div>
+      }
+
+      @if (showFitBoundsControl()) {
+        <button
+          type="button"
+          class="to-map__control"
+          aria-label="Fit all sites"
+          title="Fit all sites"
+          data-testid="map-fit-bounds-btn"
+          (click)="fitToMarkers()"
+        >
+          <i class="pi pi-expand"></i>
+        </button>
+      }
+
+      @if (showLocateControl()) {
+        <button
+          type="button"
+          class="to-map__control"
+          [class.to-map__control--active]="isLocating()"
+          aria-label="Show my location"
+          title="Show my location"
+          data-testid="map-locate-btn"
+          (click)="locateMe()"
+        >
+          <i
+            class="pi"
+            [class.pi-spin]="isLocating()"
+            [class.pi-spinner]="isLocating()"
+            [class.pi-compass]="!isLocating()"
+          ></i>
+        </button>
+      }
+
+      @if (showFullscreenControl()) {
+        <button
+          type="button"
+          class="to-map__control"
+          [attr.aria-label]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+          [title]="isFullscreen() ? 'Exit fullscreen' : 'Enter fullscreen'"
+          data-testid="map-fullscreen-btn"
+          (click)="toggleFullscreen()"
+        >
+          <i
+            class="pi"
+            [class.pi-window-minimize]="isFullscreen()"
+            [class.pi-window-maximize]="!isFullscreen()"
+          ></i>
+        </button>
+      }
+
+      @if (showLayerSwitcher()) {
+        <div class="to-map__layer-switcher">
+          <button
+            type="button"
+            class="to-map__control"
+            aria-haspopup="true"
+            [attr.aria-expanded]="layerMenuOpen()"
+            aria-label="Change map style"
+            title="Change map style"
+            data-testid="map-layer-switcher-btn"
+            (click)="toggleLayerMenu()"
+          >
+            <i class="pi pi-images"></i>
+          </button>
+
+          @if (layerMenuOpen()) {
+            <div
+              class="to-map__panel to-map__layer-menu"
+              role="menu"
+              data-testid="map-layer-menu"
+            >
+              @for (layer of baseLayerOptions(); track layer.id) {
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  class="to-map__layer-option"
+                  [class.to-map__layer-option--active]="activeBaseLayerId() === layer.id"
+                  [attr.aria-checked]="activeBaseLayerId() === layer.id"
+                  (click)="setBaseLayer(layer.id)"
+                >
+                  <i [class]="layer.icon"></i>
+                  <span>{{ layer.label }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (showLegend() && legendItems().length) {
+    <div class="to-map__panel to-map__legend" data-testid="map-legend">
+      @for (item of legendItems(); track item.label) {
+        <div class="to-map__legend-row">
+          <span
+            class="to-map__legend-swatch"
+            [style.background]="item.color"
+          ></span>
+          <span class="to-map__legend-label">{{ item.label }}</span>
+        </div>
+      }
+    </div>
+  }
+
+  @if (initialized() && markers().length === 0) {
+    <div class="to-map__empty">
+      <span>
+        <i class="pi pi-map"></i>
+      </span>
+
+      <strong>No mapped locations</strong>
+      <small>
+        Sites with valid coordinates will appear here.
+      </small>
+    </div>
+  }
+
+  <div class="to-map__sr-only" role="status" aria-live="polite">
+    {{ statusAnnouncement() }}
+  </div>
+</section>

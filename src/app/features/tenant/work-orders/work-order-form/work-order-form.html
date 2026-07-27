@@ -1,0 +1,240 @@
+<section
+  class="to-work-order-form-page"
+  data-testid="work-order-form-page"
+>
+  <header class="to-page-header">
+    <div class="to-page-header__content">
+      <button
+        type="button"
+        class="to-page-header__back"
+        aria-label="Back to work orders"
+        (click)="cancelForm()"
+      >
+        <i class="pi pi-arrow-left"></i>
+      </button>
+
+      <div>
+        <span class="to-page-header__eyebrow">
+          Field Operations
+        </span>
+
+        <h1>
+          {{ pageTitle() }}
+        </h1>
+
+        <p>
+          {{ pageDescription() }}
+        </p>
+      </div>
+    </div>
+
+    @if (isEditMode()) {
+      <div class="to-page-header__reference">
+        <span>Work Order</span>
+
+        <strong>
+          {{
+            form.controls
+              .workOrderCode.value ||
+              '—'
+          }}
+        </strong>
+      </div>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="to-form-loading">
+      <div class="to-form-loading__main">
+        @for (
+          card of [1, 2, 3];
+          track card
+        ) {
+          <article class="to-loading-card">
+            <div class="to-loading-card__header">
+              <p-skeleton
+                width="2.25rem"
+                height="2.25rem"
+                borderRadius="11px"
+              />
+
+              <div>
+                <p-skeleton
+                  width="10rem"
+                  height="1rem"
+                />
+
+                <p-skeleton
+                  width="18rem"
+                  height="0.75rem"
+                />
+              </div>
+            </div>
+
+            <p-skeleton
+              width="100%"
+              height="12rem"
+              borderRadius="12px"
+            />
+          </article>
+        }
+      </div>
+
+      <aside class="to-form-loading__side">
+        <article class="to-loading-card">
+          <p-skeleton
+            width="9rem"
+            height="1rem"
+          />
+
+          <p-skeleton
+            width="100%"
+            height="25rem"
+            borderRadius="12px"
+          />
+        </article>
+      </aside>
+    </div>
+  } @else {
+    <form
+      class="to-work-order-form"
+      [formGroup]="form"
+      novalidate
+      (ngSubmit)="
+        isCreateMode()
+          ? createWorkOrder()
+          : saveWorkOrder()
+      "
+    >
+      <div class="to-work-order-form__layout">
+        <main class="to-work-order-form__main">
+          <to-work-order-card
+            [form]="form"
+            [readonly]="formReadonly()"
+            [editMode]="isEditMode()"
+          />
+
+          <to-work-order-assignment-card
+            [form]="form"
+            [technicians]="technicianOptions()"
+            [loadingTechnicians]="
+              loadingTechnicians()
+            "
+            [readonly]="formReadonly()"
+            (technicianChanged)="
+              onTechnicianChanged($event)
+            "
+            (scheduledAtChanged)="
+              onScheduledAtChanged($event)
+            "
+          />
+
+          <to-work-order-resources-card
+            [form]="form"
+            [sites]="siteOptions()"
+            [devices]="deviceOptions()"
+            [alerts]="alertOptions()"
+            [tickets]="ticketOptions()"
+            [loadingSites]="
+              loadingSites()
+            "
+            [loadingDevices]="
+              loadingDevices()
+            "
+            [loadingAlerts]="
+              loadingAlerts()
+            "
+            [loadingTickets]="
+              loadingTickets()
+            "
+            [readonly]="formReadonly()"
+            (siteChanged)="
+              onSiteChanged($event)
+            "
+            (deviceChanged)="
+              onDeviceChanged($event)
+            "
+            (alertChanged)="
+              onAlertChanged($event)
+            "
+            (ticketChanged)="
+              onTicketChanged($event)
+            "
+          />
+
+          <to-work-order-resolution-card
+            [form]="form"
+            [readonly]="formReadonly()"
+            [completionRequired]="
+              completionMode()
+            "
+            (startedAtChanged)="
+              onStartedAtChanged($event)
+            "
+            (completedAtChanged)="
+              onCompletedAtChanged($event)
+            "
+            (laborHoursChanged)="
+              onLaborHoursChanged($event)
+            "
+          />
+        </main>
+
+        <aside class="to-work-order-form__side">
+          <div class="to-work-order-form__sticky">
+            <to-work-order-site-context-card
+              [context]="siteContext()"
+              [loading]="
+                loadingSiteContext()
+              "
+              [siteSelected]="
+                selectedSiteId() !== null
+              "
+            />
+          </div>
+        </aside>
+      </div>
+
+      <to-work-order-action-footer
+        [mode]="formMode()"
+        [status]="currentStatus()"
+        [loading]="submitting()"
+        [dirty]="form.dirty"
+        [valid]="form.valid"
+        [readonly]="formReadonly()"
+        [invalidFields]="
+          invalidFieldLabels()
+        "
+        [canSaveDraft]="
+          canSaveDraft()
+        "
+        [canCreate]="canCreate()"
+        [canSave]="canSave()"
+        [canAssign]="canAssign()"
+        [canStart]="canStart()"
+        [canComplete]="
+          canComplete()
+        "
+        [canVerify]="canVerify()"
+        [canClose]="canClose()"
+        [canCancel]="canCancel()"
+        [canDelete]="canDelete()"
+        (cancel)="cancelForm()"
+        (saveDraft)="saveDraft()"
+        (create)="createWorkOrder()"
+        (save)="saveWorkOrder()"
+        (assign)="assignWorkOrder()"
+        (start)="startWorkOrder()"
+        (complete)="
+          completeWorkOrder()
+        "
+        (verify)="verifyWorkOrder()"
+        (close)="closeWorkOrder()"
+        (cancelOrder)="
+          cancelWorkOrder()
+        "
+        (delete)="deleteWorkOrder()"
+      />
+    </form>
+  }
+</section>
