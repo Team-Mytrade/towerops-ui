@@ -1,0 +1,145 @@
+<section class="to-permissions" data-testid="permissions-page">
+  <header class="to-permissions__header">
+    <div>
+      <p class="to-permissions__eyebrow">Access management</p>
+      <h1>Permissions</h1>
+      <p>Define the individual capabilities that can be assigned to roles.</p>
+    </div>
+    <div class="to-permissions__actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        (onClick)="loadPermissions()"
+      />
+      <p-button
+        label="Create permission"
+        icon="pi pi-plus"
+        (onClick)="openCreate()"
+      />
+    </div>
+  </header>
+
+  <div class="to-permissions__toolbar">
+    <label>
+      <i class="pi pi-search"></i>
+      <input
+        pInputText
+        type="search"
+        placeholder="Search permissions"
+        aria-label="Search permissions"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+    </label>
+    <span>{{ filteredPermissions().length }} permissions</span>
+  </div>
+
+  @if (pageError()) {
+    <div class="to-permissions__state is-error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>Permissions could not be loaded</strong>
+      <span>{{ pageError() }}</span>
+      <p-button label="Try again" icon="pi pi-refresh" (onClick)="loadPermissions()" />
+    </div>
+  } @else {
+    <p-table
+      [value]="filteredPermissions()"
+      [loading]="loading()"
+      [paginator]="filteredPermissions().length > 10"
+      [rows]="10"
+      dataKey="id"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Permission</th>
+          <th>Description</th>
+          <th class="to-permissions__action-column">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-permission>
+        <tr>
+          <td>
+            <div class="to-permissions__identity">
+              <i class="pi pi-lock"></i>
+              <span>
+                <strong>{{ permission.permissionName }}</strong>
+                <small>{{ permission.permissionCode }}</small>
+              </span>
+            </div>
+          </td>
+          <td>{{ permission.description || 'No description' }}</td>
+          <td>
+            <div class="to-permissions__row-actions">
+              <p-button icon="pi pi-pencil" [text]="true" [rounded]="true"
+                pTooltip="Edit permission" (onClick)="openEdit(permission)" />
+              <p-button icon="pi pi-trash" severity="danger" [text]="true"
+                [rounded]="true" pTooltip="Delete permission"
+                (onClick)="confirmDelete(permission)" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="3">
+            <div class="to-permissions__state">
+              <i class="pi pi-lock"></i>
+              <strong>No permissions found</strong>
+              <span>Create a permission or change your search.</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <p-dialog
+    [header]="editingId() === null ? 'Create permission' : 'Edit permission'"
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: 'min(34rem, calc(100vw - 2rem))' }"
+  >
+    @if (loadingPermission()) {
+      <div class="to-permissions__state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading permission...</span>
+      </div>
+    } @else {
+      <form id="permission-form" class="to-permissions__form"
+        [formGroup]="form" (ngSubmit)="save()">
+        <label>
+          <span>Permission code *</span>
+          <input pInputText formControlName="permissionCode" placeholder="devices:view" />
+          @if (form.controls.permissionCode.invalid && form.controls.permissionCode.touched) {
+            <small>Permission code is required.</small>
+          }
+        </label>
+        <label>
+          <span>Permission name *</span>
+          <input pInputText formControlName="permissionName" placeholder="View devices" />
+          @if (form.controls.permissionName.invalid && form.controls.permissionName.touched) {
+            <small>Permission name is required.</small>
+          }
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea pTextarea formControlName="description" rows="3"></textarea>
+        </label>
+      </form>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [outlined]="true"
+        (onClick)="dialogVisible.set(false)" />
+      <p-button type="submit" form="permission-form"
+        [label]="editingId() === null ? 'Create permission' : 'Save changes'"
+        icon="pi pi-check" [loading]="saving()" [disabled]="loadingPermission()" />
+    </ng-template>
+  </p-dialog>
+  <p-confirmdialog />
+</section>

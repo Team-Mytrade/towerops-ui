@@ -1,71 +1,36 @@
-import { QueryParams } from '../../../../core/api/api-query.types';
-import {
-  Severity,
-  SiteCategory
-} from '../../../../core/models/application.enums';
+import { Severity } from '../../../../core/models/application.enums';
 
-export type AlertStatus =
-  | 'OPEN'
-  | 'ACKNOWLEDGED'
-  | 'IN_PROGRESS'
-  | 'RESOLVED'
-  | 'CLOSED'
-  | 'SUPPRESSED';
+export type AlertStatus = 'OPEN' | 'RESOLVED';
 
 export interface Alert {
   id: number;
   alertCode: string;
-  title: string;
-  message: string;
-
+  deviceId: string;
+  ruleId: number;
+  ruleName: string;
+  alertType: string;
   severity: Severity;
+  message: string;
+  acknowledged: boolean;
+  timestamp: string;
   status: AlertStatus;
 
-  category?: string | null;
-  ruleId?: number | null;
-  ruleName?: string | null;
-
+  // Optional display context supplied by some aggregate endpoints.
+  title?: string;
   siteId?: number | null;
   siteCode?: string | null;
   siteName?: string | null;
-  siteCategory?: SiteCategory | null;
-
-  deviceId?: number | null;
   deviceCode?: string | null;
   deviceName?: string | null;
-
-  acknowledgedBy?: string | null;
-  acknowledgedAt?: string | null;
-
-  resolvedBy?: string | null;
-  resolvedAt?: string | null;
-
-  createdAt: string;
-  updatedAt?: string | null;
-
   ticketId?: number | null;
   ticketCode?: string | null;
 }
 
-export interface AlertListQuery extends QueryParams {
-  search?: string;
-  severity?: Severity;
-  status?: AlertStatus;
-  siteId?: number;
-  deviceId?: number;
-  category?: string;
-  fromDate?: string;
-  toDate?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
-}
-
-export interface AcknowledgeAlertPayload {
-  remarks?: string;
-}
-
-export interface ResolveAlertPayload {
-  resolution: string;
-  remarks?: string;
+export interface AlertPayload {
+  deviceId: string;
+  ruleId: number;
+  ruleName: string;
+  alertType: string;
+  severity: Severity;
+  message: string;
 }

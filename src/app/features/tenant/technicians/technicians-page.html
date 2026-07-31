@@ -1,0 +1,159 @@
+<section class="to-technicians" data-testid="technicians-page">
+  <header class="to-header">
+    <div>
+      <p class="to-eyebrow">Operations</p>
+      <h1>Technicians</h1>
+      <p>Manage field personnel, availability, skills and site assignments.</p>
+    </div>
+    <div class="to-header__actions">
+      <p-button label="Refresh" icon="pi pi-refresh" severity="secondary"
+        [outlined]="true" [loading]="loading()" (click)="load()" />
+      <p-button label="Add Technician" icon="pi pi-plus"
+        data-testid="add-technician-btn" (click)="create()" />
+    </div>
+  </header>
+
+  @if (editorOpen()) {
+  <section class="to-inline-form" data-testid="technician-form">
+    <header class="to-inline-form__header">
+      <div>
+        <p class="to-eyebrow">Technician record</p>
+        <h2>{{ draft().id ? 'Edit technician' : 'Add technician' }}</h2>
+        <p>Maintain identity, contact, assignment and availability details.</p>
+      </div>
+      <p-button label="Back to Technicians" icon="pi pi-arrow-left"
+        severity="secondary" [outlined]="true" [disabled]="saving()"
+        (click)="closeEditor()" />
+    </header>
+
+    <div class="to-form">
+      <label class="to-form__wide"><span>User account *</span>
+        <p-select [options]="userOptions()" optionLabel="label"
+          optionValue="value" placeholder="Select a technician user"
+          [filter]="true" [showClear]="true" [ngModel]="draft().userId || null"
+          (ngModelChange)="selectUser($event)" />
+        <small>Selecting a user fills the technician's identity and contact details.</small>
+      </label>
+      <label><span>Technician code *</span><input pInputText [ngModel]="draft().technicianCode"
+        (ngModelChange)="setDraft('technicianCode', $event)" /></label>
+      <label><span>First name *</span><input pInputText [ngModel]="draft().firstName"
+        (ngModelChange)="setDraft('firstName', $event)" /></label>
+      <label><span>Last name *</span><input pInputText [ngModel]="draft().lastName"
+        (ngModelChange)="setDraft('lastName', $event)" /></label>
+      <label><span>Email</span><input pInputText type="email" [ngModel]="draft().email"
+        (ngModelChange)="setDraft('email', $event)" /></label>
+      <label><span>Phone number</span><input pInputText [ngModel]="draft().phoneNumber"
+        (ngModelChange)="setDraft('phoneNumber', $event)" /></label>
+      <label><span>Designation</span><input pInputText [ngModel]="draft().designation"
+        (ngModelChange)="setDraft('designation', $event)" /></label>
+      <label><span>Department</span><input pInputText [ngModel]="draft().department"
+        (ngModelChange)="setDraft('department', $event)" /></label>
+      <label><span>Site</span><p-select [options]="siteOptions()" optionLabel="label"
+        optionValue="value" placeholder="Select a site" [filter]="true"
+        [showClear]="true" [ngModel]="draft().siteCode"
+        (ngModelChange)="setDraft('siteCode', $event ?? '')" /></label>
+      <label><span>Status</span><p-select [options]="statusOptions" optionLabel="label"
+        optionValue="value" [ngModel]="draft().status"
+        (ngModelChange)="setDraft('status', $event)" /></label>
+      <label class="to-form__wide"><span>Skill set</span><input pInputText
+        placeholder="e.g. Electrical, HVAC, RF" [ngModel]="draft().skillSet"
+        (ngModelChange)="setDraft('skillSet', $event)" /></label>
+      <label class="to-form__wide"><span>Remarks</span><textarea rows="4"
+        [ngModel]="draft().remarks" (ngModelChange)="setDraft('remarks', $event)"></textarea></label>
+      <label class="to-checkbox"><p-checkbox [binary]="true" [ngModel]="draft().enabled"
+        (ngModelChange)="setDraft('enabled', $event)" /><span>Technician is enabled</span></label>
+    </div>
+
+    <footer class="to-inline-form__footer">
+      <p-button label="Cancel" severity="secondary" [outlined]="true"
+        [disabled]="saving()" (click)="closeEditor()" />
+      <p-button label="Save technician" icon="pi pi-check"
+        [loading]="saving()" (click)="save()" />
+    </footer>
+  </section>
+  } @else {
+  <div class="to-summary">
+    <article><span>Total</span><strong>{{ technicians().length }}</strong></article>
+    <article><span>Available</span><strong>{{ availableCount() }}</strong></article>
+    <article><span>Assigned / Active</span><strong>{{ assignedCount() }}</strong></article>
+    <article><span>Enabled</span><strong>{{ enabledCount() }}</strong></article>
+  </div>
+
+  <div class="to-toolbar">
+    <span class="to-search">
+      <i class="pi pi-search"></i>
+      <input pInputText type="search" placeholder="Search technicians"
+        [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </span>
+    <p-select [options]="statusOptions" optionLabel="label" optionValue="value"
+      placeholder="All statuses" [showClear]="true"
+      [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" />
+    <p-select [options]="enabledOptions" optionLabel="label" optionValue="value"
+      placeholder="Any state" [showClear]="true"
+      [ngModel]="enabledFilter()" (ngModelChange)="enabledFilter.set($event)" />
+    <p-button label="Clear" severity="secondary" [text]="true"
+      (click)="clearFilters()" />
+  </div>
+
+  <div class="to-table-card">
+    @if (loading()) {
+      <div class="to-state"><i class="pi pi-spin pi-spinner"></i> Loading technicians...</div>
+    } @else if (pageError()) {
+      <div class="to-state to-state--error">
+        <i class="pi pi-exclamation-triangle"></i>
+        <strong>Technicians could not be loaded</strong>
+        <span>{{ pageError() }}</span>
+        <p-button label="Try again" (click)="load()" />
+      </div>
+    } @else {
+      <p-table [value]="filtered()" [rowHover]="true" [paginator]="filtered().length > 10"
+        [rows]="10" [rowsPerPageOptions]="[10, 25, 50]">
+        <ng-template #header>
+          <tr>
+            <th>Technician</th><th>Status</th><th>Contact</th>
+            <th>Department</th><th>Site</th><th>Skills</th><th>State</th><th></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-item>
+          <tr>
+            <td>
+              <div class="to-person">
+                <span>{{ item.firstName.charAt(0) }}{{ item.lastName.charAt(0) }}</span>
+                <div><strong>{{ item.firstName }} {{ item.lastName }}</strong>
+                  <small>{{ item.technicianCode }} @if (item.username) { · {{ item.username }} }</small>
+                </div>
+              </div>
+            </td>
+            <td><p-tag [value]="formatEnum(item.status)"
+              [severity]="statusSeverity(item.status)" /></td>
+            <td><div class="to-stacked"><span>{{ item.email || '—' }}</span>
+              <small>{{ item.phoneNumber || '—' }}</small></div></td>
+            <td><div class="to-stacked"><span>{{ item.department || '—' }}</span>
+              <small>{{ item.designation || '—' }}</small></div></td>
+            <td>{{ item.siteCode || '—' }}</td>
+            <td class="to-skills">{{ item.skillSet || '—' }}</td>
+            <td><p-tag [value]="item.enabled ? 'Enabled' : 'Disabled'"
+              [severity]="item.enabled ? 'success' : 'secondary'" /></td>
+            <td>
+              <div class="to-actions">
+                <p-button icon="pi pi-pencil" severity="secondary" [text]="true"
+                  ariaLabel="Edit technician" (click)="edit(item)" />
+                <p-button icon="pi pi-trash" severity="danger" [text]="true"
+                  ariaLabel="Delete technician" (click)="confirmDelete(item)" />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="8"><div class="to-state">
+            <i class="pi pi-users"></i><strong>No technicians found</strong>
+            <span>Adjust the filters or add a technician.</span>
+          </div></td></tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+  }
+</section>
+
+<p-confirm-dialog />

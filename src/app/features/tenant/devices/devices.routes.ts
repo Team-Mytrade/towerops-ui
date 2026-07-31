@@ -11,7 +11,7 @@ const guardedRouteData = {
   userTypes: allowedUserTypes,
 };
 
-export const DEVICE_ROUTES: Routes = [
+const DEVICE_WORKSPACE_ROUTES: Routes = [
   /*
    * Device Models
    *
@@ -158,5 +158,19 @@ export const DEVICE_ROUTES: Routes = [
         (module) =>
           module.DeviceDetailComponent,
       ),
+  },
+];
+
+export const DEVICE_ROUTES: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import(
+        './pages/device-workspace/device-workspace'
+      ).then(
+        module =>
+          module.DeviceWorkspaceComponent,
+      ),
+    children: DEVICE_WORKSPACE_ROUTES,
   },
 ];

@@ -1,114 +1,90 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-
+import { map } from 'rxjs/operators';
 import { ApiResponse } from '../../../../core/api/api.types';
 import { BaseService } from '../../../../core/base/base.service';
+import { Alert, AlertPayload } from '../models/alert.models';
 
-import {
-  AcknowledgeAlertPayload,
-  Alert,
-  AlertListQuery,
-  ResolveAlertPayload
-} from '../models/alert.models';
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AlertService extends BaseService {
   private readonly endpoint = 'alerts';
 
-  getAlerts(
-    query?: AlertListQuery
-  ): Observable<ApiResponse<Alert[]>> {
+  getAlerts(_query?: unknown): Observable<ApiResponse<Alert[]>> {
     return this.api.get<Alert[]>(
       this.endpoint,
-      this.withQuery(query)
-    );
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
   }
 
-  getById(
-    alertId: number | string
-  ): Observable<ApiResponse<Alert>> {
+  getOpen(): Observable<ApiResponse<Alert[]>> {
+    return this.api.get<Alert[]>(
+      this.buildUrl(this.endpoint, 'open'),
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
+  }
+
+  getById(id: number | string): Observable<ApiResponse<Alert>> {
     return this.api.get<Alert>(
-      this.buildUrl(this.endpoint, alertId)
+      this.buildUrl(this.endpoint, id),
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
+  }
+
+  getByDevice(deviceId: string): Observable<ApiResponse<Alert[]>> {
+    return this.api.get<Alert[]>(
+      this.buildUrl(this.endpoint, 'device', deviceId),
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
+  }
+
+  create(payload: AlertPayload): Observable<ApiResponse<Alert>> {
+    return this.api.post<Alert, AlertPayload>(
+      this.endpoint,
+      payload,
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
+  }
+
+  acknowledge(id: number | string): Observable<ApiResponse<Alert>> {
+    return this.api.put<Alert, Record<string, never>>(
+      this.buildUrl(this.endpoint, id, 'acknowledge'),
+      {},
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
+  }
+
+  resolve(id: number | string): Observable<ApiResponse<Alert>> {
+    return this.api.put<Alert, Record<string, never>>(
+      this.buildUrl(this.endpoint, id, 'resolve'),
+      {},
+      this.withoutUserHeader()
+    ).pipe(map(response => this.normalizeResponse(response)));
+  }
+
+  delete(id: number | string): Observable<ApiResponse<void>> {
+    return this.api.delete<void>(
+      this.buildUrl(this.endpoint, id),
+      this.withoutUserHeader()
     );
   }
 
-  acknowledge(
-    alertId: number | string,
-    payload: AcknowledgeAlertPayload = {}
-  ): Observable<ApiResponse<Alert>> {
-    return this.api.patch<
-      Alert,
-      AcknowledgeAlertPayload
-    >(
-      this.buildUrl(
-        this.endpoint,
-        alertId,
-        'acknowledge'
-      ),
-      payload
-    );
-  }
+  private normalizeResponse<T>(
+    response: ApiResponse<T> | T
+  ): ApiResponse<T> {
+    if (
+      response !== null &&
+      typeof response === 'object' &&
+      'data' in response &&
+      'success' in response
+    ) {
+      return response as ApiResponse<T>;
+    }
 
-  resolve(
-    alertId: number | string,
-    payload: ResolveAlertPayload
-  ): Observable<ApiResponse<Alert>> {
-    return this.api.patch<
-      Alert,
-      ResolveAlertPayload
-    >(
-      this.buildUrl(
-        this.endpoint,
-        alertId,
-        'resolve'
-      ),
-      payload
-    );
-  }
-
-  suppress(
-    alertId: number | string,
-    remarks?: string
-  ): Observable<ApiResponse<Alert>> {
-    return this.api.patch<
-      Alert,
-      { remarks?: string }
-    >(
-      this.buildUrl(
-        this.endpoint,
-        alertId,
-        'suppress'
-      ),
-      { remarks }
-    );
-  }
-
-  reopen(
-    alertId: number | string
-  ): Observable<ApiResponse<Alert>> {
-    return this.api.patch<Alert>(
-      this.buildUrl(
-        this.endpoint,
-        alertId,
-        'reopen'
-      )
-    );
-  }
-
-  createTicket(
-    alertId: number | string
-  ): Observable<ApiResponse<{
-    ticketId: number;
-    ticketCode: string;
-  }>> {
-    return this.api.post(
-      this.buildUrl(
-        this.endpoint,
-        alertId,
-        'create-ticket'
-      )
-    );
+    return {
+      timestamp: Date.now(),
+      success: true,
+      message: '',
+      data: response as T
+    };
   }
 }

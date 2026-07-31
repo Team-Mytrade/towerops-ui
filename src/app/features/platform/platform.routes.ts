@@ -18,6 +18,31 @@ export const PLATFORM_ROUTES: Routes = [
       ),
   },
   {
+    path: 'tenants',
+    canActivate: [roleGuard],
+    data: {
+      userTypes: ['SUPER_ADMIN'],
+    },
+    loadComponent: () =>
+      import(
+        './customers/customers-list'
+      ).then(
+        (module) =>
+          module.CustomersListComponent,
+      ),
+  },
+  {
+    path: 'map',
+    canActivate: [roleGuard],
+    data: {
+      userTypes: ['SUPER_ADMIN'],
+    },
+    loadComponent: () =>
+      import('./map/platform-map').then(
+        module => module.PlatformMapComponent,
+      ),
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'dashboard',

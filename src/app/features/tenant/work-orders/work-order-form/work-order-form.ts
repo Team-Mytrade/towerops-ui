@@ -527,9 +527,9 @@ private readonly ticketService =
     technicians.map(
       technician => ({
         label:
-          technician.technicianName ??
-          technician.username ??
-          technician.technicianCode ??
+          `${technician.firstName} ${technician.lastName}`.trim() ||
+          technician.username ||
+          technician.technicianCode ||
           `Technician #${technician.id}`,
 
         value:
@@ -545,7 +545,7 @@ private readonly ticketService =
           technician.phoneNumber,
 
         active:
-          technician.active
+          technician.enabled
       })
     )
   );
@@ -846,7 +846,7 @@ private applyWorkOrder(
               alert.siteName ?? null,
 
             deviceId:
-              alert.deviceId ?? null,
+              null,
 
             deviceCode:
               alert.deviceCode ?? null,

@@ -29,6 +29,7 @@ export type DeviceCategory =
 export interface Device {
   id: number;
 
+  deviceId?: string;
   deviceCode: string;
   serialNumber: string;
   deviceName: string;

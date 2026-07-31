@@ -9,7 +9,7 @@ import {
   DatePipe
 } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,18 +17,26 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 
 import { BaseComponent } from '../../../../../core/base/base.component';
+import { AuthService } from '../../../../../core/auth/auth.service';
 import {
   Severity
 } from '../../../../../core/models/application.enums';
 
 import {
   Alert,
+  AlertPayload,
   AlertStatus
 } from '../../models/alert.models';
 
 import {
   AlertService
 } from '../../services/alert.service';
+import { Device } from '../../../devices/models/device.models';
+import { DeviceService } from '../../../devices/services/device.service';
+import { Rule } from '../../../rules/models/rule.models';
+import { RuleService } from '../../../rules/services/rule.service';
+import { Site } from '../../../sites/models/site.models';
+import { SiteService } from '../../../sites/services/site.service';
 
 interface SelectOption<T> {
   label: string;
@@ -52,9 +60,20 @@ interface SelectOption<T> {
 })
 export class AlertsListComponent extends BaseComponent {
   private readonly alertService = inject(AlertService);
+  private readonly deviceService = inject(DeviceService);
+  private readonly ruleService = inject(RuleService);
+  private readonly siteService = inject(SiteService);
+  private readonly auth = inject(AuthService);
 
   readonly alerts = signal<Alert[]>([]);
   readonly selectedAlert = signal<Alert | null>(null);
+  readonly createOpen = signal(false);
+  readonly saving = signal(false);
+  readonly loadingRules = signal(false);
+  readonly devices = signal<Device[]>([]);
+  readonly sites = signal<Site[]>([]);
+  readonly rules = signal<Rule[]>([]);
+  readonly draft = signal<AlertPayload>(this.emptyDraft());
 
   readonly search = signal('');
   readonly severityFilter =
@@ -75,18 +94,38 @@ export class AlertsListComponent extends BaseComponent {
     SelectOption<AlertStatus>[] = [
       { label: 'All statuses', value: null },
       { label: 'Open', value: 'OPEN' },
-      {
-        label: 'Acknowledged',
-        value: 'ACKNOWLEDGED'
-      },
-      {
-        label: 'In Progress',
-        value: 'IN_PROGRESS'
-      },
-      { label: 'Resolved', value: 'RESOLVED' },
-      { label: 'Closed', value: 'CLOSED' },
-      { label: 'Suppressed', value: 'SUPPRESSED' }
+      { label: 'Resolved', value: 'RESOLVED' }
     ];
+
+  readonly createSeverityOptions = this.severityOptions
+    .filter((option): option is { label: string; value: Severity } =>
+      option.value !== null && option.value !== 'ERROR'
+    );
+
+  readonly deviceOptions = computed(() =>
+    this.devices()
+      .filter(device =>
+        device.active !== false &&
+        device.enabled !== false
+      )
+      .map(device => {
+        const deviceIdentifier =
+          device.deviceId ?? device.deviceCode;
+
+        return {
+          label: `${device.deviceName} (${deviceIdentifier})`,
+          value: deviceIdentifier
+        };
+      })
+      .filter(option => Boolean(option.value))
+  );
+
+  readonly ruleOptions = computed(() =>
+    this.rules().filter(rule => rule.enabled).map(rule => ({
+      label: `${rule.name} (${rule.ruleCode})`,
+      value: rule.id
+    }))
+  );
 
   readonly filteredAlerts = computed(() => {
     const search =
@@ -98,16 +137,13 @@ export class AlertsListComponent extends BaseComponent {
         alert.alertCode
           .toLowerCase()
           .includes(search) ||
-        alert.title
+        alert.alertType
           .toLowerCase()
           .includes(search) ||
         alert.message
           .toLowerCase()
           .includes(search) ||
-        (alert.siteName ?? '')
-          .toLowerCase()
-          .includes(search) ||
-        (alert.deviceName ?? '')
+        alert.deviceId
           .toLowerCase()
           .includes(search);
 
@@ -148,7 +184,7 @@ export class AlertsListComponent extends BaseComponent {
   readonly acknowledgedAlerts = computed(
     () =>
       this.filteredAlerts().filter(
-        alert => alert.status === 'ACKNOWLEDGED'
+        alert => alert.acknowledged
       ).length
   );
 
@@ -156,8 +192,7 @@ export class AlertsListComponent extends BaseComponent {
     () =>
       this.filteredAlerts().filter(
         alert =>
-          alert.status === 'RESOLVED' ||
-          alert.status === 'CLOSED'
+          alert.status === 'RESOLVED'
       ).length
   );
 
@@ -167,18 +202,25 @@ export class AlertsListComponent extends BaseComponent {
     this.activatedRoute.queryParamMap
       .pipe(this.untilDestroyed())
       .subscribe(params => {
+        if (params.get('mode') === 'create') {
+          this.draft.set(this.emptyDraft());
+          this.rules.set([]);
+          this.createOpen.set(true);
+        } else {
+          this.createOpen.set(false);
+        }
+
         const siteId =
           this.parsePositiveNumber(
             params.get('siteId')
           );
 
-        const deviceId =
-          this.parsePositiveNumber(
-            params.get('deviceId')
-          );
+        const deviceId = params.get('deviceId') ?? undefined;
 
         this.loadAlerts(siteId, deviceId);
       });
+
+    this.loadLookups();
   }
 
   refresh(): void {
@@ -189,10 +231,99 @@ export class AlertsListComponent extends BaseComponent {
       this.parsePositiveNumber(
         params.get('siteId')
       ),
-      this.parsePositiveNumber(
-        params.get('deviceId')
-      )
+      params.get('deviceId') ?? undefined
     );
+  }
+
+  openCreate(): void {
+    void this.navigate([], {
+      relativeTo: this.activatedRoute,
+      queryParams: { mode: 'create' }
+    });
+  }
+
+  closeCreate(): void {
+    if (!this.saving()) {
+      void this.navigate([], {
+        relativeTo: this.activatedRoute,
+        queryParams: {}
+      });
+    }
+  }
+
+  setDraft<K extends keyof AlertPayload>(key: K, value: AlertPayload[K]): void {
+    this.draft.update(current => ({ ...current, [key]: value }));
+  }
+
+  selectDevice(deviceCode: string | null): void {
+    this.draft.update(current => ({
+      ...current,
+      deviceId: deviceCode ?? '',
+      ruleId: 0,
+      ruleName: ''
+    }));
+    this.rules.set([]);
+
+    if (!deviceCode) return;
+    const device = this.devices().find(
+      item => (item.deviceId ?? item.deviceCode) === deviceCode
+    );
+    const tenantId = this.auth.tenantId();
+    const siteCode = device?.siteCode ??
+      this.sites().find(site => site.id === device?.siteId)?.siteCode;
+
+    if (!device || !tenantId) return;
+    if (!siteCode) {
+      this.toast.warning(
+        'The selected device is not linked to a valid site.'
+      );
+      return;
+    }
+
+    this.loadingRules.set(true);
+    this.ruleService.getForDevice({
+      tenantId,
+      siteCode,
+      deviceId: deviceCode
+    }).pipe(
+      this.untilDestroyed(),
+      finalize(() => this.loadingRules.set(false))
+    ).subscribe({
+      next: rules => this.rules.set(rules ?? []),
+      error: error => this.showError(error, 'Unable to load rules for this device.')
+    });
+  }
+
+  selectRule(ruleId: number | null): void {
+    const rule = this.rules().find(item => item.id === ruleId);
+    this.draft.update(current => ({
+      ...current,
+      ruleId: rule?.id ?? 0,
+      ruleName: rule?.name ?? '',
+      severity: rule?.severity ?? current.severity
+    }));
+  }
+
+  createAlert(): void {
+    const payload = this.draft();
+    if (!payload.deviceId || !payload.ruleId || !payload.alertType.trim() ||
+        !payload.message.trim()) {
+      this.toast.warning('Device, rule, alert type and message are required.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.alertService.create(payload).pipe(
+      this.untilDestroyed(),
+      finalize(() => this.saving.set(false))
+    ).subscribe({
+      next: response => {
+        this.alerts.update(alerts => [response.data, ...alerts]);
+        this.closeCreate();
+        this.toast.success('Alert created successfully.');
+      },
+      error: error => this.showError(error, 'Unable to create the alert.')
+    });
   }
 
   selectAlert(alert: Alert): void {
@@ -243,24 +374,20 @@ export class AlertsListComponent extends BaseComponent {
       });
   }
 
-  createTicket(alert: Alert): void {
+  resolve(alert: Alert): void {
     this.alertService
-      .createTicket(alert.id)
+      .resolve(alert.id)
       .pipe(this.untilDestroyed())
       .subscribe({
         next: response => {
           this.toast.success(
-            'Ticket created successfully.'
-          );
-
-          void this.navigateByUrl(
-            `/tenant/tickets/${response.data.ticketId}`
+            'Alert resolved successfully.'
           );
         },
         error: error => {
           this.showError(
             error,
-            'Unable to create a ticket.'
+            'Unable to resolve the alert.'
           );
         }
       });
@@ -295,16 +422,8 @@ export class AlertsListComponent extends BaseComponent {
       case 'OPEN':
         return 'danger';
 
-      case 'ACKNOWLEDGED':
-      case 'IN_PROGRESS':
-        return 'warn';
-
       case 'RESOLVED':
-      case 'CLOSED':
         return 'success';
-
-      case 'SUPPRESSED':
-        return 'secondary';
 
       default:
         return 'info';
@@ -312,20 +431,17 @@ export class AlertsListComponent extends BaseComponent {
   }
 
   private loadAlerts(
-    siteId?: number,
-    deviceId?: number
+    _siteId?: number,
+    deviceId?: string
   ): void {
     this.startLoading();
     this.clearPageError();
 
-    this.alertService
-      .getAlerts({
-        siteId,
-        deviceId,
-        page: 0,
-        size: 500,
-        sort: 'createdAt,desc'
-      })
+    const request = deviceId
+      ? this.alertService.getByDevice(deviceId)
+      : this.alertService.getAlerts();
+
+    request
       .pipe(
         this.untilDestroyed(),
         finalize(() => this.stopLoading())
@@ -366,5 +482,41 @@ export class AlertsListComponent extends BaseComponent {
     )
       ? parsedValue
       : undefined;
+  }
+
+  private loadLookups(): void {
+    forkJoin({
+      devices: this.deviceService.getDevices({
+        enabled: true,
+        active: true,
+        size: 500
+      }),
+      sites: this.siteService.getSites({
+        enabled: true,
+        size: 500
+      })
+    })
+      .pipe(this.untilDestroyed())
+      .subscribe({
+        next: response => {
+          this.devices.set(response.devices.data ?? []);
+          this.sites.set(response.sites.data ?? []);
+        },
+        error: error => this.showError(
+          error,
+          'Unable to load device and site choices.'
+        )
+      });
+  }
+
+  private emptyDraft(): AlertPayload {
+    return {
+      deviceId: '',
+      ruleId: 0,
+      ruleName: '',
+      alertType: '',
+      severity: 'LOW',
+      message: ''
+    };
   }
 }

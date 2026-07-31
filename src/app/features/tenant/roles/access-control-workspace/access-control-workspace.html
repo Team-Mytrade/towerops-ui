@@ -1,0 +1,26 @@
+<section class="to-access-control" data-testid="access-control-workspace">
+  <nav class="to-access-control__nav" aria-label="Roles and permissions">
+    <a
+      routerLink="/tenant/roles"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <i class="pi pi-id-card"></i>
+      <span>
+        <strong>Roles</strong>
+        <small>Group permissions into responsibilities</small>
+      </span>
+    </a>
+    <a
+      routerLink="/tenant/roles/permissions"
+      routerLinkActive="is-active"
+    >
+      <i class="pi pi-lock"></i>
+      <span>
+        <strong>Permissions</strong>
+        <small>Manage individual access capabilities</small>
+      </span>
+    </a>
+  </nav>
+  <router-outlet />
+</section>

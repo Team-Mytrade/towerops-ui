@@ -27,10 +27,13 @@ export const tenantInterceptor: HttpInterceptorFn = (
 
   if (
     !request.context.get(SKIP_TENANT_HEADER) &&
-    user.tenantId &&
-    user.tenantId !== 'DEFAULT'
+    user.tenantId
   ) {
     headers['X-Tenant-Id'] = user.tenantId;
+
+    if (request.url.includes('/device-credentials')) {
+      headers['tenantId'] = user.tenantId;
+    }
   }
 
   if (!request.context.get(SKIP_USER_HEADER)) {

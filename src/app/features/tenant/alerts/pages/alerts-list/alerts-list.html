@@ -16,17 +16,77 @@
       </p>
     </div>
 
-    <p-button
-      label="Refresh"
-      icon="pi pi-refresh"
-      severity="secondary"
-      [outlined]="true"
-      [loading]="loading()"
-      data-testid="refresh-alerts-btn"
-      (click)="refresh()"
-    />
+    @if (!createOpen()) {
+      <div class="to-alerts__header-actions">
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="loading()"
+          data-testid="refresh-alerts-btn"
+          (click)="refresh()"
+        />
+        <p-button label="Create Alert" icon="pi pi-plus"
+          data-testid="create-alert-btn" (click)="openCreate()" />
+      </div>
+    }
   </header>
 
+  @if (createOpen()) {
+    <section class="to-alert-form" data-testid="alert-create-form">
+      <header>
+        <div>
+          <p class="to-alerts__eyebrow">Alert request</p>
+          <h2>Create alert</h2>
+          <p>Select the affected device and one of its configured rules.</p>
+        </div>
+        <p-button label="Back to Alerts" icon="pi pi-arrow-left"
+          severity="secondary" [outlined]="true" [disabled]="saving()"
+          (click)="closeCreate()" />
+      </header>
+
+      <div class="to-alert-form__body">
+        <label><span>Device *</span>
+          <p-select [options]="deviceOptions()" optionLabel="label"
+            optionValue="value" placeholder="Select a device"
+            [filter]="true" [showClear]="true"
+            [ngModel]="draft().deviceId || null"
+            (ngModelChange)="selectDevice($event)" />
+        </label>
+        <label><span>Rule *</span>
+          <p-select [options]="ruleOptions()" optionLabel="label"
+            optionValue="value" placeholder="Select a rule"
+            [filter]="true" [showClear]="true" [loading]="loadingRules()"
+            [disabled]="!draft().deviceId"
+            [ngModel]="draft().ruleId || null"
+            (ngModelChange)="selectRule($event)" />
+        </label>
+        <label><span>Alert type *</span>
+          <input pInputText placeholder="e.g. THRESHOLD_BREACH"
+            [ngModel]="draft().alertType"
+            (ngModelChange)="setDraft('alertType', $event)" />
+        </label>
+        <label><span>Severity *</span>
+          <p-select [options]="createSeverityOptions" optionLabel="label"
+            optionValue="value" [ngModel]="draft().severity"
+            (ngModelChange)="setDraft('severity', $event)" />
+        </label>
+        <label class="to-alert-form__wide"><span>Message *</span>
+          <textarea rows="5" placeholder="Describe the alert"
+            [ngModel]="draft().message"
+            (ngModelChange)="setDraft('message', $event)"></textarea>
+        </label>
+      </div>
+
+      <footer>
+        <p-button label="Cancel" severity="secondary" [outlined]="true"
+          [disabled]="saving()" (click)="closeCreate()" />
+        <p-button label="Create alert" icon="pi pi-check"
+          [loading]="saving()" (click)="createAlert()" />
+      </footer>
+    </section>
+  } @else {
   <div class="to-alerts__summary">
     <article>
       <span>Total</span>
@@ -122,7 +182,7 @@
           <div class="to-alerts__table-header">
             <span>Alert</span>
             <span>Severity</span>
-            <span>Site</span>
+            <span>Rule</span>
             <span>Device</span>
             <span>Status</span>
             <span>Raised</span>
@@ -156,7 +216,7 @@
                 ></span>
 
                 <span>
-                  <strong>{{ alert.title }}</strong>
+                  <strong>{{ alert.alertType }}</strong>
 
                   <small>
                     {{ alert.alertCode }} ·
@@ -176,7 +236,7 @@
 
               <span>
                 <strong>
-                  {{ alert.siteName || 'Unknown site' }}
+                  {{ alert.ruleName || 'Unknown rule' }}
                 </strong>
 
                 <small>
@@ -186,7 +246,7 @@
 
               <span>
                 <strong>
-                  {{ alert.deviceName || 'Unknown device' }}
+                  {{ alert.deviceId || 'Unknown device' }}
                 </strong>
 
                 <small>
@@ -202,7 +262,7 @@
               </span>
 
               <span>
-                {{ alert.createdAt | date:'MMM d, h:mm a' }}
+                {{ alert.timestamp | date:'MMM d, h:mm a' }}
               </span>
 
               <span>
@@ -225,7 +285,7 @@
         <header>
           <div>
             <span>{{ alert.alertCode }}</span>
-            <h2>{{ alert.title }}</h2>
+            <h2>{{ alert.alertType }}</h2>
           </div>
 
           <button
@@ -257,19 +317,6 @@
           </section>
 
           <section>
-            <span>Site</span>
-            <button
-              type="button"
-              [disabled]="!alert.siteId"
-              data-testid="open-alert-site-btn"
-              (click)="openSite(alert)"
-            >
-              {{ alert.siteName || 'Unknown site' }}
-              <i class="pi pi-arrow-right"></i>
-            </button>
-          </section>
-
-          <section>
             <span>Device</span>
             <button
               type="button"
@@ -277,7 +324,7 @@
               data-testid="open-alert-device-btn"
               (click)="openDevice(alert)"
             >
-              {{ alert.deviceName || 'Unknown device' }}
+              {{ alert.deviceId || 'Unknown device' }}
               <i class="pi pi-arrow-right"></i>
             </button>
           </section>
@@ -292,38 +339,20 @@
           <section>
             <span>Raised At</span>
             <strong>
-              {{ alert.createdAt | date:'MMM d, y, h:mm:ss a' }}
+              {{ alert.timestamp | date:'MMM d, y, h:mm:ss a' }}
             </strong>
           </section>
 
-          @if (alert.acknowledgedAt) {
-            <section>
-              <span>Acknowledged</span>
-              <strong>
-                {{ alert.acknowledgedBy || 'Unknown user' }}
-              </strong>
-
-              <small>
-                {{
-                  alert.acknowledgedAt
-                    | date:'MMM d, y, h:mm a'
-                }}
-              </small>
-            </section>
-          }
-
-          @if (alert.ticketId) {
-            <section>
-              <span>Ticket</span>
-              <strong>
-                {{ alert.ticketCode || alert.ticketId }}
-              </strong>
-            </section>
-          }
+          <section>
+            <span>Acknowledgement</span>
+            <strong>
+              {{ alert.acknowledged ? 'Acknowledged' : 'Pending' }}
+            </strong>
+          </section>
         </div>
 
         <footer>
-          @if (alert.status === 'OPEN') {
+          @if (alert.status === 'OPEN' && !alert.acknowledged) {
             <p-button
               label="Acknowledge"
               icon="pi pi-check"
@@ -334,16 +363,17 @@
             />
           }
 
-          @if (!alert.ticketId) {
+          @if (alert.status === 'OPEN') {
             <p-button
-              label="Create Ticket"
-              icon="pi pi-ticket"
-              data-testid="create-ticket-from-alert-btn"
-              (click)="createTicket(alert)"
+              label="Resolve"
+              icon="pi pi-check-circle"
+              data-testid="resolve-alert-btn"
+              (click)="resolve(alert)"
             />
           }
         </footer>
       </aside>
     }
   </div>
+  }
 </section>

@@ -1,0 +1,298 @@
+<section class="rules-page" data-testid="rules-page">
+  <header class="rules-page__header">
+    <div>
+      <p class="eyebrow">Automation</p>
+      <h1>Rules</h1>
+      <p>Create condition-based actions and inspect the rules applied to a device.</p>
+    </div>
+  </header>
+
+  <div class="rules-page__grid">
+    <article class="panel">
+      <header class="panel__header">
+        <div>
+          <span class="step">01</span>
+          <h2>Device rules</h2>
+          <p>Enter the complete device context required by the rules API.</p>
+        </div>
+      </header>
+
+      <form class="lookup" [formGroup]="lookupForm" (ngSubmit)="loadRules()">
+        <label>
+          <span>Site</span>
+          <p-select
+            formControlName="siteCode"
+            [options]="sites()"
+            optionLabel="siteName"
+            optionValue="siteCode"
+            [placeholder]="loadingSites() ? 'Loading sites...' : 'Select a site'"
+            [loading]="loadingSites()"
+            [filter]="true"
+            filterBy="siteName,siteCode"
+            (onChange)="onLookupSiteChanged($event.value)"
+          />
+        </label>
+        <label>
+          <span>Device</span>
+          <p-select
+            formControlName="deviceId"
+            [options]="lookupDevices()"
+            optionLabel="deviceName"
+            optionValue="id"
+            [placeholder]="
+              loadingLookupDevices()
+                ? 'Loading devices...'
+                : lookupForm.controls.siteCode.value
+                  ? 'Select a device'
+                  : 'Select a site first'
+            "
+            [loading]="loadingLookupDevices()"
+            [filter]="true"
+            filterBy="deviceName,deviceCode"
+            [disabled]="!lookupForm.controls.siteCode.value || loadingLookupDevices()"
+          />
+        </label>
+        <p-button
+          type="submit"
+          label="Load rules"
+          icon="pi pi-search"
+          [loading]="loading()"
+        />
+      </form>
+
+      @if (pageError()) {
+        <div class="state state--error">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ pageError() }}</span>
+        </div>
+      } @else if (loading()) {
+        <div class="state">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading device rules...</span>
+        </div>
+      } @else if (!searched()) {
+        <div class="state">
+          <i class="pi pi-sliders-h"></i>
+          <span>Select a device context to view its effective rules.</span>
+        </div>
+      } @else {
+        <div class="rule-list">
+          @for (rule of rules(); track rule.id) {
+            <article class="rule-card">
+              <div class="rule-card__top">
+                <div>
+                  <small>{{ rule.ruleCode }}</small>
+                  <h3>{{ rule.name }}</h3>
+                </div>
+                <p-tag
+                  [value]="rule.severity"
+                  [severity]="severity(rule.severity)"
+                />
+              </div>
+              <div class="rule-card__meta">
+                <span>{{ rule.scope }}</span>
+                <span>{{ rule.actionType }}</span>
+                <span>Priority {{ rule.priority }}</span>
+                <span [class.is-disabled]="!rule.enabled">
+                  {{ rule.enabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </div>
+              <div class="conditions">
+                @for (
+                  condition of rule.definition.conditions;
+                  track $index
+                ) {
+                  <code>
+                    {{ condition.field }} {{ condition.operator }}
+                    {{ condition.value }}
+                  </code>
+                  @if (!$last) {
+                    <b>{{ condition.logicalOperator }}</b>
+                  }
+                }
+              </div>
+            </article>
+          } @empty {
+            <div class="state">
+              <i class="pi pi-inbox"></i>
+              <span>No rules apply to this device.</span>
+            </div>
+          }
+        </div>
+      }
+    </article>
+
+    <article class="panel panel--form">
+      <header class="panel__header">
+        <div>
+          <span class="step">02</span>
+          <h2>Create rule</h2>
+          <p>Define the trigger, scope and alert action.</p>
+        </div>
+      </header>
+
+      <form [formGroup]="form" (ngSubmit)="createRule()" class="rule-form">
+        <fieldset>
+          <legend>Identity</legend>
+          <div class="fields fields--two">
+            <label>
+              <span>Rule code *</span>
+              <input pInputText formControlName="ruleCode" placeholder="HIGH_TEMP" />
+            </label>
+            <label>
+              <span>Name *</span>
+              <input pInputText formControlName="name" placeholder="High temperature" />
+            </label>
+          </div>
+          <label>
+            <span>Description</span>
+            <textarea pTextarea formControlName="description" rows="2"></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Scope</legend>
+          <div class="fields fields--two">
+            <label>
+              <span>Scope *</span>
+              <p-select
+                formControlName="scope"
+                [options]="scopeOptions"
+                optionLabel="label"
+                optionValue="value"
+              />
+            </label>
+            <label>
+              <span>Site</span>
+              <p-select
+                formControlName="siteCode"
+                [options]="sites()"
+                optionLabel="siteName"
+                optionValue="siteCode"
+                [placeholder]="loadingSites() ? 'Loading sites...' : 'Select a site'"
+                [loading]="loadingSites()"
+                [filter]="true"
+                filterBy="siteName,siteCode"
+                [showClear]="true"
+                (onChange)="onFormSiteChanged($event.value)"
+              />
+            </label>
+            <label>
+              <span>Device</span>
+              <p-select
+                formControlName="deviceId"
+                [options]="formDevices()"
+                optionLabel="deviceName"
+                optionValue="id"
+                [placeholder]="
+                  loadingFormDevices()
+                    ? 'Loading devices...'
+                    : form.controls.siteCode.value
+                      ? 'Select a device'
+                      : 'Select a site first'
+                "
+                [loading]="loadingFormDevices()"
+                [filter]="true"
+                filterBy="deviceName,deviceCode"
+                [showClear]="true"
+                [disabled]="!form.controls.siteCode.value || loadingFormDevices()"
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <div class="legend-row">
+            <legend>Conditions</legend>
+            <p-button
+              type="button"
+              label="Add condition"
+              icon="pi pi-plus"
+              [text]="true"
+              size="small"
+              (onClick)="addCondition()"
+            />
+          </div>
+          <div formArrayName="conditions" class="condition-list">
+            @for (condition of conditions.controls; track condition; let i = $index) {
+              <div class="condition-row" [formGroupName]="i">
+                <input pInputText formControlName="field" placeholder="Field" />
+                <p-select
+                  formControlName="operator"
+                  [options]="operatorOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  ariaLabel="Operator"
+                />
+                <input pInputText formControlName="value" placeholder="Value" />
+                <p-select
+                  formControlName="logicalOperator"
+                  [options]="logicalOperatorOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  ariaLabel="Logical operator"
+                />
+                <p-button
+                  type="button"
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [text]="true"
+                  [rounded]="true"
+                  aria-label="Remove condition"
+                  [disabled]="conditions.length === 1"
+                  (onClick)="removeCondition(i)"
+                />
+              </div>
+            }
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Action</legend>
+          <div class="fields fields--two">
+            <label>
+              <span>Action target *</span>
+              <input pInputText formControlName="actionTarget" placeholder="operations-team" />
+            </label>
+            <label>
+              <span>Severity *</span>
+              <p-select
+                formControlName="severity"
+                [options]="severityOptions"
+                optionLabel="label"
+                optionValue="value"
+              />
+            </label>
+            <label>
+              <span>Priority *</span>
+              <p-inputnumber
+                formControlName="priority"
+                [min]="0"
+                [showButtons]="true"
+                [useGrouping]="false"
+              />
+            </label>
+            <label class="checkbox">
+              <p-checkbox
+                formControlName="enabled"
+                [binary]="true"
+                inputId="rule-enabled"
+              />
+              <span>Enable immediately</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <footer class="form-footer">
+          <span>Category: CONDITION · Action: ALERT</span>
+          <p-button
+            type="submit"
+            label="Create rule"
+            icon="pi pi-plus"
+            [loading]="creating()"
+          />
+        </footer>
+      </form>
+    </article>
+  </div>
+</section>

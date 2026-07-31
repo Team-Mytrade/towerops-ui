@@ -82,6 +82,18 @@ export const TENANT_ROUTES: Routes = [
       ),
   },
   {
+    path: 'rules',
+    canActivate: [roleGuard],
+    data: {
+      ...tenantRouteData,
+      pageTitle: 'Rules',
+    },
+    loadChildren: () =>
+      import('./rules/rules.routes').then(
+        (module) => module.RULE_ROUTES,
+      ),
+  },
+  {
     path: 'alerts',
     canActivate: [roleGuard],
     data: {
@@ -112,6 +124,21 @@ export const TENANT_ROUTES: Routes = [
       ),
   },
   {
+    path: 'technicians',
+    canActivate: [roleGuard],
+    data: {
+      ...tenantRouteData,
+      pageTitle: 'Technicians',
+    },
+    loadChildren: () =>
+      import(
+        './technicians/technicians.routes'
+      ).then(
+        (module) =>
+          module.TECHNICIAN_ROUTES,
+      ),
+  },
+  {
     path: 'work-orders',
     canActivate: [roleGuard],
     data: {
@@ -124,6 +151,49 @@ export const TENANT_ROUTES: Routes = [
       ).then(
         (module) =>
           module.WORK_ORDER_ROUTES,
+      ),
+  },
+  {
+    path: 'users',
+    canActivate: [roleGuard],
+    data: {
+      ...tenantRouteData,
+      pageTitle: 'Users',
+    },
+    loadChildren: () =>
+      import('./users/users.routes').then(
+        (module) => module.USER_ROUTES,
+      ),
+  },
+  {
+    path: 'roles',
+    canActivate: [roleGuard],
+    data: {
+      ...tenantRouteData,
+      pageTitle: 'Roles',
+    },
+    loadChildren: () =>
+      import('./roles/roles.routes').then(
+        module => module.ROLE_ROUTES,
+      ),
+  },
+  {
+    path: 'permissions',
+    pathMatch: 'full',
+    redirectTo: 'roles/permissions',
+  },
+  {
+    path: 'notification-settings',
+    canActivate: [roleGuard],
+    data: {
+      ...tenantRouteData,
+      pageTitle: 'Notifications',
+    },
+    loadChildren: () =>
+      import(
+        './notification-settings/notification-settings.routes'
+      ).then(
+        module => module.NOTIFICATION_SETTINGS_ROUTES,
       ),
   },
   {

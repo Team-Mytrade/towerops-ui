@@ -1,0 +1,53 @@
+<section
+  class="to-device-workspace"
+  data-testid="device-management-workspace"
+>
+  <nav
+    class="to-device-workspace__nav"
+    aria-label="Device management"
+  >
+    <a
+      routerLink="/tenant/devices"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <span class="to-device-workspace__icon">
+        <i class="pi pi-microchip"></i>
+      </span>
+      <span>
+        <strong>Devices</strong>
+        <small>Inventory and health</small>
+      </span>
+    </a>
+
+    <a
+      routerLink="/tenant/devices/models"
+      routerLinkActive="is-active"
+    >
+      <span class="to-device-workspace__icon">
+        <i class="pi pi-box"></i>
+      </span>
+      <span>
+        <strong>Device Models</strong>
+        <small>Templates and protocols</small>
+      </span>
+    </a>
+
+    <a
+      routerLink="/tenant/devices/credentials"
+      routerLinkActive="is-active"
+    >
+      <span class="to-device-workspace__icon">
+        <i class="pi pi-key"></i>
+      </span>
+      <span>
+        <strong>Credentials</strong>
+        <small>Secure connections</small>
+      </span>
+    </a>
+  </nav>
+
+  <div class="to-device-workspace__content">
+    <router-outlet />
+  </div>
+</section>

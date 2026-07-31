@@ -1,3 +1,5 @@
+@use 'styles/page-alignment';
+
 @import 'primeicons/primeicons.css';
 
 @layer reset, primeng, towerops;
@@ -16,6 +18,12 @@
     min-width: 320px;
     min-height: 100%;
     margin: 0;
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
   }
 
   body {
@@ -156,8 +164,10 @@
        ===================================================== */
 
     --to-text: #17372e;
+    --to-text-primary: var(--to-text);
     --to-text-secondary: #58746c;
     --to-text-muted: #829b94;
+    --to-text-tertiary: var(--to-text-muted);
     --to-text-disabled: #a8bab5;
     --to-text-inverse: #ffffff;
 
@@ -266,6 +276,47 @@
     --to-transition-slow: 320ms ease;
   }
 
+  .towerops-dark {
+    --to-background: #07110e;
+    --to-surface: #101d19;
+    --to-surface-raised: #14241f;
+    --to-surface-muted: #172722;
+    --to-surface-soft: #0d1915;
+    --to-surface-hover: #1b3029;
+    --to-surface-selected: #17352b;
+
+    --to-overlay: rgb(0 0 0 / 58%);
+    --to-overlay-soft: rgb(0 0 0 / 30%);
+
+    --to-border: #2a4039;
+    --to-border-soft: #1d302a;
+    --to-border-strong: #3a574e;
+    --to-border-primary: #30735d;
+
+    --to-text: #e7f5f0;
+    --to-text-primary: var(--to-text);
+    --to-text-secondary: #a7beb6;
+    --to-text-muted: #718c83;
+    --to-text-tertiary: var(--to-text-muted);
+    --to-text-disabled: #526a62;
+
+    --to-primary-soft: #142c24;
+    --to-primary-subtle: #19392e;
+    --to-success-soft: #102b20;
+    --to-warning-soft: #302510;
+    --to-danger-soft: #32191a;
+    --to-info-soft: #14243b;
+
+    --to-shadow-xs: 0 1px 2px rgb(0 0 0 / 20%);
+    --to-shadow-sm:
+      0 2px 5px rgb(0 0 0 / 24%),
+      0 5px 14px rgb(0 0 0 / 16%);
+    --to-shadow-md: 0 10px 24px rgb(0 0 0 / 30%);
+    --to-shadow-lg: 0 20px 48px rgb(0 0 0 / 38%);
+    --to-shadow-xl: 0 30px 72px rgb(0 0 0 / 46%);
+    --to-shadow-inset: inset 0 1px 2px rgb(0 0 0 / 24%);
+  }
+
   html {
     background: var(--to-background);
   }
@@ -284,6 +335,16 @@
     line-height: 1.5;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+  }
+
+  .towerops-dark body {
+    background:
+      radial-gradient(
+        circle at top left,
+        rgb(48 115 93 / 18%),
+        transparent 28rem
+      ),
+      var(--to-background);
   }
 
   h1,

@@ -20,8 +20,8 @@ export function mapTechniciansToOptions(
   return technicians.map(
     technician => ({
       label:
-        technician.technicianName ??
-        technician.technicianCode ??
+        `${technician.firstName} ${technician.lastName}`.trim() ||
+        technician.technicianCode ||
         `Technician #${technician.id}`,
 
       value:
@@ -37,7 +37,7 @@ export function mapTechniciansToOptions(
         technician.phoneNumber,
 
       active:
-        technician.active
+        technician.enabled
     })
   );
 }

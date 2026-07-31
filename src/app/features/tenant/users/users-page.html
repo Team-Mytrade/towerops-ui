@@ -1,0 +1,156 @@
+<section class="to-users" data-testid="users-page">
+  <header class="to-header">
+    <div>
+      <p class="to-eyebrow">Administration</p>
+      <h1>Users</h1>
+      <p>Manage tenant user accounts, access type and contact information.</p>
+    </div>
+    <div class="to-header__actions">
+      @if (!formOpen()) {
+        <p-button label="Refresh" icon="pi pi-refresh" severity="secondary"
+          [outlined]="true" [loading]="loading()" (click)="load()" />
+        <p-button label="Add User" icon="pi pi-plus" (click)="create()" />
+      }
+    </div>
+  </header>
+
+  @if (formOpen()) {
+    <section class="to-inline-form" data-testid="user-form">
+      <header class="to-inline-form__header">
+        <div>
+          <p class="to-eyebrow">User account</p>
+          <h2>{{ draft().id ? 'Edit user' : 'Add user' }}</h2>
+          <p>Configure account details and the user's contact address.</p>
+        </div>
+        <p-button label="Back to Users" icon="pi pi-arrow-left"
+          severity="secondary" [outlined]="true" [disabled]="saving()"
+          (click)="closeForm()" />
+      </header>
+
+      <div class="to-form">
+        <label><span>User code *</span><input pInputText
+          [ngModel]="draft().userCode"
+          (ngModelChange)="setDraft('userCode', $event)" /></label>
+        <label><span>User type *</span><p-select [options]="typeOptions"
+          optionLabel="label" optionValue="value" [ngModel]="draft().userType"
+          (ngModelChange)="setDraft('userType', $event)" /></label>
+        <label><span>Username *</span><input pInputText autocomplete="off"
+          [ngModel]="draft().username"
+          (ngModelChange)="setDraft('username', $event)" /></label>
+        <label><span>Email *</span><input pInputText type="email"
+          [ngModel]="draft().email"
+          (ngModelChange)="setDraft('email', $event)" /></label>
+        <label><span>{{ draft().id ? 'New password' : 'Password *' }}</span>
+          <p-password [toggleMask]="true" [feedback]="false"
+            autocomplete="new-password"
+            [placeholder]="draft().id ? 'Leave blank to keep current password' : ''"
+            [ngModel]="draft().password"
+            (ngModelChange)="setDraft('password', $event)" /></label>
+        <label><span>Phone number</span><input pInputText
+          [ngModel]="draft().phoneNumber"
+          (ngModelChange)="setDraft('phoneNumber', $event)" /></label>
+
+        <div class="to-form__section"><h3>Address</h3></div>
+        <label class="to-form__wide"><span>Street</span><input pInputText
+          [ngModel]="draft().address.street"
+          (ngModelChange)="setAddress('street', $event)" /></label>
+        <label><span>City</span><input pInputText
+          [ngModel]="draft().address.city"
+          (ngModelChange)="setAddress('city', $event)" /></label>
+        <label><span>Country</span><p-select [options]="countryOptions"
+          optionLabel="label" optionValue="value" placeholder="Select a country"
+          [filter]="true" [showClear]="true"
+          [ngModel]="draft().address.country"
+          (ngModelChange)="setCountry($event)" /></label>
+        <label><span>State</span><p-select [options]="stateOptions()"
+          optionLabel="label" optionValue="value" placeholder="Select a state"
+          [filter]="true" [showClear]="true"
+          [disabled]="!draft().address.country"
+          [ngModel]="draft().address.state"
+          (ngModelChange)="setAddress('state', $event ?? '')" /></label>
+        <label><span>Postal code</span><input pInputText
+          [ngModel]="draft().address.postalCode"
+          (ngModelChange)="setAddress('postalCode', $event)" /></label>
+        <label class="to-checkbox"><p-checkbox [binary]="true"
+          [ngModel]="draft().enabled"
+          (ngModelChange)="setDraft('enabled', $event)" />
+          <span>User account is enabled</span></label>
+      </div>
+
+      <footer class="to-inline-form__footer">
+        <p-button label="Cancel" severity="secondary" [outlined]="true"
+          [disabled]="saving()" (click)="closeForm()" />
+        <p-button label="Save user" icon="pi pi-check"
+          [loading]="saving()" (click)="save()" />
+      </footer>
+    </section>
+  } @else {
+    <div class="to-summary">
+      <article><span>Total Users</span><strong>{{ users().length }}</strong></article>
+      <article><span>Active</span><strong>{{ activeCount() }}</strong></article>
+      <article><span>Enabled</span><strong>{{ enabledCount() }}</strong></article>
+      <article><span>Technicians</span><strong>{{ technicianCount() }}</strong></article>
+    </div>
+
+    <div class="to-toolbar">
+      <span class="to-search"><i class="pi pi-search"></i>
+        <input pInputText type="search" placeholder="Search users"
+          [ngModel]="search()" (ngModelChange)="search.set($event)" />
+      </span>
+      <p-select [options]="typeOptions" optionLabel="label" optionValue="value"
+        placeholder="All user types" [showClear]="true"
+        [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)" />
+      <p-select [options]="enabledOptions" optionLabel="label" optionValue="value"
+        placeholder="Any state" [showClear]="true"
+        [ngModel]="enabledFilter()" (ngModelChange)="enabledFilter.set($event)" />
+      <p-button label="Clear" severity="secondary" [text]="true"
+        (click)="clearFilters()" />
+    </div>
+
+    <div class="to-table-card">
+      @if (loading()) {
+        <div class="to-state"><i class="pi pi-spin pi-spinner"></i> Loading users...</div>
+      } @else if (pageError()) {
+        <div class="to-state to-state--error">
+          <i class="pi pi-exclamation-triangle"></i>
+          <strong>Users could not be loaded</strong><span>{{ pageError() }}</span>
+          <p-button label="Try again" (click)="load()" />
+        </div>
+      } @else {
+        <p-table [value]="filtered()" [rowHover]="true"
+          [paginator]="filtered().length > 10" [rows]="10"
+          [rowsPerPageOptions]="[10, 25, 50]">
+          <ng-template #header><tr>
+            <th>User</th><th>Code</th><th>Type</th><th>Phone</th>
+            <th>Location</th><th>Status</th><th></th>
+          </tr></ng-template>
+          <ng-template #body let-user><tr>
+            <td><div class="to-person">
+              <span>{{ user.username.charAt(0).toUpperCase() }}</span>
+              <div><strong>{{ user.username }}</strong><small>{{ user.email }}</small></div>
+            </div></td>
+            <td>{{ user.userCode }}</td>
+            <td><p-tag [value]="formatType(user.userType)" severity="info" /></td>
+            <td>{{ user.phoneNumber || '—' }}</td>
+            <td>{{ user.address?.city || '—' }}@if (user.address?.country) {, {{ user.address.country }}}</td>
+            <td><p-tag [value]="user.enabled ? 'Enabled' : 'Disabled'"
+              [severity]="user.enabled ? 'success' : 'secondary'" /></td>
+            <td><div class="to-actions">
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true"
+                ariaLabel="Edit user" (click)="edit(user)" />
+              <p-button icon="pi pi-trash" severity="danger" [text]="true"
+                ariaLabel="Delete user" (click)="confirmDelete(user)" />
+            </div></td>
+          </tr></ng-template>
+          <ng-template #emptymessage><tr><td colspan="7">
+            <div class="to-state"><i class="pi pi-users"></i>
+              <strong>No users found</strong>
+              <span>Adjust the filters or add a user.</span></div>
+          </td></tr></ng-template>
+        </p-table>
+      }
+    </div>
+  }
+</section>
+
+<p-confirm-dialog />

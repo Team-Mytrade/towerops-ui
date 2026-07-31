@@ -1,0 +1,124 @@
+<section class="to-platform-map" data-testid="platform-map-page">
+  <header class="to-platform-map__header">
+    <div>
+      <p class="to-platform-map__eyebrow">Platform operations</p>
+      <h1>Platform Map</h1>
+      <p>Monitor tower health, alerts and connectivity across every tenant.</p>
+    </div>
+    <span class="to-platform-map__live">
+      <i class="pi pi-circle-fill"></i>
+      Live overview
+    </span>
+  </header>
+
+  <div class="to-platform-map__summary">
+    <article>
+      <span>Total sites</span>
+      <strong>{{ markers.length }}</strong>
+    </article>
+    <article class="is-healthy">
+      <span>Healthy</span>
+      <strong>{{ healthyCount() }}</strong>
+    </article>
+    <article class="is-warning">
+      <span>Needs attention</span>
+      <strong>{{ attentionCount() }}</strong>
+    </article>
+    <article class="is-offline">
+      <span>Offline</span>
+      <strong>{{ offlineCount() }}</strong>
+    </article>
+    <article class="is-alert">
+      <span>Open alerts</span>
+      <strong>{{ openAlertCount() }}</strong>
+    </article>
+  </div>
+
+  <div class="to-platform-map__toolbar">
+    <label class="to-platform-map__search">
+      <i class="pi pi-search"></i>
+      <input
+        pInputText
+        type="search"
+        placeholder="Search site, code, tenant or location"
+        aria-label="Search platform map"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </label>
+
+    <p-select
+      [options]="healthOptions"
+      optionLabel="label"
+      optionValue="value"
+      ariaLabel="Filter by health"
+      [ngModel]="healthFilter()"
+      (ngModelChange)="healthFilter.set($event)"
+    />
+
+    @if (search() || healthFilter()) {
+      <button type="button" class="to-platform-map__clear" (click)="clearFilters()">
+        Clear filters
+      </button>
+    }
+
+    <span class="to-platform-map__results">
+      {{ visibleMarkers().length }} of {{ markers.length }} sites
+    </span>
+  </div>
+
+  <div class="to-platform-map__workspace">
+    <div class="to-platform-map__canvas">
+      <to-map
+        [markers]="visibleMarkers()"
+        height="clamp(32rem, 65vh, 48rem)"
+        [center]="[25.28, 51.52]"
+        [zoom]="8"
+        [autoFitBounds]="true"
+        [showLegend]="true"
+        [legendItems]="[
+          { label: 'Healthy', color: '#22c55e' },
+          { label: 'Warning', color: '#f59e0b' },
+          { label: 'Critical', color: '#ef4444' },
+          { label: 'Offline', color: '#64748b' }
+        ]"
+        [persistViewport]="true"
+        viewportStorageKey="platform-map"
+        (markerSelected)="selectMarker($event)"
+      />
+
+      @if (!visibleMarkers().length) {
+        <div class="to-platform-map__empty">
+          <i class="pi pi-map-marker"></i>
+          <strong>No matching sites</strong>
+          <span>Try changing the search or health filter.</span>
+          <button type="button" (click)="clearFilters()">Clear filters</button>
+        </div>
+      }
+    </div>
+
+    @if (selectedMarker(); as marker) {
+      <aside class="to-platform-map__selection" aria-live="polite">
+        <button
+          type="button"
+          class="to-platform-map__close"
+          aria-label="Close site details"
+          (click)="selectedMarker.set(null)"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+        <span class="to-platform-map__status" [attr.data-health]="marker.healthStatus">
+          {{ marker.healthStatus }}
+        </span>
+        <h2>{{ marker.title }}</h2>
+        <p>{{ marker.subtitle }}</p>
+        <dl>
+          <div><dt>Site code</dt><dd>{{ marker.siteCode }}</dd></div>
+          <div><dt>Devices</dt><dd>{{ marker.deviceCount ?? 0 }}</dd></div>
+          <div><dt>Open alerts</dt><dd>{{ marker.openAlerts ?? 0 }}</dd></div>
+          <div><dt>Coordinates</dt><dd>{{ marker.latitude }}, {{ marker.longitude }}</dd></div>
+        </dl>
+      </aside>
+    }
+  </div>
+</section>

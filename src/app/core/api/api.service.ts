@@ -1,6 +1,7 @@
 import {
   HttpClient,
   HttpContext,
+  HttpHeaders,
   HttpParams
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
@@ -14,6 +15,12 @@ import { QueryParams, QueryValue } from './api-query.types';
 export interface ApiRequestOptions {
   query?: QueryParams;
   context?: HttpContext;
+  headers?:
+    | HttpHeaders
+    | Record<
+        string,
+        string | string[]
+      >;
 }
 @Injectable({
   providedIn: 'root'
@@ -30,7 +37,8 @@ export class ApiService {
       this.resolveUrl(endpoint),
       {
         params: this.createParams(options?.query),
-        context: options?.context
+        context: options?.context,
+        headers: options?.headers
       }
     );
   }
@@ -45,7 +53,8 @@ export class ApiService {
       payload ?? {},
       {
         params: this.createParams(options?.query),
-        context: options?.context
+        context: options?.context,
+        headers: options?.headers
       }
     );
   }
@@ -60,7 +69,8 @@ export class ApiService {
       payload,
       {
         params: this.createParams(options?.query),
-        context: options?.context
+        context: options?.context,
+        headers: options?.headers
       }
     );
   }
@@ -75,7 +85,8 @@ export class ApiService {
       payload ?? {},
       {
         params: this.createParams(options?.query),
-        context: options?.context
+        context: options?.context,
+        headers: options?.headers
       }
     );
   }
@@ -88,7 +99,8 @@ export class ApiService {
       this.resolveUrl(endpoint),
       {
         params: this.createParams(options?.query),
-        context: options?.context
+        context: options?.context,
+        headers: options?.headers
       }
     );
   }
@@ -105,7 +117,8 @@ export class ApiService {
       params: this.createParams(
         options?.query
       ),
-      context: options?.context
+      context: options?.context,
+      headers: options?.headers
     }
   );
 }

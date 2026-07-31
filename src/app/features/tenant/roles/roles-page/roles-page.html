@@ -1,0 +1,205 @@
+<section class="to-roles" data-testid="roles-page">
+  <header class="to-roles__header">
+    <div>
+      <p class="to-roles__eyebrow">Access management</p>
+      <h1>Roles</h1>
+      <p>Create tenant roles and control their assigned permissions.</p>
+    </div>
+    <div class="to-roles__actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading()"
+        (onClick)="loadRoles()"
+      />
+      <p-button
+        label="Create role"
+        icon="pi pi-plus"
+        [disabled]="!permissionCatalogReady()"
+        (onClick)="openCreate()"
+      />
+    </div>
+  </header>
+
+  <div class="to-roles__summary">
+    <article>
+      <span>Total roles</span>
+      <strong>{{ roles().length }}</strong>
+    </article>
+    <article>
+      <span>Permissions in use</span>
+      <strong>{{ permissionCount() }}</strong>
+    </article>
+  </div>
+
+  <div class="to-roles__toolbar">
+    <label class="to-roles__search">
+      <i class="pi pi-search"></i>
+      <input
+        pInputText
+        type="search"
+        placeholder="Search code, name, description or permission"
+        aria-label="Search roles"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+      />
+    </label>
+    <span>{{ filteredRoles().length }} roles</span>
+  </div>
+
+  @if (pageError()) {
+    <div class="to-roles__state to-roles__state--error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>Roles could not be loaded</strong>
+      <span>{{ pageError() }}</span>
+      <p-button label="Try again" icon="pi pi-refresh" (onClick)="loadRoles()" />
+    </div>
+  } @else {
+    <p-table
+      [value]="filteredRoles()"
+      [loading]="loading()"
+      [paginator]="filteredRoles().length > 10"
+      [rows]="10"
+      dataKey="id"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Role</th>
+          <th>Description</th>
+          <th>Permissions</th>
+          <th class="to-roles__action-column">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-role>
+        <tr>
+          <td>
+            <div class="to-roles__identity">
+              <span><i class="pi pi-shield"></i></span>
+              <div>
+                <strong>{{ role.roleName }}</strong>
+                <small>{{ role.roleCode }}</small>
+              </div>
+            </div>
+          </td>
+          <td>{{ role.description || 'No description' }}</td>
+          <td>
+            <div class="to-roles__permissions">
+              @for (permission of role.permissions; track permission) {
+                <p-tag [value]="permission" severity="secondary" />
+              } @empty {
+                <span>No permissions</span>
+              }
+            </div>
+          </td>
+          <td>
+            <div class="to-roles__row-actions">
+              <p-button
+                icon="pi pi-pencil"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Edit role"
+                [disabled]="!permissionCatalogReady()"
+                (onClick)="openEdit(role)"
+              />
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Delete role"
+                (onClick)="confirmDelete(role)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4">
+            <div class="to-roles__state">
+              <i class="pi pi-shield"></i>
+              <strong>No roles found</strong>
+              <span>Create a role or change your search.</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <p-dialog
+    [header]="editingRoleId() === null ? 'Create role' : 'Edit role'"
+    [visible]="dialogVisible()"
+    (visibleChange)="dialogVisible.set($event)"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: 'min(34rem, calc(100vw - 2rem))' }"
+  >
+    @if (loadingRole()) {
+      <div class="to-roles__state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading role...</span>
+      </div>
+    } @else {
+      <form id="role-form" class="to-roles__form" [formGroup]="form" (ngSubmit)="save()">
+        <label>
+          <span>Role code *</span>
+          <input pInputText formControlName="roleCode" placeholder="OPERATIONS_MANAGER" />
+          @if (form.controls.roleCode.invalid && form.controls.roleCode.touched) {
+            <small>Role code is required.</small>
+          }
+        </label>
+        <label>
+          <span>Role name *</span>
+          <input pInputText formControlName="roleName" placeholder="Operations Manager" />
+          @if (form.controls.roleName.invalid && form.controls.roleName.touched) {
+            <small>Role name is required.</small>
+          }
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea pTextarea formControlName="description" rows="3"></textarea>
+        </label>
+        <label>
+          <span>Permissions</span>
+          <p-multiselect
+            formControlName="permissionIds"
+            [options]="permissions()"
+            optionLabel="permissionName"
+            optionValue="id"
+            placeholder="Select permissions"
+            [filter]="true"
+            filterBy="permissionName,permissionCode"
+            [loading]="loadingPermissions()"
+            display="chip"
+            [showToggleAll]="true"
+            [maxSelectedLabels]="4"
+          />
+          <em>Select the permissions assigned to this role.</em>
+        </label>
+      </form>
+    }
+
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="dialogVisible.set(false)"
+      />
+      <p-button
+        type="submit"
+        form="role-form"
+        [label]="editingRoleId() === null ? 'Create role' : 'Save changes'"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="loadingRole()"
+      />
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmdialog />
+</section>

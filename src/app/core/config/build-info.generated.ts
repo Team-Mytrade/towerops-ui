@@ -5,6 +5,6 @@
  */
 
 export const BUILD_INFO = {
-  build: '2026.07.19.9',
-  generatedAt: '2026-07-19T12:00:01.879Z'
+  build: '2026.07.30.7',
+  generatedAt: '2026-07-30T16:53:42.635Z'
 } as const;

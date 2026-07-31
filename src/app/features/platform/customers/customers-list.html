@@ -1,0 +1,171 @@
+<section class="to-customers" data-testid="tenants-page">
+  <header class="to-customers__header">
+    <div>
+      <p class="to-customers__eyebrow">Platform administration</p>
+      <h1>Tenants</h1>
+      <p>View every customer workspace and its contact information.</p>
+    </div>
+
+    <p-button
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="loading()"
+      (click)="refresh()"
+    />
+  </header>
+
+  <div class="to-customers__summary">
+    <article>
+      <span class="to-customers__metric-icon to-customers__metric-icon--blue">
+        <i class="pi pi-building"></i>
+      </span>
+      <div>
+        <span>Total tenants</span>
+        <strong>{{ customers().length }}</strong>
+      </div>
+    </article>
+
+    <article>
+      <span class="to-customers__metric-icon to-customers__metric-icon--green">
+        <i class="pi pi-check-circle"></i>
+      </span>
+      <div>
+        <span>Active</span>
+        <strong>{{ activeCustomers() }}</strong>
+      </div>
+    </article>
+
+    <article>
+      <span class="to-customers__metric-icon to-customers__metric-icon--amber">
+        <i class="pi pi-clock"></i>
+      </span>
+      <div>
+        <span>Inactive</span>
+        <strong>{{ inactiveCustomers() }}</strong>
+      </div>
+    </article>
+
+    <article>
+      <span class="to-customers__metric-icon to-customers__metric-icon--purple">
+        <i class="pi pi-address-book"></i>
+      </span>
+      <div>
+        <span>Contact available</span>
+        <strong>{{ customersWithContact() }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="to-customers__toolbar">
+      <label class="to-customers__search">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="search"
+          placeholder="Search name, tenant ID, email, phone or address"
+          aria-label="Search tenants"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          data-testid="tenant-search-input"
+        />
+      </label>
+
+      <p-select
+        [options]="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        ariaLabel="Filter by status"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      />
+
+      @if (filtersActive()) {
+        <button
+          type="button"
+          class="to-customers__clear"
+          (click)="clearFilters()"
+        >
+          Clear filters
+        </button>
+      }
+
+      <span class="to-customers__result-count">
+        {{ filteredCustomers().length }}
+        {{ filteredCustomers().length === 1 ? 'tenant' : 'tenants' }}
+      </span>
+  </div>
+
+  <div class="to-customers__table">
+    @if (loading()) {
+      <div class="to-customers__state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <strong>Loading tenants</strong>
+        <span>Fetching platform customer records...</span>
+      </div>
+    } @else if (pageError()) {
+      <div class="to-customers__state to-customers__state--error">
+        <i class="pi pi-exclamation-triangle"></i>
+        <strong>Tenants could not be loaded</strong>
+        <span>{{ pageError() }}</span>
+        <p-button
+          label="Try again"
+          icon="pi pi-refresh"
+          size="small"
+          (click)="refresh()"
+        />
+      </div>
+    } @else {
+      <div class="to-customers__table-header">
+        <span>Tenant</span>
+        <span>Status</span>
+        <span>Email</span>
+        <span>Phone</span>
+        <span>Address</span>
+      </div>
+
+      @for (
+        customer of filteredCustomers();
+        track customer.id
+      ) {
+        <div class="to-customers__row">
+          <span class="to-customers__tenant">
+            <span class="to-customers__avatar">
+              {{ initials(customer.tenantName) }}
+            </span>
+            <span>
+              <strong>{{ customer.tenantName }}</strong>
+              <small>{{ customer.tenantId }}</small>
+            </span>
+          </span>
+
+          <span>
+            <p-tag
+              [value]="customer.active ? 'Active' : 'Inactive'"
+              [severity]="customer.active ? 'success' : 'secondary'"
+            />
+          </span>
+
+          <span class="to-customers__truncate" [title]="customer.email || 'Not provided'">
+            {{ customer.email || 'Not provided' }}
+          </span>
+
+          <span class="to-customers__truncate" [title]="customer.phoneNumber || 'Not provided'">
+            {{ customer.phoneNumber || 'Not provided' }}
+          </span>
+
+          <span class="to-customers__truncate" [title]="customer.address || 'Not provided'">
+            {{ customer.address || 'Not provided' }}
+          </span>
+        </div>
+      } @empty {
+        <div class="to-customers__state">
+          <i class="pi pi-building"></i>
+          <strong>No tenants found</strong>
+          <span>Adjust the filters to see more results.</span>
+        </div>
+      }
+    }
+  </div>
+</section>

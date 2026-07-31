@@ -1,0 +1,193 @@
+<section class="to-notifications" data-testid="notification-settings-page">
+  <header class="to-notifications__header">
+    <div>
+      <p class="to-notifications__eyebrow">Communication</p>
+      <h1>Notifications</h1>
+      <p>Configure event messages, delivery channels and recipients.</p>
+    </div>
+    <div class="to-notifications__actions">
+      <p-button label="Refresh" icon="pi pi-refresh" severity="secondary"
+        [outlined]="true" [loading]="loading()" (onClick)="loadConfigs()" />
+      <p-button label="Create configuration" icon="pi pi-plus"
+        (onClick)="openCreate()" />
+    </div>
+  </header>
+
+  <div class="to-notifications__summary">
+    <article><span>Total configurations</span><strong>{{ configs().length }}</strong></article>
+    <article class="is-active"><span>Active</span><strong>{{ activeCount() }}</strong></article>
+    <article><span>Inactive</span><strong>{{ configs().length - activeCount() }}</strong></article>
+  </div>
+
+  <div class="to-notifications__toolbar">
+    <label>
+      <i class="pi pi-search"></i>
+      <input pInputText type="search" placeholder="Search name, event or subject"
+        aria-label="Search notification configurations" [value]="search()"
+        (input)="search.set($any($event.target).value)" />
+    </label>
+    <span>{{ filteredConfigs().length }} configurations</span>
+  </div>
+
+  @if (pageError()) {
+    <div class="to-notifications__state is-error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <strong>Notifications could not be loaded</strong>
+      <span>{{ pageError() }}</span>
+      <p-button label="Try again" icon="pi pi-refresh" (onClick)="loadConfigs()" />
+    </div>
+  } @else {
+    <p-table [value]="filteredConfigs()" [loading]="loading()"
+      [paginator]="filteredConfigs().length > 10" [rows]="10"
+      dataKey="id" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Configuration</th>
+          <th>Severity</th>
+          <th>Channels</th>
+          <th>Recipients</th>
+          <th>Status</th>
+          <th class="to-notifications__action-column">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-config>
+        <tr>
+          <td>
+            <div class="to-notifications__identity">
+              <i class="pi pi-bell"></i>
+              <span>
+                <strong>{{ config.name }}</strong>
+                <small>{{ config.eventType }} · {{ config.subject }}</small>
+              </span>
+            </div>
+          </td>
+          <td><p-tag [value]="config.severity"
+            [severity]="severityTone(config.severity)" /></td>
+          <td>
+            <div class="to-notifications__channels">
+              @if (config.emailEnabled) { <i class="pi pi-envelope" pTooltip="Email"></i> }
+              @if (config.smsEnabled) { <i class="pi pi-mobile" pTooltip="SMS"></i> }
+              @if (config.websocketEnabled) { <i class="pi pi-desktop" pTooltip="In-app"></i> }
+              @if (!config.emailEnabled && !config.smsEnabled && !config.websocketEnabled) {
+                <span>None</span>
+              }
+            </div>
+          </td>
+          <td>
+            <div class="to-notifications__recipients">
+              @if (config.emailRecipients) { <span>{{ config.emailRecipients }}</span> }
+              @if (config.phoneRecipients) { <span>{{ config.phoneRecipients }}</span> }
+              @if (!config.emailRecipients && !config.phoneRecipients) { <span>Default recipients</span> }
+            </div>
+          </td>
+          <td><p-tag [value]="config.active ? 'Active' : 'Inactive'"
+            [severity]="config.active ? 'success' : 'secondary'" /></td>
+          <td>
+            <div class="to-notifications__row-actions">
+              <p-button icon="pi pi-pencil" [text]="true" [rounded]="true"
+                pTooltip="Edit configuration" (onClick)="openEdit(config)" />
+              <p-button icon="pi pi-trash" severity="danger" [text]="true"
+                [rounded]="true" pTooltip="Delete configuration"
+                (onClick)="confirmDelete(config)" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="6">
+          <div class="to-notifications__state">
+            <i class="pi pi-bell-slash"></i>
+            <strong>No configurations found</strong>
+            <span>Create a configuration or change your search.</span>
+          </div>
+        </td></tr>
+      </ng-template>
+    </p-table>
+  }
+
+  <p-dialog
+    [header]="editingId() === null ? 'Create notification configuration' : 'Edit notification configuration'"
+    [visible]="dialogVisible()" (visibleChange)="dialogVisible.set($event)"
+    [modal]="true" [draggable]="false"
+    [style]="{ width: 'min(46rem, calc(100vw - 2rem))' }">
+    @if (loadingConfig()) {
+      <div class="to-notifications__state">
+        <i class="pi pi-spin pi-spinner"></i><span>Loading configuration...</span>
+      </div>
+    } @else {
+      <form id="notification-config-form" class="to-notifications__form"
+        [formGroup]="form" (ngSubmit)="save()">
+        <div class="to-notifications__fields">
+          <label>
+            <span>Name *</span>
+            <input pInputText formControlName="name" placeholder="Critical alert email" />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <small>Name is required.</small>
+            }
+          </label>
+          <label>
+            <span>Event type *</span>
+            <input pInputText formControlName="eventType" placeholder="ALERT_CREATED" />
+            @if (form.controls.eventType.invalid && form.controls.eventType.touched) {
+              <small>Event type is required.</small>
+            }
+          </label>
+          <label>
+            <span>Severity *</span>
+            <p-select formControlName="severity" [options]="severityOptions"
+              optionLabel="label" optionValue="value" />
+          </label>
+          <label class="to-notifications__subject">
+            <span>Subject *</span>
+            <input pInputText formControlName="subject" placeholder="Critical alert: {{ '{{eventType}}' }}" />
+            @if (form.controls.subject.invalid && form.controls.subject.touched) {
+              <small>Subject is required.</small>
+            }
+          </label>
+        </div>
+
+        <label>
+          <span>Message body *</span>
+          <textarea pTextarea formControlName="body" rows="5"
+            placeholder="A {{ '{{severity}}' }} alert occurred at {{ '{{siteName}}' }}."></textarea>
+          @if (form.controls.body.invalid && form.controls.body.touched) {
+            <small>Message body is required.</small>
+          }
+        </label>
+
+        <fieldset>
+          <legend>Delivery channels</legend>
+          <div class="to-notifications__checks">
+            <label><p-checkbox formControlName="emailEnabled" [binary]="true" inputId="email-enabled" /><span>Email</span></label>
+            <label><p-checkbox formControlName="smsEnabled" [binary]="true" inputId="sms-enabled" /><span>SMS</span></label>
+            <label><p-checkbox formControlName="websocketEnabled" [binary]="true" inputId="websocket-enabled" /><span>In-app / WebSocket</span></label>
+            <label><p-checkbox formControlName="active" [binary]="true" inputId="config-active" /><span>Active</span></label>
+          </div>
+        </fieldset>
+
+        <div class="to-notifications__fields">
+          <label>
+            <span>Email recipients</span>
+            <input pInputText formControlName="emailRecipients"
+              placeholder="ops@example.com, manager@example.com" />
+            <em>Separate multiple addresses with commas.</em>
+          </label>
+          <label>
+            <span>Phone recipients</span>
+            <input pInputText formControlName="phoneRecipients"
+              placeholder="+971500000000, +971500000001" />
+            <em>Separate multiple numbers with commas.</em>
+          </label>
+        </div>
+      </form>
+    }
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" severity="secondary" [outlined]="true"
+        (onClick)="dialogVisible.set(false)" />
+      <p-button type="submit" form="notification-config-form"
+        [label]="editingId() === null ? 'Create configuration' : 'Save changes'"
+        icon="pi pi-check" [loading]="saving()" [disabled]="loadingConfig()" />
+    </ng-template>
+  </p-dialog>
+  <p-confirmdialog />
+</section>

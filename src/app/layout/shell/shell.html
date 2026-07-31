@@ -122,11 +122,112 @@
         <button
           type="button"
           class="to-shell__icon-button"
-          aria-label="Notifications"
+          [attr.aria-label]="
+            unreadCount()
+              ? 'Notifications, ' + unreadCount() + ' unread'
+              : 'Notifications'
+          "
+          aria-haspopup="dialog"
           data-testid="notifications-btn"
+          (click)="notificationPopover.toggle($event)"
         >
           <i class="pi pi-bell"></i>
-          <span class="to-shell__notification-dot"></span>
+          @if (unreadCount()) {
+            <span class="to-shell__notification-badge">
+              {{ unreadCount() }}
+            </span>
+          }
+        </button>
+
+        <p-popover
+          #notificationPopover
+          styleClass="to-shell__notification-popover"
+        >
+          <div class="to-notifications">
+            <header>
+              <div>
+                <strong>Notifications</strong>
+                <span>{{ unreadCount() }} unread</span>
+              </div>
+
+              @if (unreadCount()) {
+                <button
+                  type="button"
+                  (click)="markAllNotificationsRead()"
+                >
+                  Mark all as read
+                </button>
+              }
+            </header>
+
+            <div class="to-notifications__list">
+              @for (
+                notification of notifications();
+                track notification.id
+              ) {
+                <button
+                  type="button"
+                  class="to-notifications__item"
+                  [class.to-notifications__item--unread]="
+                    notification.unread
+                  "
+                  (click)="markNotificationRead(notification.id)"
+                >
+                  <span
+                    class="to-notifications__icon"
+                    [class]="'to-notifications__icon to-notifications__icon--' + notification.tone"
+                  >
+                    <i [class]="notification.icon"></i>
+                  </span>
+
+                  <span class="to-notifications__copy">
+                    <strong>{{ notification.title }}</strong>
+                    <span>{{ notification.message }}</span>
+                    <small>{{ notification.time }}</small>
+                  </span>
+
+                  @if (notification.unread) {
+                    <span class="to-notifications__unread"></span>
+                  }
+                </button>
+              }
+            </div>
+
+          </div>
+        </p-popover>
+
+        <button
+          type="button"
+          class="to-shell__icon-button"
+          [attr.aria-label]="
+            fullscreen() ? 'Exit full screen' : 'Enter full screen'
+          "
+          [attr.aria-pressed]="fullscreen()"
+          data-testid="fullscreen-btn"
+          (click)="toggleFullscreen()"
+        >
+          <i
+            [class]="
+              fullscreen()
+                ? 'pi pi-window-minimize'
+                : 'pi pi-expand'
+            "
+          ></i>
+        </button>
+
+        <button
+          type="button"
+          class="to-shell__icon-button"
+          [attr.aria-label]="
+            darkMode() ? 'Switch to light theme' : 'Switch to dark theme'
+          "
+          [attr.aria-pressed]="darkMode()"
+          data-testid="theme-toggle-btn"
+          (click)="toggleDarkMode()"
+        >
+          <i
+            [class]="darkMode() ? 'pi pi-sun' : 'pi pi-moon'"
+          ></i>
         </button>
 
         <p-menu

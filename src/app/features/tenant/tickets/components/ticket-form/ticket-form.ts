@@ -238,7 +238,7 @@ export class TicketFormComponent
   readonly alertOptions = computed(() =>
     this.alerts().map(alert => ({
       label:
-        `${alert.alertCode} · ${alert.title}`,
+        `${alert.alertCode} · ${alert.alertType}`,
       value: alert.id
     }))
   );
@@ -246,7 +246,7 @@ export class TicketFormComponent
   readonly technicianOptions = computed(() =>
     this.technicians().map(technician => ({
       label:
-        `${technician.technicianCode} · ${technician.technicianName}`,
+        `${technician.technicianCode} · ${technician.firstName} ${technician.lastName}`,
       value: technician.id
     }))
   );
