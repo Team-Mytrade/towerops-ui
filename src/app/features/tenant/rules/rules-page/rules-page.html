@@ -1,298 +1,140 @@
 <section class="rules-page" data-testid="rules-page">
-  <header class="rules-page__header">
+  <header class="page-hero">
     <div>
-      <p class="eyebrow">Automation</p>
-      <h1>Rules</h1>
-      <p>Create condition-based actions and inspect the rules applied to a device.</p>
+      <p class="eyebrow"><span></span> Automation engine</p>
+      <h1>Rule orchestration</h1>
+      <p>Define how operational signals become alerts, tickets, and notifications.</p>
+    </div>
+    <div class="hero-status">
+      <span class="status-dot"></span>
+      <div><strong>Engine ready</strong><small>11 rule categories available</small></div>
     </div>
   </header>
 
-  <div class="rules-page__grid">
-    <article class="panel">
-      <header class="panel__header">
-        <div>
-          <span class="step">01</span>
-          <h2>Device rules</h2>
-          <p>Enter the complete device context required by the rules API.</p>
-        </div>
-      </header>
+  <nav class="category-rail" aria-label="Rule categories">
+    @for (option of categoryOptions; track option.value) {
+      <button type="button" [class.is-active]="category === option.value"
+        [attr.data-testid]="'rule-category-' + option.value.toLowerCase()"
+        (click)="selectCategory(option.value)">
+        <i [class]="option.icon"></i><span>{{ option.label }}</span>
+      </button>
+    }
+  </nav>
+
+  <div class="rules-layout">
+    <aside class="registry-panel">
+      <div class="section-heading">
+        <div><p class="section-kicker">Rule registry</p><h2>Effective rules</h2></div>
+        @if (searched()) { <span class="count-badge">{{ rules().length }}</span> }
+      </div>
 
       <form class="lookup" [formGroup]="lookupForm" (ngSubmit)="loadRules()">
-        <label>
-          <span>Site</span>
-          <p-select
-            formControlName="siteCode"
-            [options]="sites()"
-            optionLabel="siteName"
-            optionValue="siteCode"
-            [placeholder]="loadingSites() ? 'Loading sites...' : 'Select a site'"
-            [loading]="loadingSites()"
-            [filter]="true"
-            filterBy="siteName,siteCode"
-            (onChange)="onLookupSiteChanged($event.value)"
-          />
-        </label>
-        <label>
-          <span>Device</span>
-          <p-select
-            formControlName="deviceId"
-            [options]="lookupDevices()"
-            optionLabel="deviceName"
-            optionValue="id"
-            [placeholder]="
-              loadingLookupDevices()
-                ? 'Loading devices...'
-                : lookupForm.controls.siteCode.value
-                  ? 'Select a device'
-                  : 'Select a site first'
-            "
-            [loading]="loadingLookupDevices()"
-            [filter]="true"
-            filterBy="deviceName,deviceCode"
-            [disabled]="!lookupForm.controls.siteCode.value || loadingLookupDevices()"
-          />
-        </label>
-        <p-button
-          type="submit"
-          label="Load rules"
-          icon="pi pi-search"
-          [loading]="loading()"
-        />
+        <label><span>Site context</span><p-select formControlName="siteCode" [options]="sites()" optionLabel="siteName" optionValue="siteCode" [loading]="loadingSites()" [filter]="true" filterBy="siteName,siteCode" placeholder="Select site" data-testid="rule-lookup-site" (onChange)="onLookupSiteChanged($event.value)" /></label>
+        <label><span>Device context</span><p-select formControlName="deviceId" [options]="lookupDevices()" optionLabel="deviceName" optionValue="deviceId" [loading]="loadingLookupDevices()" [filter]="true" filterBy="deviceName,deviceId" placeholder="Select device" [disabled]="!lookupForm.controls.siteCode.value" data-testid="rule-lookup-device" /></label>
+        <p-button type="submit" label="Inspect rules" icon="pi pi-search" [loading]="loading()" styleClass="lookup-button" data-testid="load-device-rules-btn" />
       </form>
 
-      @if (pageError()) {
-        <div class="state state--error">
-          <i class="pi pi-exclamation-triangle"></i>
-          <span>{{ pageError() }}</span>
-        </div>
-      } @else if (loading()) {
-        <div class="state">
-          <i class="pi pi-spin pi-spinner"></i>
-          <span>Loading device rules...</span>
-        </div>
-      } @else if (!searched()) {
-        <div class="state">
-          <i class="pi pi-sliders-h"></i>
-          <span>Select a device context to view its effective rules.</span>
-        </div>
-      } @else {
-        <div class="rule-list">
-          @for (rule of rules(); track rule.id) {
-            <article class="rule-card">
-              <div class="rule-card__top">
-                <div>
-                  <small>{{ rule.ruleCode }}</small>
-                  <h3>{{ rule.name }}</h3>
+      <div class="registry-content">
+        @if (pageError()) { <div class="empty-state is-error"><i class="pi pi-exclamation-circle"></i><strong>Rules unavailable</strong><span>{{ pageError() }}</span></div> }
+        @else if (loading()) { <div class="empty-state"><i class="pi pi-spin pi-spinner"></i><strong>Loading rules</strong><span>Reading the selected device context…</span></div> }
+        @else if (!searched()) { <div class="empty-state"><i class="pi pi-sitemap"></i><strong>Choose a device</strong><span>Inspect the automation currently applied to an asset.</span></div> }
+        @else {
+          <div class="rule-list">
+            @for (rule of rules(); track rule.id) {
+              <article class="rule-card">
+                <div class="rule-card__head">
+                  <span class="category-icon"><i [class]="categoryIcon(rule.category)"></i></span>
+                  <div><small>{{ rule.ruleCode }}</small><h3>{{ rule.name }}</h3></div>
+                  <p-tag [value]="rule.severity" [severity]="severity(rule.severity)" />
                 </div>
-                <p-tag
-                  [value]="rule.severity"
-                  [severity]="severity(rule.severity)"
-                />
-              </div>
-              <div class="rule-card__meta">
-                <span>{{ rule.scope }}</span>
-                <span>{{ rule.actionType }}</span>
-                <span>Priority {{ rule.priority }}</span>
-                <span [class.is-disabled]="!rule.enabled">
-                  {{ rule.enabled ? 'Enabled' : 'Disabled' }}
-                </span>
-              </div>
-              <div class="conditions">
-                @for (
-                  condition of rule.definition.conditions;
-                  track $index
-                ) {
-                  <code>
-                    {{ condition.field }} {{ condition.operator }}
-                    {{ condition.value }}
-                  </code>
-                  @if (!$last) {
-                    <b>{{ condition.logicalOperator }}</b>
-                  }
-                }
-              </div>
-            </article>
-          } @empty {
-            <div class="state">
-              <i class="pi pi-inbox"></i>
-              <span>No rules apply to this device.</span>
-            </div>
-          }
-        </div>
-      }
-    </article>
+                <p class="definition-summary">{{ definitionSummary(rule) }}</p>
+                <footer><span>{{ categoryLabel(rule.category) }}</span><span>{{ rule.scope }}</span><span>P{{ rule.priority }}</span><b [class.is-off]="!rule.enabled">{{ rule.enabled ? 'Active' : 'Disabled' }}</b></footer>
+              </article>
+            } @empty { <div class="empty-state"><i class="pi pi-inbox"></i><strong>No matching rules</strong><span>This device has no effective automation yet.</span></div> }
+          </div>
+        }
+      </div>
+    </aside>
 
-    <article class="panel panel--form">
-      <header class="panel__header">
-        <div>
-          <span class="step">02</span>
-          <h2>Create rule</h2>
-          <p>Define the trigger, scope and alert action.</p>
-        </div>
-      </header>
+    <main class="builder-panel">
+      <div class="builder-heading">
+        <div class="builder-title"><span class="category-icon is-large"><i [class]="categoryIcon(category)"></i></span><div><p class="section-kicker">New automation</p><h2>{{ categoryLabel(category) }} rule</h2></div></div>
+        <div class="builder-context"><span>{{ scope }}</span><i class="pi pi-angle-right"></i><span>{{ form.controls.actionType.value }}</span></div>
+      </div>
 
       <form [formGroup]="form" (ngSubmit)="createRule()" class="rule-form">
-        <fieldset>
-          <legend>Identity</legend>
-          <div class="fields fields--two">
-            <label>
-              <span>Rule code *</span>
-              <input pInputText formControlName="ruleCode" placeholder="HIGH_TEMP" />
-            </label>
-            <label>
-              <span>Name *</span>
-              <input pInputText formControlName="name" placeholder="High temperature" />
-            </label>
+        <section class="form-section">
+          <div class="section-number">01</div><div class="form-section__content"><div class="form-section__title"><h3>Rule identity</h3><p>Name and classify this automation.</p></div>
+            <div class="fields fields--two">
+              <label><span>Rule code *</span><input pInputText formControlName="ruleCode" placeholder="TEMP_HIGH_ALERT" data-testid="rule-code-input" /></label>
+              <label><span>Rule name *</span><input pInputText formControlName="name" placeholder="High Temperature Alert" data-testid="rule-name-input" /></label>
+              <label class="field-span-two"><span>Description</span><textarea pTextarea formControlName="description" rows="2" placeholder="Explain when and why this rule should run"></textarea></label>
+            </div>
           </div>
-          <label>
-            <span>Description</span>
-            <textarea pTextarea formControlName="description" rows="2"></textarea>
-          </label>
-        </fieldset>
+        </section>
 
-        <fieldset>
-          <legend>Scope</legend>
-          <div class="fields fields--two">
-            <label>
-              <span>Scope *</span>
-              <p-select
-                formControlName="scope"
-                [options]="scopeOptions"
-                optionLabel="label"
-                optionValue="value"
-              />
-            </label>
-            <label>
-              <span>Site</span>
-              <p-select
-                formControlName="siteCode"
-                [options]="sites()"
-                optionLabel="siteName"
-                optionValue="siteCode"
-                [placeholder]="loadingSites() ? 'Loading sites...' : 'Select a site'"
-                [loading]="loadingSites()"
-                [filter]="true"
-                filterBy="siteName,siteCode"
-                [showClear]="true"
-                (onChange)="onFormSiteChanged($event.value)"
-              />
-            </label>
-            <label>
-              <span>Device</span>
-              <p-select
-                formControlName="deviceId"
-                [options]="formDevices()"
-                optionLabel="deviceName"
-                optionValue="id"
-                [placeholder]="
-                  loadingFormDevices()
-                    ? 'Loading devices...'
-                    : form.controls.siteCode.value
-                      ? 'Select a device'
-                      : 'Select a site first'
-                "
-                [loading]="loadingFormDevices()"
-                [filter]="true"
-                filterBy="deviceName,deviceCode"
-                [showClear]="true"
-                [disabled]="!form.controls.siteCode.value || loadingFormDevices()"
-              />
-            </label>
+        <section class="form-section">
+          <div class="section-number">02</div><div class="form-section__content"><div class="form-section__title"><h3>Applies to</h3><p>Set the operational boundary for this rule.</p></div>
+            <div class="fields fields--three">
+              <label><span>Scope *</span><p-select formControlName="scope" [options]="scopeOptions" optionLabel="label" optionValue="value" data-testid="rule-scope-select" /></label>
+              @if (needsSite()) { <label><span>Site *</span><p-select formControlName="siteCode" [options]="sites()" optionLabel="siteName" optionValue="siteCode" [loading]="loadingSites()" [filter]="true" filterBy="siteName,siteCode" placeholder="Select site" data-testid="rule-site-select" (onChange)="onFormSiteChanged($event.value)" /></label> }
+              @if (needsDevice()) { <label><span>Device *</span><p-select formControlName="deviceId" [options]="formDevices()" optionLabel="deviceName" optionValue="deviceId" [loading]="loadingFormDevices()" [filter]="true" filterBy="deviceName,deviceId" placeholder="Select device" [disabled]="!form.controls.siteCode.value" data-testid="rule-device-select" /></label> }
+            </div>
           </div>
-        </fieldset>
+        </section>
 
-        <fieldset>
-          <div class="legend-row">
-            <legend>Conditions</legend>
-            <p-button
-              type="button"
-              label="Add condition"
-              icon="pi pi-plus"
-              [text]="true"
-              size="small"
-              (onClick)="addCondition()"
-            />
-          </div>
-          <div formArrayName="conditions" class="condition-list">
-            @for (condition of conditions.controls; track condition; let i = $index) {
-              <div class="condition-row" [formGroupName]="i">
-                <input pInputText formControlName="field" placeholder="Field" />
-                <p-select
-                  formControlName="operator"
-                  [options]="operatorOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  ariaLabel="Operator"
-                />
-                <input pInputText formControlName="value" placeholder="Value" />
-                <p-select
-                  formControlName="logicalOperator"
-                  [options]="logicalOperatorOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  ariaLabel="Logical operator"
-                />
-                <p-button
-                  type="button"
-                  icon="pi pi-trash"
-                  severity="danger"
-                  [text]="true"
-                  [rounded]="true"
-                  aria-label="Remove condition"
-                  [disabled]="conditions.length === 1"
-                  (onClick)="removeCondition(i)"
-                />
+        <section class="form-section definition-section">
+          <div class="section-number">03</div><div class="form-section__content"><div class="form-section__title"><h3>Trigger definition</h3><p>{{ categoryHelp(category) }}</p></div>
+            @if (category === 'CONDITION') {
+              <div formArrayName="conditions" class="condition-list">
+                @for (condition of conditions.controls; track condition; let i = $index) {
+                  <div class="condition-block" [formGroupName]="i">
+                    <div class="condition-index">{{ i + 1 }}</div>
+                    <label><span>Telemetry field *</span><input pInputText formControlName="field" placeholder="temperature" /></label>
+                    <label><span>Operator *</span><p-select formControlName="operator" [options]="operatorOptions" optionLabel="label" optionValue="value" /></label>
+                    <label><span>Comparison value *</span><input pInputText formControlName="value" placeholder="75" /></label>
+                    <label><span>Join with next</span><p-select formControlName="logicalOperator" [options]="logicalOperatorOptions" optionLabel="label" optionValue="value" /></label>
+                    <p-button type="button" icon="pi pi-trash" severity="danger" [text]="true" [rounded]="true" aria-label="Remove condition" [disabled]="conditions.length === 1" (onClick)="removeCondition(i)" />
+                  </div>
+                }
+              </div>
+              <button type="button" class="add-condition" data-testid="add-condition-btn" (click)="addCondition()"><i class="pi pi-plus"></i><span>Add another condition</span></button>
+            } @else {
+              <div formGroupName="definition" class="fields fields--two definition-fields">
+                @if (['REGEX','THRESHOLD','RANGE','STATE_CHANGE','ABSENCE','AGGREGATION','DUPLICATE'].includes(category)) { <label><span>Telemetry field *</span><input pInputText formControlName="field" placeholder="temperature" /></label> }
+                @if (['THRESHOLD','AGGREGATION'].includes(category)) { <label><span>Operator *</span><p-select formControlName="operator" [options]="operatorOptions" optionLabel="label" optionValue="value" /></label> }
+                @switch (category) {
+                  @case ('REGEX') { <label><span>Pattern *</span><input pInputText formControlName="pattern" placeholder="^DEV-[0-9A-Z-]+$" /></label> }
+                  @case ('THRESHOLD') { <label><span>Threshold *</span><p-inputnumber formControlName="threshold" /></label><label><span>Duration *</span><input pInputText formControlName="duration" placeholder="5m" /></label> }
+                  @case ('RANGE') { <label><span>Minimum *</span><p-inputnumber formControlName="minValue" /></label><label><span>Maximum *</span><p-inputnumber formControlName="maxValue" /></label> }
+                  @case ('STATE_CHANGE') { <label><span>From value *</span><input pInputText formControlName="fromValue" placeholder="RUNNING" /></label><label><span>To value *</span><input pInputText formControlName="toValue" placeholder="STOPPED" /></label> }
+                  @case ('ABSENCE') { <label><span>Missing for *</span><input pInputText formControlName="duration" placeholder="10m" /></label> }
+                  @case ('AGGREGATION') { <label><span>Aggregation *</span><p-select formControlName="aggregationType" [options]="aggregationOptions" optionLabel="label" optionValue="value" /></label><label><span>Window *</span><input pInputText formControlName="window" placeholder="15m" /></label><label><span>Comparison value *</span><p-inputnumber formControlName="value" /></label> }
+                  @case ('SCHEDULE') { <label class="field-span-two"><span>Cron expression *</span><input pInputText formControlName="cronExpression" placeholder="0 0 9 * * MON-FRI" /></label> }
+                  @case ('GEO_FENCE') { <label><span>Latitude *</span><p-inputnumber formControlName="latitude" [minFractionDigits]="4" [maxFractionDigits]="8" /></label><label><span>Longitude *</span><p-inputnumber formControlName="longitude" [minFractionDigits]="4" [maxFractionDigits]="8" /></label><label><span>Radius (metres) *</span><p-inputnumber formControlName="radiusMeters" [min]="1" /></label><label><span>Event *</span><p-select formControlName="event" [options]="geoEventOptions" optionLabel="label" optionValue="value" /></label> }
+                  @case ('DUPLICATE') { <label><span>Detection window *</span><input pInputText formControlName="window" placeholder="1m" /></label> }
+                  @case ('SCRIPT') { <label><span>Language</span><input pInputText formControlName="language" readonly /></label><label class="field-span-two"><span>Expression *</span><textarea class="code-input" pTextarea formControlName="expression" rows="5" placeholder="temperature > 75 && humidity < 60"></textarea></label> }
+                }
               </div>
             }
           </div>
-        </fieldset>
+        </section>
 
-        <fieldset>
-          <legend>Action</legend>
-          <div class="fields fields--two">
-            <label>
-              <span>Action target *</span>
-              <input pInputText formControlName="actionTarget" placeholder="operations-team" />
-            </label>
-            <label>
-              <span>Severity *</span>
-              <p-select
-                formControlName="severity"
-                [options]="severityOptions"
-                optionLabel="label"
-                optionValue="value"
-              />
-            </label>
-            <label>
-              <span>Priority *</span>
-              <p-inputnumber
-                formControlName="priority"
-                [min]="0"
-                [showButtons]="true"
-                [useGrouping]="false"
-              />
-            </label>
-            <label class="checkbox">
-              <p-checkbox
-                formControlName="enabled"
-                [binary]="true"
-                inputId="rule-enabled"
-              />
-              <span>Enable immediately</span>
-            </label>
+        <section class="form-section">
+          <div class="section-number">04</div><div class="form-section__content"><div class="form-section__title"><h3>Response</h3><p>Choose what happens when the rule matches.</p></div>
+            <div class="fields fields--three">
+              <label><span>Action type *</span><p-select formControlName="actionType" [options]="actionTypeOptions" optionLabel="label" optionValue="value" /></label>
+              <label><span>Action target *</span><p-select formControlName="actionTarget" [options]="actionTargetOptions" optionLabel="label" optionValue="value" [editable]="true" placeholder="Select or enter target" /></label>
+              <label><span>Severity *</span><p-select formControlName="severity" [options]="severityOptions" optionLabel="label" optionValue="value" /></label>
+              <label><span>Priority *</span><p-inputnumber formControlName="priority" [min]="0" [showButtons]="true" [useGrouping]="false" /></label>
+              <label class="toggle-field"><span><strong>Enable rule</strong><small>Start evaluating immediately</small></span><p-checkbox formControlName="enabled" [binary]="true" inputId="rule-enabled" /></label>
+            </div>
           </div>
-        </fieldset>
+        </section>
 
-        <footer class="form-footer">
-          <span>Category: CONDITION · Action: ALERT</span>
-          <p-button
-            type="submit"
-            label="Create rule"
-            icon="pi pi-plus"
-            [loading]="creating()"
-          />
-        </footer>
+        <details class="payload-preview"><summary><span><i class="pi pi-code"></i> Payload preview</span><i class="pi pi-angle-down"></i></summary><pre>{{ payloadPreview() }}</pre></details>
+        <footer class="form-footer"><button type="button" class="reset-button" (click)="resetForm()" data-testid="reset-rule-btn">Reset</button><div><span>Required fields are marked with *</span><p-button type="submit" label="Create rule" icon="pi pi-bolt" [loading]="creating()" data-testid="create-rule-btn" /></div></footer>
       </form>
-    </article>
+    </main>
   </div>
 </section>

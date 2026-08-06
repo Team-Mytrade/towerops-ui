@@ -7,6 +7,7 @@ import { BaseService } from '../../../../core/base/base.service';
 import {
   AssignTechnicianPayload,
   CloseTicketPayload,
+  CreateTicketPayload,
   CreateTicketCommentPayload,
   RejectTicketPayload,
   Ticket,
@@ -69,11 +70,11 @@ export class TicketService extends BaseService {
   }
 
   create(
-    payload: TicketPayload
+    payload: CreateTicketPayload
   ): Observable<ApiResponse<Ticket>> {
     return this.api.post<
       Ticket,
-      TicketPayload
+      CreateTicketPayload
     >(
       this.endpoint,
       payload
@@ -117,16 +118,22 @@ export class TicketService extends BaseService {
     ticketId: number | string,
     payload: UpdateTicketStatusPayload
   ): Observable<ApiResponse<Ticket>> {
-    return this.api.patch<
+    return this.api.put<
       Ticket,
-      UpdateTicketStatusPayload
+      Record<string, never>
     >(
       this.buildUrl(
         this.endpoint,
         ticketId,
-        'status'
+        'transition'
       ),
-      payload
+      {},
+      {
+        query: {
+          targetStatus: payload.status,
+          remarks: payload.remarks
+        }
+      }
     );
   }
 
@@ -168,16 +175,24 @@ export class TicketService extends BaseService {
     ticketId: number | string,
     payload: CloseTicketPayload
   ): Observable<ApiResponse<Ticket>> {
-    return this.api.patch<
+    return this.api.put<
       Ticket,
-      CloseTicketPayload
+      Record<string, never>
     >(
       this.buildUrl(
         this.endpoint,
         ticketId,
-        'close'
+        'transition'
       ),
-      payload
+      {},
+      {
+        query: {
+          targetStatus: 'CLOSED',
+          remarks: [payload.resolution, payload.remarks]
+            .filter(Boolean)
+            .join(' — ')
+        }
+      }
     );
   }
 

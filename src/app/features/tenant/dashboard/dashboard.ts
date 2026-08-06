@@ -1,413 +1,159 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal
-} from '@angular/core';
-
-import {
-  CommonModule,
-  DatePipe,
-  DecimalPipe,
-  TitleCasePipe
-} from '@angular/common';
-
-import {
-  finalize,
-  forkJoin
-} from 'rxjs';
-
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
-
-import { BaseComponent } from '../../../core/base/base.component';
-
-import {
-  Severity,
-  SiteCategory,
-  SiteHealthStatus,
-  WorkOrderStatus
-} from '../../../core/models/application.enums';
-
-import { STORAGE_KEYS } from '../../../core/storage/storage.keys';
-import { StorageService } from '../../../core/storage/storage.service';
-
+import { AuthService } from '../../../core/auth/auth.service';
 import { MapComponent } from '../../../shared/components/map/map';
 import { MapMarker } from '../../../shared/components/map/map.models';
 
-import {
-  CategoryDashboardSummary,
-  DashboardAlert,
-  DashboardMapSite,
-  DashboardWorkOrder
-} from './dashboard.models';
+type HealthStatus = 'Healthy' | 'Warning' | 'Critical' | 'Offline';
+type TagSeverity = 'success' | 'warn' | 'danger' | 'secondary' | 'info';
+type WorkOrderStatus = 'In progress' | 'Assigned' | 'Scheduled';
+type TrendTone = 'positive' | 'negative' | 'neutral';
 
-import { TenantDashboardService } from './dashboard.service';
-import { RouterLink } from '@angular/router';
+interface SiteSnapshot {
+  id: string;
+  name: string;
+  code: string;
+  location: string;
+  devices: number;
+  uptime: number;
+  alerts: number;
+  status: HealthStatus;
+  signal: number;
+  battery: number;
+  fuel: number;
+  temperature: number;
+  latitude: number;
+  longitude: number;
+}
 
-const SITE_CATEGORIES: readonly SiteCategory[] = [
-  'TOWER',
-  'BUILDING',
-  'WAREHOUSE',
-  'TELECOM',
-  'POWER',
-  'GENERATOR',
-  'FACILITY',
-  'MARINE',
-  'AVIATION',
-  'DEFENSE',
-  'AI_OPS_CENTER'
-];
+interface WorkOrderSnapshot {
+  id: string;
+  title: string;
+  site: string;
+  assignee: string;
+  due: string;
+  status: WorkOrderStatus;
+}
+
+interface KpiSnapshot {
+  label: string;
+  value: string;
+  note: string;
+  icon: string;
+  tone: string;
+  trend: TrendTone;
+}
+
+const HEALTH_SEVERITY: Record<HealthStatus, TagSeverity> = {
+  Healthy: 'success',
+  Warning: 'warn',
+  Critical: 'danger',
+  Offline: 'secondary'
+};
+
+const WORK_ORDER_SEVERITY: Record<WorkOrderStatus, TagSeverity> = {
+  'In progress': 'warn',
+  Assigned: 'info',
+  Scheduled: 'secondary'
+};
 
 @Component({
   selector: 'to-tenant-dashboard',
   standalone: true,
-  imports: [
-    DatePipe,
-    DecimalPipe,
-    TitleCasePipe,
-    ButtonModule,
-    ProgressSpinnerModule,
-    TagModule,
-    MapComponent,
-    CommonModule,
-    RouterLink
-  ],
+  imports: [FormsModule, ButtonModule, SelectModule, TagModule, MapComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TenantDashboardComponent extends BaseComponent {
-  private readonly dashboardService =
-    inject(TenantDashboardService);
+export class TenantDashboardComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
-  private readonly storageService =
-    inject(StorageService);
+  readonly dateRange = signal('Last 30 days');
+  readonly isRefreshing = signal(false);
+  readonly selectedSiteId = signal('site-003');
+  readonly category = signal((this.route.snapshot.paramMap.get('category') ?? 'TOWER').toUpperCase());
+  readonly categoryLabel = computed(() => this.category().replaceAll('_', ' '));
+  readonly currentUser = this.authService.currentUser;
+  readonly dateRanges = ['Today', 'Last 7 days', 'Last 30 days', 'This quarter'];
 
-  readonly category = signal<SiteCategory>('TOWER');
-
-  readonly summary =
-    signal<CategoryDashboardSummary | null>(null);
-
-  readonly mapSites =
-    signal<DashboardMapSite[]>([]);
-
-  readonly criticalAlerts =
-    signal<DashboardAlert[]>([]);
-
-  readonly activeWorkOrders =
-    signal<DashboardWorkOrder[]>([]);
-
-  readonly loadingDashboard = signal(false);
-
-  readonly categoryLabel = computed(() =>
-    this.category()
-      .replaceAll('_', ' ')
-      .toLowerCase()
-  );
-
-  readonly healthyPercentage = computed(() => {
-    const dashboard = this.summary();
-    const total = dashboard?.sites.total ?? 0;
-    const healthy = dashboard?.sites.healthy ?? 0;
-
-    if (total <= 0) {
-      return 0;
-    }
-
-    return Math.round(
-      (healthy / total) * 100
-    );
-  });
-
-  readonly onlineDevicePercentage = computed(() => {
-    const dashboard = this.summary();
-    const total = dashboard?.devices.total ?? 0;
-    const online = dashboard?.devices.online ?? 0;
-
-    if (total <= 0) {
-      return 0;
-    }
-
-    return Math.round(
-      (online / total) * 100
-    );
-  });
+  readonly sites: SiteSnapshot[] = [
+    { id: 'site-001', name: 'Doha Central Tower', code: 'DOH-001', location: 'West Bay, Doha', devices: 24, uptime: 99.98, alerts: 0, status: 'Healthy', signal: 96, battery: 91, fuel: 78, temperature: 26, latitude: 25.326, longitude: 51.531 },
+    { id: 'site-002', name: 'Al Rayyan Hub', code: 'RYN-014', location: 'Al Rayyan', devices: 18, uptime: 99.72, alerts: 2, status: 'Warning', signal: 72, battery: 64, fuel: 51, temperature: 34, latitude: 25.2919, longitude: 51.4244 },
+    { id: 'site-003', name: 'Lusail North Station', code: 'LSL-008', location: 'Lusail', devices: 31, uptime: 98.46, alerts: 4, status: 'Critical', signal: 61, battery: 38, fuel: 29, temperature: 42, latitude: 25.4209, longitude: 51.4903 },
+    { id: 'site-004', name: 'Al Wakrah Exchange', code: 'WKR-021', location: 'Al Wakrah', devices: 16, uptime: 99.91, alerts: 0, status: 'Healthy', signal: 94, battery: 87, fuel: 73, temperature: 27, latitude: 25.1715, longitude: 51.6034 },
+    { id: 'site-005', name: 'Mesaieed Relay', code: 'MSD-006', location: 'Mesaieed', devices: 12, uptime: 97.82, alerts: 1, status: 'Offline', signal: 0, battery: 14, fuel: 22, temperature: 31, latitude: 24.9909, longitude: 51.5493 }
+  ];
 
   readonly mapMarkers = computed<MapMarker[]>(() =>
-    this.mapSites()
-      .filter(site =>
-        this.hasValidCoordinates(site)
-      )
-      .map(site => ({
-        id: site.siteId,
-        latitude: site.latitude,
-        longitude: site.longitude,
-        title: site.siteName,
-        subtitle: `${site.deviceCount ?? 0} connected devices`,
-        category: site.category,
-        healthStatus: site.healthStatus,
-        siteCode: site.siteCode,
-        deviceCount: site.deviceCount ?? 0,
-        openAlerts: site.openAlerts ?? 0,
-        data: site
-      }))
+    this.sites.map(site => ({
+      id: site.id,
+      latitude: site.latitude,
+      longitude: site.longitude,
+      title: site.name,
+      subtitle: site.location,
+      healthStatus: site.status.toUpperCase() as MapMarker['healthStatus'],
+      siteCode: site.code,
+      deviceCount: site.devices,
+      openAlerts: site.alerts,
+      data: site
+    }))
   );
 
-  constructor() {
-    super();
+  readonly selectedSite = computed(() =>
+    this.sites.find(site => site.id === this.selectedSiteId()) ?? this.sites[0]
+  );
 
-    this.activatedRoute.paramMap
-      .pipe(this.untilDestroyed())
-      .subscribe(params => {
-        const routeCategory = params
-          .get('category')
-          ?.trim()
-          .toUpperCase();
+  readonly kpis: KpiSnapshot[] = [
+    { label: 'Total sites', value: '128', note: '6 added this month', icon: 'pi-map-marker', tone: 'blue', trend: 'positive' },
+    { label: 'Healthy', value: '118', note: '92.2% of network', icon: 'pi-heart', tone: 'green', trend: 'positive' },
+    { label: 'Critical', value: '2', note: 'Needs immediate action', icon: 'pi-exclamation-triangle', tone: 'red', trend: 'negative' },
+    { label: 'Active alerts', value: '23', note: '7 raised today', icon: 'pi-bell', tone: 'amber', trend: 'negative' },
+    { label: 'Open tickets', value: '18', note: '6 due today', icon: 'pi-briefcase', tone: 'violet', trend: 'neutral' },
+    { label: 'SLA breaches', value: '3', note: '97.6% compliant', icon: 'pi-shield', tone: 'cyan', trend: 'neutral' }
+  ];
 
-        if (!this.isSiteCategory(routeCategory)) {
-          void this.navigateByUrl(
-            '/tenant/categories'
-          );
-
-          return;
-        }
-
-        this.category.set(routeCategory);
-
-        this.storageService.set(
-          STORAGE_KEYS.selectedCategory,
-          routeCategory
-        );
-
-        this.resetDashboard();
-        this.loadDashboard();
-      });
-  }
+  readonly workOrders: WorkOrderSnapshot[] = [
+    { id: 'WO-2841', title: 'Replace backup battery bank', site: 'Lusail North Station', assignee: 'Omar Khalid', due: 'Today, 4:30 PM', status: 'In progress' },
+    { id: 'WO-2837', title: 'Inspect antenna alignment', site: 'Al Rayyan Hub', assignee: 'Maya Thomas', due: 'Tomorrow, 9:00 AM', status: 'Assigned' },
+    { id: 'WO-2829', title: 'Quarterly generator service', site: 'Doha Central Tower', assignee: 'Field Team 2', due: 'Aug 6, 11:00 AM', status: 'Scheduled' }
+  ];
 
   refresh(): void {
-    if (this.loadingDashboard()) {
-      return;
-    }
-
-    this.loadDashboard();
+    this.isRefreshing.set(true);
+    window.setTimeout(() => this.isRefreshing.set(false), 550);
   }
 
-  changeCategory(): void {
-    void this.navigateByUrl(
-      '/tenant/categories'
-    );
-  }
-
-  openSites(): void {
-    void this.navigate(
-      ['/tenant/sites'],
-      {
-        queryParams: {
-          category: this.category()
-        }
-      }
-    );
-  }
-
-  openDevices(): void {
-    void this.navigate(
-      ['/tenant/devices'],
-      {
-        queryParams: {
-          category: this.category()
-        }
-      }
-    );
-  }
-
-  openAlerts(): void {
-    void this.navigate(
-      ['/tenant/alerts'],
-      {
-        queryParams: {
-          category: this.category()
-        }
-      }
-    );
-  }
-
-  openTickets(): void {
-    void this.navigate(
-      ['/tenant/tickets'],
-      {
-        queryParams: {
-          category: this.category()
-        }
-      }
-    );
-  }
-
-  openWorkOrders(): void {
-    void this.navigate(
-      ['/tenant/work-orders'],
-      {
-        queryParams: {
-          category: this.category()
-        }
-      }
-    );
-  }
-
-  openSite(site: DashboardMapSite): void {
-    void this.navigate([
-      '/tenant/sites',
-      site.siteId
-    ]);
-  }
-
-  openAlert(alert: DashboardAlert): void {
-    void this.navigate([
-      '/tenant/alerts',
-      alert.id
-    ]);
-  }
-
-  openWorkOrder(
-    workOrder: DashboardWorkOrder
-  ): void {
-    void this.navigate([
-      '/tenant/work-orders',
-      workOrder.id
-    ]);
+  selectSite(site: SiteSnapshot): void {
+    this.selectedSiteId.set(site.id);
   }
 
   onMarkerSelected(marker: MapMarker): void {
-    const site =
-      marker.data as DashboardMapSite | undefined;
+    const site = marker.data as SiteSnapshot | undefined;
 
     if (site) {
-      this.openSite(site);
-      return;
+      this.selectSite(site);
     }
-
-    void this.navigate([
-      '/tenant/sites',
-      marker.id
-    ]);
   }
 
-  severityClass(
-    severity: Severity | null | undefined
-  ): string {
-    return `to-severity--${(
-      severity ?? 'LOW'
-    ).toLowerCase()}`;
+  open(path: string): void {
+    void this.router.navigateByUrl(`/tenant/${path}`);
   }
 
-  healthClass(
-    status: SiteHealthStatus | null | undefined
-  ): string {
-    return status
-      ? `to-health--${status.toLowerCase()}`
-      : 'to-health--unknown';
+  changeCategory(): void {
+    void this.router.navigateByUrl('/tenant/categories');
   }
 
-  workOrderClass(
-    status: WorkOrderStatus | null | undefined
-  ): string {
-    return `to-work-order--${(
-      status ?? 'CREATED'
-    ).toLowerCase()}`;
+  healthSeverity(status: HealthStatus): TagSeverity {
+    return HEALTH_SEVERITY[status];
   }
 
-  private loadDashboard(): void {
-    this.loadingDashboard.set(true);
-    this.clearPageError();
-
-    const category = this.category();
-
-    forkJoin({
-      summary:
-        this.dashboardService.getSummary(category),
-
-      sites:
-        this.dashboardService.getMapSites(category),
-
-      alerts:
-        this.dashboardService.getCriticalAlerts(
-          category
-        ),
-
-      workOrders:
-        this.dashboardService.getActiveWorkOrders(
-          category
-        )
-    })
-      .pipe(
-        this.untilDestroyed(),
-        finalize(() => {
-          this.loadingDashboard.set(false);
-        })
-      )
-      .subscribe({
-        next: response => {
-          this.summary.set(
-            response.summary.data ?? null
-          );
-
-          this.mapSites.set(
-            response.sites.data ?? []
-          );
-
-          this.criticalAlerts.set(
-            response.alerts.data ?? []
-          );
-
-          this.activeWorkOrders.set(
-            response.workOrders.data ?? []
-          );
-        },
-
-        error: error => {
-          this.resetDashboard();
-
-          this.setPageError(
-            error,
-            'Unable to load the category dashboard.'
-          );
-        }
-      });
-  }
-
-  private resetDashboard(): void {
-    this.summary.set(null);
-    this.mapSites.set([]);
-    this.criticalAlerts.set([]);
-    this.activeWorkOrders.set([]);
-  }
-
-  private hasValidCoordinates(
-    site: DashboardMapSite
-  ): boolean {
-    const latitude = Number(site.latitude);
-    const longitude = Number(site.longitude);
-
-    return (
-      Number.isFinite(latitude) &&
-      Number.isFinite(longitude) &&
-      latitude >= -90 &&
-      latitude <= 90 &&
-      longitude >= -180 &&
-      longitude <= 180
-    );
-  }
-
-  private isSiteCategory(
-    value: string | null | undefined
-  ): value is SiteCategory {
-    return Boolean(
-      value &&
-      SITE_CATEGORIES.includes(
-        value as SiteCategory
-      )
-    );
+  workOrderSeverity(status: WorkOrderStatus): TagSeverity {
+    return WORK_ORDER_SEVERITY[status];
   }
 }

@@ -25,13 +25,13 @@ export const LAYOUT_ROUTES: Routes = [
             module => module.TENANT_ROUTES
           )
       },
-      // {
-      //   path: 'technician',
-      //   loadChildren: () =>
-      //     import('../features/technician/technician.routes').then(
-      //       module => module.TECHNICIAN_ROUTES
-      //     )
-      // },
+      {
+        path: 'technician',
+        loadChildren: () =>
+          import('../features/technician/technician.routes').then(
+            module => module.TECHNICIAN_ROUTES
+          )
+      },
       {
         path: '',
         pathMatch: 'full',

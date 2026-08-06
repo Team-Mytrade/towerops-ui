@@ -5,7 +5,7 @@ import {
   HttpParams
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from './api.types';
@@ -33,14 +33,14 @@ export class ApiService {
     endpoint: string,
     options?: ApiRequestOptions
   ): Observable<ApiResponse<TResponse>> {
-    return this.http.get<ApiResponse<TResponse>>(
+    return this.http.get<ApiResponse<TResponse> | TResponse>(
       this.resolveUrl(endpoint),
       {
         params: this.createParams(options?.query),
         context: options?.context,
         headers: options?.headers
       }
-    );
+    ).pipe(map(response => this.normalizeResponse(response)));
   }
 
   post<TResponse, TPayload = unknown>(
@@ -48,7 +48,7 @@ export class ApiService {
     payload?: TPayload,
     options?: ApiRequestOptions
   ): Observable<ApiResponse<TResponse>> {
-    return this.http.post<ApiResponse<TResponse>>(
+    return this.http.post<ApiResponse<TResponse> | TResponse>(
       this.resolveUrl(endpoint),
       payload ?? {},
       {
@@ -56,7 +56,7 @@ export class ApiService {
         context: options?.context,
         headers: options?.headers
       }
-    );
+    ).pipe(map(response => this.normalizeResponse(response)));
   }
 
   put<TResponse, TPayload>(
@@ -64,7 +64,7 @@ export class ApiService {
     payload: TPayload,
     options?: ApiRequestOptions
   ): Observable<ApiResponse<TResponse>> {
-    return this.http.put<ApiResponse<TResponse>>(
+    return this.http.put<ApiResponse<TResponse> | TResponse>(
       this.resolveUrl(endpoint),
       payload,
       {
@@ -72,7 +72,7 @@ export class ApiService {
         context: options?.context,
         headers: options?.headers
       }
-    );
+    ).pipe(map(response => this.normalizeResponse(response)));
   }
 
   patch<TResponse, TPayload = unknown>(
@@ -80,7 +80,7 @@ export class ApiService {
     payload?: TPayload,
     options?: ApiRequestOptions
   ): Observable<ApiResponse<TResponse>> {
-    return this.http.patch<ApiResponse<TResponse>>(
+    return this.http.patch<ApiResponse<TResponse> | TResponse>(
       this.resolveUrl(endpoint),
       payload ?? {},
       {
@@ -88,21 +88,21 @@ export class ApiService {
         context: options?.context,
         headers: options?.headers
       }
-    );
+    ).pipe(map(response => this.normalizeResponse(response)));
   }
 
   delete<TResponse>(
     endpoint: string,
     options?: ApiRequestOptions
   ): Observable<ApiResponse<TResponse>> {
-    return this.http.delete<ApiResponse<TResponse>>(
+    return this.http.delete<ApiResponse<TResponse> | TResponse>(
       this.resolveUrl(endpoint),
       {
         params: this.createParams(options?.query),
         context: options?.context,
         headers: options?.headers
       }
-    );
+    ).pipe(map(response => this.normalizeResponse(response)));
   }
 
   postFormData<TResponse>(
@@ -110,7 +110,7 @@ export class ApiService {
   payload: FormData,
   options?: ApiRequestOptions
 ): Observable<ApiResponse<TResponse>> {
-  return this.http.post<ApiResponse<TResponse>>(
+  return this.http.post<ApiResponse<TResponse> | TResponse>(
     this.resolveUrl(endpoint),
     payload,
     {
@@ -120,8 +120,28 @@ export class ApiService {
       context: options?.context,
       headers: options?.headers
     }
-  );
+  ).pipe(map(response => this.normalizeResponse(response)));
 }
+
+  private normalizeResponse<T>(
+    response: ApiResponse<T> | T
+  ): ApiResponse<T> {
+    if (
+      response !== null &&
+      typeof response === 'object' &&
+      'data' in response &&
+      'success' in response
+    ) {
+      return response as ApiResponse<T>;
+    }
+
+    return {
+      timestamp: Date.now(),
+      success: true,
+      message: '',
+      data: response as T
+    };
+  }
 
   private resolveUrl(endpoint: string): string {
     const normalizedEndpoint = endpoint.startsWith('/')

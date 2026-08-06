@@ -205,3 +205,16 @@ export interface TicketWorkOrderResponse {
   workOrderId: number;
   workOrderCode: string;
 }
+
+export interface CreateTicketPayload {
+  alarmId: number;
+  deviceId: string;
+  tenantId: string;
+  siteCode: string;
+  ruleId: number;
+  title: string;
+  description: string;
+  severity: Severity;
+  assignedUserId: number;
+  assignedUserName: string;
+}

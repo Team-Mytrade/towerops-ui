@@ -108,16 +108,16 @@ export class AlertsListComponent extends BaseComponent {
         device.active !== false &&
         device.enabled !== false
       )
-      .map(device => {
-        const deviceIdentifier =
-          device.deviceId ?? device.deviceCode;
+      .flatMap(device => {
+        const deviceId = device.deviceId?.trim();
 
-        return {
-          label: `${device.deviceName} (${deviceIdentifier})`,
-          value: deviceIdentifier
-        };
+        return deviceId
+          ? [{
+              label: `${device.deviceName} (${deviceId})`,
+              value: deviceId
+            }]
+          : [];
       })
-      .filter(option => Boolean(option.value))
   );
 
   readonly ruleOptions = computed(() =>
@@ -255,18 +255,18 @@ export class AlertsListComponent extends BaseComponent {
     this.draft.update(current => ({ ...current, [key]: value }));
   }
 
-  selectDevice(deviceCode: string | null): void {
+  selectDevice(deviceId: string | null): void {
     this.draft.update(current => ({
       ...current,
-      deviceId: deviceCode ?? '',
+      deviceId: deviceId ?? '',
       ruleId: 0,
       ruleName: ''
     }));
     this.rules.set([]);
 
-    if (!deviceCode) return;
+    if (!deviceId) return;
     const device = this.devices().find(
-      item => (item.deviceId ?? item.deviceCode) === deviceCode
+      item => item.deviceId === deviceId
     );
     const tenantId = this.auth.tenantId();
     const siteCode = device?.siteCode ??
@@ -284,7 +284,7 @@ export class AlertsListComponent extends BaseComponent {
     this.ruleService.getForDevice({
       tenantId,
       siteCode,
-      deviceId: deviceCode
+      deviceId
     }).pipe(
       this.untilDestroyed(),
       finalize(() => this.loadingRules.set(false))

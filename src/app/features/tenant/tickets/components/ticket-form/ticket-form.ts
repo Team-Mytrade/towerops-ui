@@ -27,6 +27,10 @@ import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 
 import {
+  AuthService
+} from '../../../../../core/auth/auth.service';
+
+import {
   BaseFormComponent
 } from '../../../../../core/base/base-form.component';
 
@@ -61,6 +65,7 @@ import {
 } from '../../../alerts/services/alert.service';
 
 import {
+  CreateTicketPayload,
   Ticket,
   TicketPayload
 } from '../../models/ticket.models';
@@ -103,6 +108,9 @@ export class TicketFormComponent
 
   private readonly ticketService =
     inject(TicketService);
+
+  private readonly auth =
+    inject(AuthService);
 
   private readonly siteService =
     inject(SiteService);
@@ -351,9 +359,6 @@ export class TicketFormComponent
       return;
     }
 
-    const payload =
-      this.buildPayload();
-
     const currentTicket =
       this.ticket();
 
@@ -364,10 +369,10 @@ export class TicketFormComponent
       currentTicket
         ? this.ticketService.update(
             currentTicket.id,
-            payload
+            this.buildPayload()
           )
         : this.ticketService.create(
-            payload
+            this.buildCreatePayload()
           );
 
     request
@@ -706,6 +711,37 @@ export class TicketFormComponent
 
       remarks:
         value.remarks.trim()
+    };
+  }
+
+  private buildCreatePayload(): CreateTicketPayload {
+    const value = this.form.getRawValue();
+    const site = this.sites().find(
+      item => item.id === value.siteId
+    );
+    const device = this.devices().find(
+      item => item.id === value.deviceId
+    );
+    const alert = this.alerts().find(
+      item => item.id === value.alertId
+    );
+    const technician = this.technicians().find(
+      item => item.id === value.assignedTechnicianId
+    );
+
+    return {
+      alarmId: value.alertId ?? 0,
+      deviceId: device?.deviceId ?? '',
+      tenantId: this.auth.tenantId() ?? '',
+      siteCode: site?.siteCode ?? '',
+      ruleId: alert?.ruleId ?? 0,
+      title: value.title.trim(),
+      description: value.description.trim(),
+      severity: value.severity,
+      assignedUserId: technician?.userId ?? 0,
+      assignedUserName: technician
+        ? `${technician.firstName} ${technician.lastName}`.trim()
+        : ''
     };
   }
 

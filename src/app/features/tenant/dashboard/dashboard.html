@@ -1,386 +1,127 @@
-<section
-  class="to-dashboard"
-  data-testid="tenant-category-dashboard"
->
-  @if (loadingDashboard()) {
-    <div class="to-dashboard__state">
-      <p-progress-spinner
-        strokeWidth="3"
-        ariaLabel="Loading dashboard"
+<section class="tenant-dashboard" data-testid="tenant-category-dashboard">
+  <header class="dashboard-hero">
+    <div>
+      <p class="eyebrow"><span></span>{{ categoryLabel() }} operations center</p>
+      <h1>Good morning, {{ currentUser()?.username }}.</h1>
+      <p class="hero-copy">Monitor site health, active alerts and field operations from one place.</p>
+    </div>
+
+    <div class="hero-actions">
+      <p-select
+        inputId="dashboard-date-range"
+        data-testid="dashboard-date-range"
+        [options]="dateRanges"
+        [ngModel]="dateRange()"
+        (ngModelChange)="dateRange.set($event)"
+        aria-label="Date range"
       />
-
-      <div>
-        <h2>Loading dashboard</h2>
-        <p>Preparing operational data...</p>
-      </div>
+      <p-button data-testid="change-category-btn" label="Change category" icon="pi pi-th-large" severity="secondary" [outlined]="true" (click)="changeCategory()" />
+      <p-button data-testid="refresh-dashboard-btn" icon="pi pi-refresh" severity="secondary" [outlined]="true" [loading]="isRefreshing()" ariaLabel="Refresh dashboard" (click)="refresh()" />
     </div>
-  } @else if (pageError()) {
-    <div class="to-dashboard__state">
-      <span class="to-dashboard__state-icon">
-        <i class="pi pi-exclamation-triangle"></i>
-      </span>
+  </header>
 
-      <div>
-        <h2>Dashboard unavailable</h2>
-        <p>{{ pageError() }}</p>
+  <section class="status-banner" aria-label="Network status">
+    <span class="status-icon"><i class="pi pi-verified"></i></span>
+    <div><strong>Network operating normally</strong><small>99.84% availability across all managed {{ categoryLabel().toLowerCase() }} sites</small></div>
+    <span class="status-separator"></span>
+    <div class="attention-copy"><strong>7 items require attention</strong><small>2 critical alerts · 5 overdue actions</small></div>
+    <button data-testid="open-alert-center-btn" type="button" (click)="open('alerts')">Open alert center <i class="pi pi-arrow-up-right"></i></button>
+  </section>
+
+  <section class="metric-grid" aria-label="Operational metrics" data-testid="dashboard-kpis">
+    @for (kpi of kpis; track kpi.label) {
+      <article class="metric-card" [class]="'metric-card accent-' + kpi.tone">
+        <span class="metric-icon"><i class="pi" [class]="'pi ' + kpi.icon"></i></span>
+        <div><p>{{ kpi.label }}</p><strong>{{ kpi.value }}</strong><small [class]="kpi.trend"><i class="pi" [class.pi-arrow-up]="kpi.trend === 'positive'" [class.pi-exclamation-circle]="kpi.trend === 'negative'" [class.pi-clock]="kpi.trend === 'neutral'"></i>{{ kpi.note }}</small></div>
+      </article>
+    }
+  </section>
+
+  <section class="command-grid">
+    <article class="panel health-panel">
+      <header class="panel-header">
+        <div><p class="panel-kicker">Live network</p><h2>System health overview</h2></div>
+        <p-tag [value]="selectedSite().status" [severity]="healthSeverity(selectedSite().status)" />
+      </header>
+
+      <div class="health-toolbar">
+        <div><strong>{{ selectedSite().name }}</strong><small><i class="pi pi-map-marker"></i>{{ selectedSite().code }} · {{ selectedSite().location }}</small></div>
+        <button data-testid="open-selected-site-btn" type="button" (click)="open('sites')">Open site <i class="pi pi-arrow-right"></i></button>
       </div>
 
-      <p-button
-        label="Try again"
-        icon="pi pi-refresh"
-        data-testid="dashboard-retry-btn"
-        (click)="refresh()"
-      />
-    </div>
-  } @else if (summary(); as dashboard) {
-    <header class="to-dashboard__header">
-      <div>
-        <p class="to-dashboard__eyebrow">
-          Operational overview
-        </p>
+      <div class="system-health">
+        <div class="system-list">
+          <div><span class="system-icon blue"><i class="pi pi-wifi"></i></span><p>Signal network<small>{{ selectedSite().signal >= 80 ? 'Healthy' : 'Attention' }}</small></p><strong>{{ selectedSite().signal }}%</strong></div>
+          <div><span class="system-icon amber"><i class="pi pi-bolt"></i></span><p>Battery bank<small>{{ selectedSite().battery >= 50 ? 'Healthy' : 'Critical' }}</small></p><strong>{{ selectedSite().battery }}%</strong></div>
+          <div><span class="system-icon violet"><i class="pi pi-database"></i></span><p>Fuel reserve<small>{{ selectedSite().fuel >= 40 ? 'Healthy' : 'Critical' }}</small></p><strong>{{ selectedSite().fuel }}%</strong></div>
+          <div><span class="system-icon red"><i class="pi pi-sun"></i></span><p>Temperature<small>{{ selectedSite().temperature <= 35 ? 'Normal' : 'High' }}</small></p><strong>{{ selectedSite().temperature }}°</strong></div>
+        </div>
 
-        <h1>
-          {{ categoryLabel() | titlecase }} Dashboard
-        </h1>
+        <div class="tower-visual" aria-label="Selected site equipment health illustration">
+          <div class="visual-glow"></div>
+          <i class="pi pi-wifi radio-wave wave-one"></i>
+          <i class="pi pi-wifi radio-wave wave-two"></i>
+          <div class="tower-mast"><span></span><span></span><span></span><span></span></div>
+          <div class="tower-base"><i></i><i></i><i></i></div>
+          <span class="sensor-pin pin-one"><i></i>Transmitter</span>
+          <span class="sensor-pin pin-two"><i></i>Receiver</span>
+          <span class="sensor-pin pin-three warning"><i></i>Power</span>
+        </div>
 
-        <p>
-          Live health, alerts and field activity for
-          {{ dashboard.sites.total }}
-          {{ categoryLabel() }} sites.
-        </p>
+        <div class="health-score">
+          <div class="score-ring" [style.--score]="selectedSite().uptime + '%'"><div><strong>{{ selectedSite().uptime }}%</strong><span>uptime</span></div></div>
+          <p><strong>{{ selectedSite().devices }}</strong> connected devices</p>
+          <p><strong>{{ selectedSite().alerts }}</strong> active alerts</p>
+        </div>
       </div>
+    </article>
 
-      <div class="to-dashboard__actions">
-        <p-button
-          label="Change Category"
-          icon="pi pi-th-large"
-          severity="secondary"
-          [outlined]="true"
-          data-testid="change-category-btn"
-          (click)="changeCategory()"
+    <article class="panel map-panel">
+      <header class="panel-header"><div><p class="panel-kicker">Site footprint</p><h2>Network map</h2></div><button data-testid="view-map-btn" type="button" (click)="open('sites')">Full map</button></header>
+      <div class="map-canvas" data-testid="tenant-network-map">
+        <to-map
+          [markers]="mapMarkers()"
+          height="100%"
+          [autoFitBounds]="true"
+          (markerSelected)="onMarkerSelected($event)"
         />
-
-        <p-button
-          label="Refresh"
-          icon="pi pi-refresh"
-          [loading]="loadingDashboard()"
-          data-testid="refresh-dashboard-btn"
-          (click)="refresh()"
-        />
       </div>
-    </header>
+    </article>
+  </section>
 
-    <div class="to-dashboard__kpis">
-      <article
-        class="to-kpi-card"
-        role="button"
-        tabindex="0"
-        data-testid="dashboard-total-sites"
-        (click)="openSites()"
-        (keydown.enter)="openSites()"
-        (keydown.space)="openSites(); $event.preventDefault()"
-      >
-        <span class="to-kpi-card__icon">
-          <i class="pi pi-map-marker"></i>
-        </span>
-
-        <div>
-          <span>Total Sites</span>
-          <strong>{{ dashboard.sites.total | number }}</strong>
-          <small>{{ healthyPercentage() }}% healthy</small>
-        </div>
-      </article>
-
-      <article class="to-kpi-card to-kpi-card--success">
-        <span class="to-kpi-card__icon">
-          <i class="pi pi-check-circle"></i>
-        </span>
-
-        <div>
-          <span>Healthy</span>
-          <strong>{{ dashboard.sites.healthy | number }}</strong>
-          <small>Operating normally</small>
-        </div>
-      </article>
-
-      <article class="to-kpi-card to-kpi-card--danger">
-        <span class="to-kpi-card__icon">
-          <i class="pi pi-exclamation-circle"></i>
-        </span>
-
-        <div>
-          <span>Critical</span>
-          <strong>{{ dashboard.sites.critical | number }}</strong>
-          <small>Requires attention</small>
-        </div>
-      </article>
-
-      <article
-        class="to-kpi-card to-kpi-card--warning"
-        role="button"
-        tabindex="0"
-        data-testid="dashboard-open-alerts"
-        (click)="openAlerts()"
-        (keydown.enter)="openAlerts()"
-        (keydown.space)="openAlerts(); $event.preventDefault()"
-      >
-        <span class="to-kpi-card__icon">
-          <i class="pi pi-bell"></i>
-        </span>
-
-        <div>
-          <span>Open Alerts</span>
-          <strong>{{ dashboard.openAlerts | number }}</strong>
-          <small>
-            {{ dashboard.criticalAlerts | number }} critical
-          </small>
-        </div>
-      </article>
-
-      <article
-        class="to-kpi-card"
-        role="button"
-        tabindex="0"
-        data-testid="dashboard-online-devices"
-        (click)="openDevices()"
-        (keydown.enter)="openDevices()"
-        (keydown.space)="openDevices(); $event.preventDefault()"
-      >
-        <span class="to-kpi-card__icon">
-          <i class="pi pi-microchip"></i>
-        </span>
-
-        <div>
-          <span>Devices Online</span>
-          <strong>
-            {{ dashboard.devices.online | number }}
-          </strong>
-          <small>
-            {{ onlineDevicePercentage() }}% availability
-          </small>
-        </div>
-      </article>
-
-      <article class="to-kpi-card to-kpi-card--danger">
-        <span class="to-kpi-card__icon">
-          <i class="pi pi-clock"></i>
-        </span>
-
-        <div>
-          <span>SLA Breaches</span>
-          <strong>{{ dashboard.slaBreaches | number }}</strong>
-          <small>Open violations</small>
-        </div>
-      </article>
-    </div>
-
-    <div class="to-dashboard__layout">
-      <article class="to-dashboard-card to-dashboard-card--map">
-        <header class="to-dashboard-card__header">
-          <div>
-            <span>Network view</span>
-            <h2>Site Map</h2>
-          </div>
-
-          <button
-            type="button"
-            class="to-dashboard-card__link"
-            data-testid="view-all-sites-btn"
-            (click)="openSites()"
-          >
-            View all sites
-            <i class="pi pi-arrow-right"></i>
+  <section class="operations-grid">
+    <article class="panel priority-panel">
+      <header class="panel-header"><div><p class="panel-kicker">Network health</p><h2>Priority sites</h2></div><button data-testid="view-all-sites-btn" type="button" (click)="open('sites')">View all <i class="pi pi-arrow-right"></i></button></header>
+      <div class="site-list">
+        @for (site of sites; track site.id) {
+          <button type="button" class="site-row" [class.selected]="selectedSiteId() === site.id" [attr.data-testid]="'priority-site-' + site.id" (click)="selectSite(site)">
+            <span class="site-state" [class]="'site-state ' + site.status.toLowerCase()"><i class="pi pi-building"></i></span>
+            <span class="site-name"><strong>{{ site.name }}</strong><small>{{ site.code }} · {{ site.location }}</small></span>
+            <span class="site-stat"><strong>{{ site.devices }}</strong><small>devices</small></span>
+            <span class="site-stat"><strong>{{ site.uptime }}%</strong><small>uptime</small></span>
+            <p-tag [value]="site.status" [severity]="healthSeverity(site.status)" />
+            <i class="pi pi-angle-right"></i>
           </button>
-        </header>
-
-        @if (mapMarkers().length > 0) {
-          <to-map
-            [markers]="mapMarkers()"
-            height="33rem"
-            [center]="[25.2048, 55.2708]"
-            [zoom]="7"
-            [autoFitBounds]="true"
-            (markerSelected)="onMarkerSelected($event)"
-          />
-        } @else {
-          <div class="to-dashboard-card__map-empty">
-            <i class="pi pi-map-marker"></i>
-
-            <div>
-              <strong>No mapped sites</strong>
-
-              <span>
-                Sites with valid latitude and longitude will appear here.
-              </span>
-            </div>
-          </div>
         }
-
-        <footer class="to-dashboard-card__legend">
-          <span>
-            <i class="to-health-dot to-health-dot--healthy"></i>
-            Healthy
-          </span>
-
-          <span>
-            <i class="to-health-dot to-health-dot--warning"></i>
-            Warning
-          </span>
-
-          <span>
-            <i class="to-health-dot to-health-dot--critical"></i>
-            Critical
-          </span>
-
-          <span>
-            <i class="to-health-dot to-health-dot--offline"></i>
-            Offline
-          </span>
-        </footer>
-      </article>
-
-      <div class="to-dashboard__side">
-        <article class="to-dashboard-card">
-          <header class="to-dashboard-card__header">
-            <div>
-              <span>Immediate attention</span>
-              <h2>Critical Alerts</h2>
-            </div>
-
-            <a
-              routerLink="/tenant/alerts"
-              [queryParams]="{
-                category: category()
-              }"
-              class="to-dashboard-card__link"
-            >
-              View all
-            </a>
-          </header>
-
-          <div class="to-dashboard-list">
-            @for (
-              alert of criticalAlerts();
-              track alert.id
-            ) {
-              <button
-                type="button"
-                class="to-dashboard-list__item"
-                [attr.data-testid]="
-                  'dashboard-alert-' + alert.id
-                "
-                (click)="openAlert(alert)"
-              >
-                <span
-                  class="to-dashboard-list__severity"
-                  [ngClass]="severityClass(alert.severity)"
-                ></span>
-
-                <div>
-                  <strong>{{ alert.message }}</strong>
-
-                  <span>
-                    {{
-                      alert.siteName ||
-                      alert.siteCode ||
-                      alert.deviceId ||
-                      'Unknown source'
-                    }}
-                  </span>
-
-                  <small>
-                    {{
-                      alert.timestamp
-                        | date: 'MMM d, h:mm a'
-                    }}
-                  </small>
-                </div>
-
-                <i class="pi pi-angle-right"></i>
-              </button>
-            } @empty {
-              <div class="to-dashboard-list__empty">
-                <i class="pi pi-check-circle"></i>
-                <span>No critical alerts</span>
-              </div>
-            }
-          </div>
-        </article>
-
-        <article class="to-dashboard-card">
-          <header class="to-dashboard-card__header">
-            <div>
-              <span>Field operations</span>
-              <h2>Active Work Orders</h2>
-            </div>
-
-            <a
-              routerLink="/tenant/work-orders"
-              [queryParams]="{
-                category: category()
-              }"
-              class="to-dashboard-card__link"
-            >
-              View all
-            </a>
-          </header>
-
-          <div class="to-dashboard-list">
-            @for (
-              workOrder of activeWorkOrders();
-              track workOrder.id
-            ) {
-              <button
-                type="button"
-                class="to-dashboard-list__item"
-                [attr.data-testid]="
-                  'dashboard-work-order-' +
-                  workOrder.id
-                "
-                (click)="openWorkOrder(workOrder)"
-              >
-                <span
-                  class="to-work-order-status"
-                  [ngClass]="
-                    workOrderClass(workOrder.status)
-                  "
-                >
-                  <i class="pi pi-briefcase"></i>
-                </span>
-
-                <div>
-                  <strong>{{ workOrder.title }}</strong>
-
-                  <span>
-                    {{
-                      workOrder.technicianName ||
-                      'Unassigned'
-                    }}
-                  </span>
-
-                  <small>
-                    @if (workOrder.scheduledAt) {
-                      {{
-                        workOrder.scheduledAt
-                          | date: 'MMM d, h:mm a'
-                      }}
-                    } @else {
-                      Not scheduled
-                    }
-                  </small>
-                </div>
-
-                <i class="pi pi-angle-right"></i>
-              </button>
-            } @empty {
-              <div class="to-dashboard-list__empty">
-                <i class="pi pi-briefcase"></i>
-                <span>No active work orders</span>
-              </div>
-            }
-          </div>
-        </article>
       </div>
-    </div>
-  }
+    </article>
+
+    <article class="panel attention-panel">
+      <header class="panel-header"><div><p class="panel-kicker">Requires action</p><h2>Critical alarms <span>2</span></h2></div><button data-testid="view-all-alerts-btn" type="button" (click)="open('alerts')">View all</button></header>
+      <button data-testid="review-power-failure-btn" type="button" class="alert-row" (click)="open('alerts')"><span class="alert-icon red"><i class="pi pi-bolt"></i></span><span><strong>Commercial power failure</strong><small>Lusail North Station · Backup at 38%</small><time>12 min ago</time></span><i class="pi pi-angle-right"></i></button>
+      <button data-testid="review-connectivity-btn" type="button" class="alert-row" (click)="open('alerts')"><span class="alert-icon amber"><i class="pi pi-wifi"></i></span><span><strong>Intermittent connectivity</strong><small>Al Rayyan Hub · 4 devices affected</small><time>28 min ago</time></span><i class="pi pi-angle-right"></i></button>
+      <div class="sla-block"><div><span>SLA compliance</span><strong>97.6%</strong></div><div class="progress"><i></i></div><small>Target 98.0% · 3 breaches this month</small></div>
+    </article>
+  </section>
+
+  <section class="panel work-panel">
+    <header class="panel-header"><div><p class="panel-kicker">Field operations</p><h2>Active work orders</h2></div><button data-testid="view-all-work-orders-btn" type="button" (click)="open('work-orders')">View all <i class="pi pi-arrow-right"></i></button></header>
+    <div class="work-table-header"><span>Work order</span><span>Assignee</span><span>Due</span><span>Status</span></div>
+    @for (workOrder of workOrders; track workOrder.id) {
+      <button type="button" class="work-row" [attr.data-testid]="'work-order-' + workOrder.id" (click)="open('work-orders')">
+        <span class="work-name"><i class="pi pi-wrench"></i><span><strong>{{ workOrder.title }}</strong><small>{{ workOrder.id }} · {{ workOrder.site }}</small></span></span>
+        <span class="assignee"><i class="pi pi-user"></i>{{ workOrder.assignee }}</span><span class="due">{{ workOrder.due }}</span><p-tag [value]="workOrder.status" [severity]="workOrderSeverity(workOrder.status)" />
+      </button>
+    }
+  </section>
 </section>

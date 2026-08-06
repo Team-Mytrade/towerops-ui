@@ -1,240 +1,337 @@
-<section
-  class="to-work-order-form-page"
-  data-testid="work-order-form-page"
->
-  <header class="to-page-header">
-    <div class="to-page-header__content">
-      <button
-        type="button"
-        class="to-page-header__back"
-        aria-label="Back to work orders"
-        (click)="cancelForm()"
-      >
-        <i class="pi pi-arrow-left"></i>
-      </button>
+<section class="work-order-page" data-testid="work-order-form-page">
+  <header class="page-header">
+    <button
+      type="button"
+      class="back-button"
+      aria-label="Back to work orders"
+      data-testid="back-to-work-orders-btn"
+      (click)="cancelForm()"
+    >
+      <i class="pi pi-arrow-left"></i>
+    </button>
 
-      <div>
-        <span class="to-page-header__eyebrow">
-          Field Operations
-        </span>
-
-        <h1>
-          {{ pageTitle() }}
-        </h1>
-
-        <p>
-          {{ pageDescription() }}
-        </p>
-      </div>
+    <div class="page-heading">
+      <p class="eyebrow">Field operations / Work orders</p>
+      <h1>{{ pageTitle() }}</h1>
+      <p>{{ pageDescription() }}</p>
     </div>
 
     @if (isEditMode()) {
-      <div class="to-page-header__reference">
-        <span>Work Order</span>
-
-        <strong>
-          {{
-            form.controls
-              .workOrderCode.value ||
-              '—'
-          }}
-        </strong>
+      <div class="order-identity">
+        <span>{{ form.controls.workOrderCode.value || 'Work order' }}</span>
+        <p-tag
+          [value]="statusLabel()"
+          [severity]="statusSeverity()"
+        />
       </div>
     }
   </header>
 
   @if (loading()) {
-    <div class="to-form-loading">
-      <div class="to-form-loading__main">
-        @for (
-          card of [1, 2, 3];
-          track card
-        ) {
-          <article class="to-loading-card">
-            <div class="to-loading-card__header">
-              <p-skeleton
-                width="2.25rem"
-                height="2.25rem"
-                borderRadius="11px"
-              />
-
-              <div>
-                <p-skeleton
-                  width="10rem"
-                  height="1rem"
-                />
-
-                <p-skeleton
-                  width="18rem"
-                  height="0.75rem"
-                />
-              </div>
-            </div>
-
-            <p-skeleton
-              width="100%"
-              height="12rem"
-              borderRadius="12px"
-            />
-          </article>
-        }
-      </div>
-
-      <aside class="to-form-loading__side">
-        <article class="to-loading-card">
-          <p-skeleton
-            width="9rem"
-            height="1rem"
-          />
-
-          <p-skeleton
-            width="100%"
-            height="25rem"
-            borderRadius="12px"
-          />
-        </article>
+    <div class="loading-layout" aria-label="Loading work order">
+      <article class="form-panel loading-panel">
+        <p-skeleton width="11rem" height="1.25rem" />
+        <p-skeleton width="100%" height="3rem" borderRadius="8px" />
+        <p-skeleton width="100%" height="9rem" borderRadius="8px" />
+        <p-skeleton width="100%" height="15rem" borderRadius="8px" />
+      </article>
+      <aside class="form-panel loading-panel">
+        <p-skeleton width="8rem" height="1.25rem" />
+        <p-skeleton width="100%" height="22rem" borderRadius="8px" />
       </aside>
     </div>
   } @else {
     <form
-      class="to-work-order-form"
+      class="work-order-form"
       [formGroup]="form"
       novalidate
-      (ngSubmit)="
-        isCreateMode()
-          ? createWorkOrder()
-          : saveWorkOrder()
-      "
+      (ngSubmit)="submitForm()"
     >
-      <div class="to-work-order-form__layout">
-        <main class="to-work-order-form__main">
-          <to-work-order-card
-            [form]="form"
-            [readonly]="formReadonly()"
-            [editMode]="isEditMode()"
-          />
+      <div class="form-layout">
+        <main class="form-panel form-panel--main">
+          <div class="panel-heading">
+            <span class="panel-icon"><i class="pi pi-clipboard"></i></span>
+            <div>
+              <h2>Work order brief</h2>
+              <p>Define the job and connect it to the originating operational record.</p>
+            </div>
+          </div>
 
-          <to-work-order-assignment-card
-            [form]="form"
-            [technicians]="technicianOptions()"
-            [loadingTechnicians]="
-              loadingTechnicians()
-            "
-            [readonly]="formReadonly()"
-            (technicianChanged)="
-              onTechnicianChanged($event)
-            "
-            (scheduledAtChanged)="
-              onScheduledAtChanged($event)
-            "
-          />
+          <div class="field-grid field-grid--two">
+            <label class="field">
+              <span>Work order code <b>*</b></span>
+              <input
+                pInputText
+                formControlName="workOrderCode"
+                placeholder="WO-2026-0001"
+                data-testid="work-order-code-input"
+              />
+              @if (hasError('workOrderCode', 'required')) {
+                <small>Work order code is required.</small>
+              }
+            </label>
 
-          <to-work-order-resources-card
-            [form]="form"
-            [sites]="siteOptions()"
-            [devices]="deviceOptions()"
-            [alerts]="alertOptions()"
-            [tickets]="ticketOptions()"
-            [loadingSites]="
-              loadingSites()
-            "
-            [loadingDevices]="
-              loadingDevices()
-            "
-            [loadingAlerts]="
-              loadingAlerts()
-            "
-            [loadingTickets]="
-              loadingTickets()
-            "
-            [readonly]="formReadonly()"
-            (siteChanged)="
-              onSiteChanged($event)
-            "
-            (deviceChanged)="
-              onDeviceChanged($event)
-            "
-            (alertChanged)="
-              onAlertChanged($event)
-            "
-            (ticketChanged)="
-              onTicketChanged($event)
-            "
-          />
+            <label class="field">
+              <span>Title <b>*</b></span>
+              <input
+                pInputText
+                formControlName="title"
+                placeholder="Generator inspection and repair"
+                data-testid="work-order-title-input"
+              />
+              @if (hasError('title', 'required')) {
+                <small>Title is required.</small>
+              }
+            </label>
+          </div>
 
-          <to-work-order-resolution-card
-            [form]="form"
-            [readonly]="formReadonly()"
-            [completionRequired]="
-              completionMode()
-            "
-            (startedAtChanged)="
-              onStartedAtChanged($event)
-            "
-            (completedAtChanged)="
-              onCompletedAtChanged($event)
-            "
-            (laborHoursChanged)="
-              onLaborHoursChanged($event)
-            "
-          />
+          <label class="field">
+            <span>Description <b>*</b></span>
+            <textarea
+              pTextarea
+              formControlName="description"
+              rows="5"
+              maxlength="1000"
+              placeholder="Describe the fault, expected work, safety notes and required outcome."
+              data-testid="work-order-description-input"
+            ></textarea>
+            <div class="field-meta">
+              @if (hasError('description', 'required')) {
+                <small>Description is required.</small>
+              } @else {
+                <span>Give the technician enough context to begin without a follow-up call.</span>
+              }
+              <span>{{ form.controls.description.value.length || 0 }}/1000</span>
+            </div>
+          </label>
+
+          <div class="section-divider">
+            <span>Source records</span>
+            <i></i>
+          </div>
+
+          <div class="source-grid">
+            <label class="field">
+              <span>Ticket <b>*</b></span>
+              <p-select
+                formControlName="ticketId"
+                [options]="ticketOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                [showClear]="true"
+                [loading]="loadingTickets()"
+                placeholder="Select source ticket"
+                appendTo="body"
+                data-testid="work-order-ticket-select"
+              />
+              @if (hasError('ticketId', 'required')) {
+                <small>A source ticket is required.</small>
+              }
+            </label>
+
+            <label class="field">
+              <span>Alert</span>
+              <p-select
+                formControlName="alertId"
+                [options]="alertOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [filter]="true"
+                [showClear]="true"
+                [loading]="loadingAlerts()"
+                placeholder="Link an alert"
+                appendTo="body"
+                data-testid="work-order-alert-select"
+              />
+            </label>
+          </div>
+
+          @if (showExecutionSection()) {
+            <div class="execution-section">
+              <div class="panel-heading panel-heading--compact">
+                <span class="panel-icon panel-icon--success"><i class="pi pi-wrench"></i></span>
+                <div>
+                  <h2>Execution & resolution</h2>
+                  <p>Record the actual effort and outcome of the field visit.</p>
+                </div>
+              </div>
+
+              <div class="field-grid field-grid--three">
+                <label class="field">
+                  <span>Started at</span>
+                  <p-datepicker
+                    formControlName="startedAt"
+                    [showTime]="true"
+                    [showIcon]="true"
+                    hourFormat="12"
+                    appendTo="body"
+                    placeholder="Select start time"
+                    data-testid="work-order-started-at-input"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>Completed at</span>
+                  <p-datepicker
+                    formControlName="completedAt"
+                    [showTime]="true"
+                    [showIcon]="true"
+                    hourFormat="12"
+                    appendTo="body"
+                    placeholder="Select completion time"
+                    data-testid="work-order-completed-at-input"
+                  />
+                </label>
+
+                <label class="field">
+                  <span>Labor hours</span>
+                  <p-inputnumber
+                    formControlName="laborHours"
+                    [min]="0"
+                    [max]="999"
+                    [maxFractionDigits]="2"
+                    suffix=" hrs"
+                    placeholder="0"
+                    data-testid="work-order-labor-hours-input"
+                  />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Resolution</span>
+                <textarea
+                  pTextarea
+                  formControlName="resolution"
+                  rows="4"
+                  maxlength="2000"
+                  placeholder="Explain the repair performed and confirm the final operating condition."
+                  data-testid="work-order-resolution-input"
+                ></textarea>
+                @if (hasError('resolution', 'required')) {
+                  <small>Resolution is required before completion.</small>
+                }
+              </label>
+            </div>
+          }
+
+          <label class="field">
+            <span>Internal remarks</span>
+            <textarea
+              pTextarea
+              formControlName="remarks"
+              rows="3"
+              maxlength="1000"
+              placeholder="Add internal notes, dependencies or handover details."
+              data-testid="work-order-remarks-input"
+            ></textarea>
+          </label>
         </main>
 
-        <aside class="to-work-order-form__side">
-          <div class="to-work-order-form__sticky">
-            <to-work-order-site-context-card
-              [context]="siteContext()"
-              [loading]="
-                loadingSiteContext()
-              "
-              [siteSelected]="
-                selectedSiteId() !== null
-              "
-            />
-          </div>
+        <aside class="form-sidebar">
+          <article class="form-panel sticky-panel">
+            <div class="panel-heading panel-heading--compact">
+              <span class="panel-icon"><i class="pi pi-sliders-h"></i></span>
+              <div>
+                <h2>Planning</h2>
+                <p>Ownership, status and schedule.</p>
+              </div>
+            </div>
+
+            <div class="sidebar-fields">
+              <label class="field">
+                <span>Status <b>*</b></span>
+                <p-select
+                  formControlName="status"
+                  [options]="statusOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  appendTo="body"
+                  data-testid="work-order-status-select"
+                />
+              </label>
+
+              <label class="field">
+                <span>Assigned technician</span>
+                <p-select
+                  formControlName="technicianId"
+                  [options]="technicianOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [filter]="true"
+                  [showClear]="true"
+                  [loading]="loadingTechnicians()"
+                  placeholder="Choose technician"
+                  appendTo="body"
+                  data-testid="work-order-technician-select"
+                />
+              </label>
+
+              <label class="field">
+                <span>Scheduled at</span>
+                <p-datepicker
+                  formControlName="scheduledAt"
+                  [showTime]="true"
+                  [showIcon]="true"
+                  hourFormat="12"
+                  appendTo="body"
+                  placeholder="Select visit time"
+                  data-testid="work-order-scheduled-at-input"
+                />
+              </label>
+            </div>
+
+            <div class="planning-summary">
+              <div>
+                <i class="pi pi-ticket"></i>
+                <span>Ticket</span>
+                <strong>{{ selectedTicketLabel() }}</strong>
+              </div>
+              <div>
+                <i class="pi pi-bell"></i>
+                <span>Alert</span>
+                <strong>{{ selectedAlertLabel() }}</strong>
+              </div>
+              <div>
+                <i class="pi pi-user"></i>
+                <span>Owner</span>
+                <strong>{{ selectedTechnicianLabel() }}</strong>
+              </div>
+            </div>
+          </article>
         </aside>
       </div>
 
-      <to-work-order-action-footer
-        [mode]="formMode()"
-        [status]="currentStatus()"
-        [loading]="submitting()"
-        [dirty]="form.dirty"
-        [valid]="form.valid"
-        [readonly]="formReadonly()"
-        [invalidFields]="
-          invalidFieldLabels()
-        "
-        [canSaveDraft]="
-          canSaveDraft()
-        "
-        [canCreate]="canCreate()"
-        [canSave]="canSave()"
-        [canAssign]="canAssign()"
-        [canStart]="canStart()"
-        [canComplete]="
-          canComplete()
-        "
-        [canVerify]="canVerify()"
-        [canClose]="canClose()"
-        [canCancel]="canCancel()"
-        [canDelete]="canDelete()"
-        (cancel)="cancelForm()"
-        (saveDraft)="saveDraft()"
-        (create)="createWorkOrder()"
-        (save)="saveWorkOrder()"
-        (assign)="assignWorkOrder()"
-        (start)="startWorkOrder()"
-        (complete)="
-          completeWorkOrder()
-        "
-        (verify)="verifyWorkOrder()"
-        (close)="closeWorkOrder()"
-        (cancelOrder)="
-          cancelWorkOrder()
-        "
-        (delete)="deleteWorkOrder()"
-      />
+      <footer class="action-bar">
+        <div class="validation-state">
+          @if (form.invalid && form.touched) {
+            <i class="pi pi-exclamation-circle"></i>
+            <span>Complete the required fields before saving.</span>
+          } @else {
+            <i class="pi pi-check-circle"></i>
+            <span>{{ form.dirty ? 'Unsaved changes' : 'All changes saved' }}</span>
+          }
+        </div>
+
+        <div class="action-bar__buttons">
+          <p-button
+            type="button"
+            label="Cancel"
+            severity="secondary"
+            [outlined]="true"
+            data-testid="cancel-work-order-btn"
+            (click)="cancelForm()"
+          />
+          <p-button
+            type="submit"
+            [label]="isCreateMode() ? 'Create work order' : 'Save changes'"
+            icon="pi pi-check"
+            [loading]="submitting()"
+            [disabled]="formReadonly()"
+            data-testid="submit-work-order-btn"
+          />
+        </div>
+      </footer>
     </form>
   }
 </section>

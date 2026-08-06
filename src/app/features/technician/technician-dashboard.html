@@ -1,0 +1,81 @@
+<section class="technician-dashboard" data-testid="technician-dashboard">
+  <header class="dashboard-hero">
+    <div>
+      <p class="eyebrow"><span></span> Field operations</p>
+      <h1>Good morning, Omar.</h1>
+      <p class="hero-copy">You have 3 jobs scheduled today. Your first critical task is already in progress.</p>
+    </div>
+    <div class="hero-actions">
+      <p-select [options]="scheduleDates" [ngModel]="scheduleDate()" (ngModelChange)="scheduleDate.set($event)" aria-label="Schedule date" />
+      <p-button label="Sync jobs" icon="pi pi-sync" severity="secondary" [outlined]="true" [loading]="isSyncing()" (click)="sync()" />
+    </div>
+  </header>
+
+  <section class="shift-strip">
+    <div class="on-duty"><i class="pi pi-circle-fill"></i><span><strong>On duty · Shift ends at 6:00 PM</strong><small>Last synced just now · GPS active</small></span></div>
+    <div class="strip-divider"></div>
+    <div><i class="pi pi-map-marker"></i><span><strong>West Bay service zone</strong><small>3 assigned sites · 38.3 km planned route</small></span></div>
+    <button type="button">Open route <i class="pi pi-arrow-up-right"></i></button>
+  </section>
+
+  <section class="metric-grid">
+    <article class="metric-card primary"><span class="metric-icon"><i class="pi pi-briefcase"></i></span><p>Today's jobs</p><strong>3</strong><small class="blue">1 in progress · 2 upcoming</small></article>
+    <article class="metric-card"><span class="metric-icon green"><i class="pi pi-check-circle"></i></span><p>Completed this week</p><strong>12</strong><small class="positive"><i class="pi pi-arrow-up"></i> 3 ahead of target</small></article>
+    <article class="metric-card"><span class="metric-icon amber"><i class="pi pi-clock"></i></span><p>Average response</p><strong>18m</strong><small class="positive"><i class="pi pi-arrow-down"></i> 4m faster this month</small></article>
+    <article class="metric-card"><span class="metric-icon violet"><i class="pi pi-star"></i></span><p>First-time fix rate</p><strong>94%</strong><small class="positive"><i class="pi pi-arrow-up"></i> 2.4% this month</small></article>
+    <article class="metric-card"><span class="metric-icon cyan"><i class="pi pi-shield"></i></span><p>Safety streak</p><strong>47d</strong><small class="neutral">No incidents reported</small></article>
+  </section>
+
+  <section class="dashboard-grid upper-grid">
+    <article class="panel schedule-panel">
+      <header class="panel-header"><div><p>Today's schedule</p><h2>Assigned jobs</h2></div><button type="button">View all jobs <i class="pi pi-arrow-right"></i></button></header>
+      <div class="schedule-progress"><div><span>Shift progress</span><strong>1 of 3 jobs underway</strong></div><div class="progress"><i></i></div><small>4h 12m of scheduled work remaining</small></div>
+      <div class="timeline">
+        @for (job of jobs; track job.id; let last = $last) {
+          <button type="button" class="job-row" [class.active]="activeJob() === job.id" (click)="selectJob(job)">
+            <span class="time"><strong>{{ job.time }}</strong><small>{{ job.duration }}</small></span>
+            <span class="timeline-mark" [class.current]="job.status === 'In progress'"><i></i>@if (!last) { <b></b> }</span>
+            <span class="job-icon"><i class="pi {{ job.icon }}"></i></span>
+            <span class="job-main"><strong>{{ job.title }}</strong><small>{{ job.id }} · {{ job.site }}</small><em><i class="pi pi-map-marker"></i> {{ job.location }}</em></span>
+            <p-tag [value]="job.priority" [severity]="prioritySeverity(job.priority)" />
+            <span class="job-status">{{ job.status }}</span>
+            <i class="pi pi-angle-right"></i>
+          </button>
+        }
+      </div>
+    </article>
+
+    <article class="panel current-job">
+      <header class="panel-header"><div><p>Current assignment</p><h2>WO-2841</h2></div><span class="live-pill"><i></i> In progress</span></header>
+      <div class="job-hero"><span><i class="pi pi-bolt"></i></span><div><p>Critical maintenance</p><h3>Replace backup battery bank</h3><small>Lusail North Station · LSL-008</small></div></div>
+      <div class="job-details"><div><i class="pi pi-clock"></i><span><small>Started</small><strong>9:08 AM</strong></span></div><div><i class="pi pi-stopwatch"></i><span><small>Elapsed</small><strong>1h 24m</strong></span></div><div><i class="pi pi-user"></i><span><small>Contact</small><strong>Fahad A.</strong></span></div><div><i class="pi pi-box"></i><span><small>Parts</small><strong>2 reserved</strong></span></div></div>
+      <div class="task-progress"><div><span>Task checklist</span><strong>3 of 6 complete</strong></div><div class="progress"><i></i></div></div>
+      <div class="job-actions"><p-button label="Continue job" icon="pi pi-arrow-right" iconPos="right" /><p-button icon="pi pi-phone" severity="secondary" [outlined]="true" ariaLabel="Call site contact" /><p-button icon="pi pi-directions" severity="secondary" [outlined]="true" ariaLabel="Open directions" /></div>
+    </article>
+  </section>
+
+  <section class="dashboard-grid lower-grid">
+    <article class="panel alerts-panel">
+      <header class="panel-header"><div><p>Priority updates</p><h2>Field notifications <span>3</span></h2></div><button type="button">View all</button></header>
+      <div class="notice"><span class="notice-icon red"><i class="pi pi-exclamation-triangle"></i></span><div><strong>Battery level dropped below 40%</strong><p>Lusail North Station · Backup bank B</p><small>12 minutes ago</small></div><button type="button">Review</button></div>
+      <div class="notice"><span class="notice-icon amber"><i class="pi pi-calendar-clock"></i></span><div><strong>Schedule updated for WO-2837</strong><p>Site access confirmed for 1:00 PM</p><small>28 minutes ago</small></div><button type="button">Review</button></div>
+      <div class="notice"><span class="notice-icon blue"><i class="pi pi-comment"></i></span><div><strong>New note from dispatch</strong><p>Replacement connectors added to your parts list</p><small>1 hour ago</small></div><button type="button">Review</button></div>
+    </article>
+
+    <article class="panel performance-panel">
+      <header class="panel-header"><div><p>This week</p><h2>Your performance</h2></div><button type="button">View details</button></header>
+      <div class="performance-score"><div class="score-ring"><span><strong>94</strong><small>/ 100</small></span></div><div><strong>Excellent work</strong><p>You are in the top 10% of field technicians this week.</p></div></div>
+      <div class="performance-row"><span>Jobs completed</span><strong>12 <small>/ 15 target</small></strong></div>
+      <div class="performance-row"><span>On-time arrival</span><strong>96%</strong></div>
+      <div class="performance-row"><span>Customer rating</span><strong><i class="pi pi-star-fill"></i> 4.9</strong></div>
+    </article>
+
+    <article class="panel safety-panel">
+      <header class="panel-header"><div><p>Before you start</p><h2>Safety & readiness</h2></div><span class="ready"><i class="pi pi-check"></i> Ready</span></header>
+      <div class="check-item done"><i class="pi pi-check"></i><span><strong>Daily safety briefing</strong><small>Completed at 7:48 AM</small></span></div>
+      <div class="check-item done"><i class="pi pi-check"></i><span><strong>PPE inspection</strong><small>All required equipment confirmed</small></span></div>
+      <div class="check-item"><i class="pi pi-box"></i><span><strong>Parts inventory</strong><small>8 items loaded · 2 reserved</small></span><button type="button">Check</button></div>
+      <button type="button" class="emergency"><i class="pi pi-phone"></i> Emergency support</button>
+    </article>
+  </section>
+</section>

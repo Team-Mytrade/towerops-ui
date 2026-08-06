@@ -6,6 +6,7 @@ import {
 
 export interface WorkOrder {
   id: number;
+  tenantId?: string | null;
   workOrderCode: string;
 
   ticketId?: number | null;
@@ -48,6 +49,7 @@ export interface WorkOrder {
 }
 
 export interface WorkOrderPayload {
+  tenantId: string;
   workOrderCode: string;
 
   ticketId?: number | null;
